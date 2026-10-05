@@ -277,6 +277,7 @@ ns.CycleViewed(1); Check(ns.state.viewed.key == "thanes", "cycle to next dungeon
 ns.CycleViewed(-1)
 Slash("reset")
 Slash("debug")
+Slash("donate"); Check(DungeonRouteGuideDonate == nil, "/drg donate does nothing without a link")
 
 for _ = 1, 6 do Slash("next") end; local dn, tt = ns.Counts(d); Check(dn == tt, "run finished")
 INSTANCE = { nil, "none", nil, nil, nil, nil, nil, 0 }

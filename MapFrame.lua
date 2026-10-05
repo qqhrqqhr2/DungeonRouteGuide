@@ -222,6 +222,11 @@ local MENU = {
   function() ns.ShowExport(); menu:Hide() end,
 }
 
+if ns.DONATE_URL ~= "" then
+  MENU[#MENU + 1] = function() return L.OPT_DONATE end
+  MENU[#MENU + 1] = function() ns.ShowDonate(); menu:Hide() end
+end
+
 local function RefreshMenu()
   if not menu or not menu:IsShown() then return end
   for k, b in ipairs(menu.buttons) do b:SetText(MENU[k * 2 - 1]()) end
@@ -1432,4 +1437,42 @@ function ns.ShowExport()
   exportFrame:Show()
   exportFrame.edit:SetFocus()
   exportFrame.edit:HighlightText()
+end
+
+-- donation link: WoW cannot open a browser, so show the address to copy
+local donateFrame
+function ns.ShowDonate()
+  if ns.DONATE_URL == "" then return end
+  if not donateFrame then
+    donateFrame = CreateFrame("Frame", "DungeonRouteGuideDonate", UIParent, "BackdropTemplate")
+    Backdrop(donateFrame, 0.96)
+    donateFrame:SetSize(380, 112)
+    donateFrame:SetPoint("CENTER", 0, 120)
+    donateFrame:SetFrameStrata("DIALOG")
+    donateFrame:EnableMouse(true)
+    local logo = donateFrame:CreateTexture(nil, "ARTWORK")
+    logo:SetTexture("Interface\\AddOns\\DungeonRouteGuide\\Media\\icon")
+    logo:SetSize(40, 40); logo:SetPoint("TOPLEFT", 10, -10)
+    local text = donateFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    text:SetPoint("TOPLEFT", logo, "TOPRIGHT", 8, 0); text:SetPoint("RIGHT", -30, 0)
+    text:SetJustifyH("LEFT")
+    ns.Loc(text, "DONATE_TEXT")
+    local close = Btn(donateFrame, "X", 22, nil, function() donateFrame:Hide() end)
+    close:SetPoint("TOPRIGHT", -6, -6)
+    local box = CreateFrame("EditBox", nil, donateFrame, "InputBoxTemplate")
+    box:SetSize(340, 22)
+    box:SetPoint("BOTTOM", 0, 14)
+    box:SetAutoFocus(false)
+    box:SetFontObject(ChatFontNormal)
+    -- keep the address intact if the player types into the box
+    box:SetScript("OnTextChanged", function(self, user) if user then self:SetText(ns.DONATE_URL); self:HighlightText() end end)
+    box:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
+    box:SetScript("OnEscapePressed", function() donateFrame:Hide() end)
+    donateFrame.box = box
+    if UISpecialFrames then tinsert(UISpecialFrames, "DungeonRouteGuideDonate") end
+  end
+  donateFrame.box:SetText(ns.DONATE_URL)
+  donateFrame:Show()
+  donateFrame.box:SetFocus()
+  donateFrame.box:HighlightText()
 end

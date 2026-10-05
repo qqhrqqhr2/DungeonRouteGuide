@@ -14,6 +14,9 @@ ns.state = {
 }
 local state = ns.state
 
+-- donation page shown by Options > Support / "/drg donate"
+ns.DONATE_URL = ""   -- empty: the Support option stays hidden
+
 local DEFAULTS = {
   alpha = 0.9, combatFade = true, combatAlpha = 0.35,
   mapSize = 380, showList = true, listTab = "route",
@@ -635,6 +638,7 @@ SlashCmdList.DUNGEONROUTEGUIDE = function(msg)
     if state.viewed then ns.db.entrances[state.viewed.key] = nil end
   elseif cmd == "edit" then ns.SetEditMode(not state.edit)
   elseif cmd == "export" then ns.ShowExport()
+  elseif cmd == "donate" or cmd == "support" or cmd == "후원" then ns.ShowDonate()
   elseif cmd == "debug" then Debug()
   elseif cmd == "verbose" then ns.db.debug = not ns.db.debug; ns.Print("debug " .. ns.OnOff(ns.db.debug))
   else
