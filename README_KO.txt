@@ -41,6 +41,7 @@ Dungeon Route Guide (던전 길잡이) 0.2.0 - 와우 포에버용
 /drg reset         진행 초기화
 /drg go            지금 보고 있는 던전의 입구 안내 (/drg go stop 으로 끄기)
 /drg entrance set  입구 좌표가 틀리면, 포털 앞에 서서 입력하면 그 위치로 저장
+/drg 후원          후원 링크 (Buy Me a Coffee)
 /drg map           지도 그림 바꾸기 (블리자드 원본 / Atlas)
 /drg edit          표식 위치 편집 (목록에서 단계 선택 후 지도 클릭)
 /drg export        편집한 위치를 복사 가능한 텍스트로 보기

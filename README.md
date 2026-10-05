@@ -8,4 +8,6 @@ WoW Forever dungeon route overlay. Opens a semi-transparent map when you enter a
 - Classic and new Forever dungeons, updated as Forever opens more (route data referenced from wowf.io guides)
 - Maps: the game's own dungeon map art (loaded from the client by file ID), Atlas Classic (GPL-2.0) as fallback. See `CREDITS.txt`.
 
+Support: https://buymeacoffee.com/qqhrqqhr2
+
 License: GPL-2.0

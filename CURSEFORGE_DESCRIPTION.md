@@ -40,6 +40,9 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 - The new Forever dungeons (Hall of Thanes, Excavation Site, Ruins of Lordaeron) use hand-drawn sketch maps; City of Dalaran is list-only for now.
 - Wandering bosses and rares can be slightly off the marked spot. Reports are welcome in the comments or on GitHub.
 
+### Support
+If the addon helps you: https://buymeacoffee.com/qqhrqqhr2 (in game: Options > Support the addon, or `/drg donate`)
+
 ---
 
 ## 한국어
@@ -79,3 +82,6 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 - 진행 순서·위치·퀘스트: **WOWF.IO** 던전 공략을 참고했고, 공략 문구는 새로 썼습니다
 - 포에버 신규 던전(영주의 전당, 발굴 현장, 로데론의 폐허)은 직접 그린 약도로, 달라란은 아직 목록만 제공합니다
 - 돌아다니는 보스·희귀 몹은 표시 위치와 조금 다를 수 있습니다. 댓글이나 GitHub로 제보해 주세요
+
+### 후원
+도움이 되셨다면: https://buymeacoffee.com/qqhrqqhr2 (게임 안에서는 설정 메뉴 > 후원하기 또는 `/drg 후원`)

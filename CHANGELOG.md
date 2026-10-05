@@ -1,5 +1,9 @@
 # Dungeon Route Guide
 
+## v1.0.1
+
+- Support link: Options > Support the addon, or /drg donate (shows the Buy Me a Coffee address to copy)
+
 ## v1.0.0
 
 - First public release on CurseForge and Wago

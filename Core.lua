@@ -15,7 +15,7 @@ ns.state = {
 local state = ns.state
 
 -- donation page shown by Options > Support / "/drg donate"
-ns.DONATE_URL = ""   -- empty: the Support option stays hidden
+ns.DONATE_URL = "https://buymeacoffee.com/qqhrqqhr2"
 
 local DEFAULTS = {
   alpha = 0.9, combatFade = true, combatAlpha = 0.35,
