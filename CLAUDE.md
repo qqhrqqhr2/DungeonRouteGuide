@@ -1,6 +1,6 @@
 # Dungeon Route Guide
 
-WoW Forever addon (Interface 16001). Release: push a `v*` tag; GitHub Actions runs BigWigsMods/packager.
+WoW Forever addon (Interface 16001). Release: put a new `## vX.Y.Z` heading at the top of `CHANGELOG.md` and push it to main (the workflow tags the commit and runs BigWigsMods/packager), or push a `v*` tag. Uploads go to CurseForge 1728502 and Wago aN0ara6j.
 
 ## Rules
 
