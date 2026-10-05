@@ -68,7 +68,7 @@ local S = {
   DIST            = { "%s쪽 %d야드", "%s, %d yd" },
   DIR_0 = { "북", "N" }, DIR_1 = { "북서", "NW" }, DIR_2 = { "서", "W" }, DIR_3 = { "남서", "SW" },
   DIR_4 = { "남", "S" }, DIR_5 = { "남동", "SE" }, DIR_6 = { "동", "E" }, DIR_7 = { "북동", "NE" },
-  EDIT_ON         = { "경로 편집 모드: 목록에서 단계를 고른 뒤 지도에서 왼쪽 클릭=경로점 추가, Shift+왼쪽 클릭=표식 위치, 오른쪽 클릭=그 단계 편집 지우기", "Edit mode: pick a step, then left-click = add waypoint, Shift+left = move marker, right-click = clear that step's edits" },
+  EDIT_ON         = { "표식 위치 편집: 목록에서 단계를 고른 뒤 지도를 왼쪽 클릭=그 자리로 옮기기, 오른쪽 클릭=원래 자리로", "Marker edit: pick a step, then left-click the map = move it there, right-click = back to default" },
   EDIT_OFF        = { "경로 편집 모드 꺼짐", "Edit mode off" },
   EDIT_POINT      = { "%s: 경로점 추가 (%d, %d)", "%s: waypoint added (%d, %d)" },
   EDIT_MARK       = { "%s: 표식 위치 (%d, %d)", "%s: marker moved (%d, %d)" },
@@ -86,8 +86,8 @@ local S = {
   ICON_DRAG       = { "끌어서 위치 이동 · /drg icon 으로 숨기기", "Drag to move · /drg icon to hide" },
   OPT_GO          = { "입구 안내 시작", "Guide to entrance" },
   OPT_RESET       = { "진행 초기화", "Reset progress" },
-  OPT_EDIT        = { "경로 편집 모드: %s", "Route edit mode: %s" },
-  OPT_EXPORT      = { "편집한 경로 내보내기", "Export route edits" },
+  OPT_EDIT        = { "표식 위치 편집: %s", "Marker edit mode: %s" },
+  OPT_EXPORT      = { "편집한 위치 내보내기", "Export marker edits" },
   EXPORT_HINT     = { "Ctrl+A, Ctrl+C 로 복사하세요", "Ctrl+A, Ctrl+C to copy" },
   ON              = { "켜짐", "on" },
   OFF             = { "꺼짐", "off" },
@@ -99,11 +99,11 @@ local S = {
     "|cff66ccff/drg|r 지도 열기/닫기 · |cff66ccff/drg hud|r 다음 목표 표시\n" ..
     "|cff66ccff/drg next|r 다음 단계 직접 완료 · |cff66ccff/drg undo|r 되돌리기 · |cff66ccff/drg reset|r 진행 초기화\n" ..
     "|cff66ccff/drg go|r 입구 안내 · |cff66ccff/drg go stop|r 안내 끄기 · |cff66ccff/drg entrance set|r 지금 위치를 입구로 저장\n" ..
-    "|cff66ccff/drg icon|r 화면 아이콘 보이기/숨기기 · |cff66ccff/drg edit|r 경로 편집 · |cff66ccff/drg export|r 편집 내보내기 · |cff66ccff/drg debug|r 던전 정보 확인",
+    "|cff66ccff/drg icon|r 화면 아이콘 보이기/숨기기 · |cff66ccff/drg edit|r 표식 위치 편집 · |cff66ccff/drg export|r 편집 내보내기 · |cff66ccff/drg debug|r 던전 정보 확인",
     "|cff66ccff/drg|r toggle map · |cff66ccff/drg hud|r next-objective bar\n" ..
     "|cff66ccff/drg next|r mark next done · |cff66ccff/drg undo|r undo · |cff66ccff/drg reset|r reset progress\n" ..
     "|cff66ccff/drg go|r guide to entrance · |cff66ccff/drg go stop|r stop · |cff66ccff/drg entrance set|r save current spot as entrance\n" ..
-    "|cff66ccff/drg icon|r show/hide icon · |cff66ccff/drg edit|r route edit · |cff66ccff/drg export|r export edits · |cff66ccff/drg debug|r dungeon info",
+    "|cff66ccff/drg icon|r show/hide icon · |cff66ccff/drg edit|r marker edit · |cff66ccff/drg export|r export edits · |cff66ccff/drg debug|r dungeon info",
   },
 }
 

@@ -5,12 +5,12 @@
 ## English
 
 ### What it does
-WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a semi-transparent map as soon as you zone in and shows **where to go next**: the route line, the boss order, rares, NPCs and quest spots. Bosses are checked off automatically when they die, and a small bar at the top of the screen always shows the next objective with a one-line tip.
+WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a semi-transparent map as soon as you zone in and shows **where to go next**: the boss order, rares, NPCs and quest spots. Bosses are checked off automatically when they die, and a small bar at the top of the screen always shows the next objective with a one-line tip.
 
 ### Features
 - **Classic dungeons and the new Forever dungeons**, including all four Scarlet Monastery wings; more are added as Forever opens them
 - Map markers in the order you clear them: **entrance, boss, rare, NPC, quest spot**, a **!** for quest-related spots and faint circles for **alternate spawn spots** of wandering bosses and rares
-- **Route line**: yellow = where to go now, white = later, grey = already done
+- The **next stop glows** on the map; cleared stops turn grey with a check mark
 - **Automatic boss checks** (your target, party targets, nameplates, corpses, loot and encounter events), with right-click as a manual fallback
 - **Next-objective bar** with the boss's key abilities; target a boss to see its tip; "Tell party" posts the tip to party chat
 - **Rare alerts** with a raid warning and sound
@@ -28,7 +28,7 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 - `/drg entrance set` - save where you stand as the entrance (if the default spot is off)
 - `/drg next`, `/drg undo`, `/drg reset` - manual progress control
 - `/drg hud`, `/drg icon` - show / hide the objective bar and the screen icon
-- `/drg edit`, `/drg export` - adjust route lines and share your edits
+- `/drg edit`, `/drg export` - move a marker that is off and share your edits
 - `/drg debug` - dungeon detection info for bug reports
 
 ### Data and credits
@@ -42,12 +42,12 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 ## 한국어
 
 ### 소개
-와우 포에버는 던전 안에서 지도를 볼 수 없습니다. Dungeon Route Guide는 던전에 들어가면 반투명 지도를 띄워 **다음에 어디로 가야 하는지** 보여줍니다. 진행 경로, 보스 순서, 희귀 몹, NPC, 퀘스트 장소를 지도에 표시하고, 보스를 잡으면 자동으로 체크합니다. 화면 위쪽 막대에는 늘 다음 목표와 공략 한 줄이 나옵니다.
+와우 포에버는 던전 안에서 지도를 볼 수 없습니다. Dungeon Route Guide는 던전에 들어가면 반투명 지도를 띄워 **다음에 어디로 가야 하는지** 보여줍니다. 보스 순서, 희귀 몹, NPC, 퀘스트 장소를 지도에 표시하고, 보스를 잡으면 자동으로 체크합니다. 화면 위쪽 막대에는 늘 다음 목표와 공략 한 줄이 나옵니다.
 
 ### 기능
 - **클래식 던전과 포에버 신규 던전** (붉은십자군 수도원 네 날개 포함). 포에버에 던전이 열리는 대로 계속 추가
 - 진행 순서대로 번호가 붙은 표식: **입구, 우두머리, 희귀 몹, NPC, 퀘스트 장소**, 퀘스트 관련 지점의 **!** 표시, 돌아다니는 보스·희귀 몹의 **다른 출현 지점**
-- **경로선**: 노란색은 지금 갈 길, 흰색은 이후, 회색은 지나온 길
+- 다음에 갈 곳은 지도에서 **노랗게 빛나고**, 잡은 곳은 회색과 체크 표시
 - **보스 자동 체크** (내 대상, 파티원 대상, 이름표, 시체, 전리품, 전투 종료 이벤트). 오른쪽 클릭으로 직접 체크도 가능
 - **다음 목표 막대**에 보스 주요 기술 표시, 보스를 대상으로 잡으면 그 보스 팁, "파티 알림"으로 파티 채팅에 공유
 - **희귀 몹 알림** (경고 문구와 소리)
@@ -65,7 +65,7 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 - `/drg entrance set` - 입구 좌표가 틀리면 포털 앞에서 입력해 저장
 - `/drg next`, `/drg undo`, `/drg reset` - 진행 직접 조작
 - `/drg hud`, `/drg icon` - 다음 목표 막대, 화면 아이콘 보이기/숨기기
-- `/drg edit`, `/drg export` - 경로선 고치기와 공유
+- `/drg edit`, `/drg export` - 어긋난 표식 옮기기와 공유
 - `/drg debug` - 오류 제보용 던전 인식 정보
 
 ### 자료와 크레딧

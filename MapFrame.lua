@@ -581,6 +581,12 @@ local function DrawMarkers(d, page, nextIndex, sc)
   -- entrance and floor links
   if d.start and d.start.page == page.key then
     Place(entranceMark, sc, d.start.pos)
+    entranceMark.text:ClearAllPoints()
+    if d.start.pos[2] > 470 then
+      entranceMark.text:SetPoint("BOTTOM", entranceMark, "TOP", 0, 1)
+    else
+      entranceMark.text:SetPoint("TOP", entranceMark, "BOTTOM", 0, -1)
+    end
     entranceMark:Show()
   else
     entranceMark:Hide()
@@ -777,7 +783,7 @@ function ns.RefreshMap()
     mapTex:Show()
     noMapText:SetShown(false)
     DrawMasks(page, sc)
-    DrawRoute(d, page, nextIndex, sc)
+    for _, ln in ipairs(lines) do ln:Hide() end   -- route lines removed (markers show the order)
     DrawMarkers(d, page, nextIndex, sc)
   else
     mapTex:Hide()
@@ -869,14 +875,9 @@ function ns.EditClick(button)
     local r = ns.db.routes[d.key]
     if r then r[step.id] = nil end
     ns.Print(L.EDIT_CLEAR:format(T(step.name)))
-  elseif IsShiftKeyDown() then
+  else
     ns.Edits(d, step, true).pos = { x, y }
     ns.Print(L.EDIT_MARK:format(T(step.name), x, y))
-  else
-    local e = ns.Edits(d, step, true)
-    e.path = e.path or {}
-    e.path[#e.path + 1] = { x, y }
-    ns.Print(L.EDIT_POINT:format(T(step.name), x, y))
   end
   ns.RefreshMap()
 end

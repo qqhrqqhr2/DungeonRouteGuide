@@ -3,6 +3,8 @@
 ## Unreleased
 
 - The map window no longer closes with ESC; use the X button (or /drg)
+- Route lines removed; numbered markers show the order and the next one glows
+- Edit mode now just moves markers (/drg edit)
 
 ## v0.2.0
 

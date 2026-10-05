@@ -206,8 +206,7 @@ Slash("size 460"); Slash("alpha 50"); Check(ns.db.alpha == 0.5, "alpha 50 -> 0.5
 Slash("edit")
 ns.state.selected = BAZ
 ns.EditClick("LeftButton")
-SHIFT = true; ns.EditClick("LeftButton"); SHIFT = false
-Check(ns.db.routes.rfc.s6.path[1][1] == math.floor((300 - 100) / (460 / 512) + 0.5), "edit waypoint coord")
+Check(ns.db.routes.rfc.s6.pos[1] == math.floor((300 - 100) / (460 / 512) + 0.5), "edit moves marker")
 Slash("export")
 ns.EditClick("RightButton")
 Check(ns.db.routes.rfc.s6 == nil, "edit clear")
