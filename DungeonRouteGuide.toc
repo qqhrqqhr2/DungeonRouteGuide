@@ -6,6 +6,7 @@
 ## Author: qqhrqqhr2
 ## Version: @project-version@
 ## Category: Dungeons
+## IconTexture: Interface\AddOns\DungeonRouteGuide\Media\icon
 ## X-License: GPL-2.0
 ## X-Website: https://github.com/qqhrqqhr2/DungeonRouteGuide
 ## X-Credits: Dungeon maps from Atlas (Dan Gilbert, Arith and the Atlas Team), GPL-2.0

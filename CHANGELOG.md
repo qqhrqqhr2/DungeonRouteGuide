@@ -7,6 +7,7 @@
 - Multi-page maps (Blackfathom Deeps), dungeon picker, Route / Quests / Prep tabs
 - Kill detection by creature ID and by name
 - Screen icon: left-click opens the guide anywhere, right-click starts the entrance arrow
+- Addon icon / logo
 
 ## v0.1.x
 

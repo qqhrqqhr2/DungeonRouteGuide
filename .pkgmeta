@@ -9,4 +9,5 @@ ignore:
   - CLAUDE.md
   - .github
   - tools
+  - assets
   - .gitignore

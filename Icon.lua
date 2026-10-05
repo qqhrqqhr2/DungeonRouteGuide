@@ -6,9 +6,7 @@ local _, ns = ...
 local L, T = ns.L, ns.T
 local state = ns.state
 
-local ICON = "Interface\\Icons\\INV_Misc_Map_01"
-local BORDER = "Interface\\Minimap\\MiniMap-TrackingBorder"
-local MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+local ICON = "Interface\\AddOns\\DungeonRouteGuide\\Media\\icon"
 
 local btn
 
@@ -67,30 +65,15 @@ function ns.CreateIcon()
   btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
   btn:RegisterForDrag("LeftButton")
 
-  local bg = btn:CreateTexture(nil, "BACKGROUND")
-  bg:SetSize(26, 26)
-  bg:SetPoint("CENTER")
-  bg:SetColorTexture(0, 0, 0, 0.6)
+  -- the addon logo (already has its own gold frame)
   local icon = btn:CreateTexture(nil, "ARTWORK")
   icon:SetTexture(ICON)
-  icon:SetSize(24, 24)
-  icon:SetPoint("CENTER")
-  if btn.CreateMaskTexture then
-    for _, t in ipairs({ bg, icon }) do
-      local m = btn:CreateMaskTexture()
-      m:SetTexture(MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-      m:SetAllPoints(t)
-      t:AddMaskTexture(m)
-    end
-  end
-  local border = btn:CreateTexture(nil, "OVERLAY")
-  border:SetTexture(BORDER)
-  border:SetSize(60, 60)
-  border:SetPoint("TOPLEFT", -2, 2)
+  icon:SetAllPoints()
   local hl = btn:CreateTexture(nil, "HIGHLIGHT")
-  hl:SetSize(28, 28)
-  hl:SetPoint("CENTER")
-  hl:SetColorTexture(1, 1, 1, 0.15)
+  hl:SetTexture(ICON)
+  hl:SetAllPoints()
+  hl:SetBlendMode("ADD")
+  hl:SetAlpha(0.35)
   btn.icon = icon
 
   local pos = ns.db.frames.icon
