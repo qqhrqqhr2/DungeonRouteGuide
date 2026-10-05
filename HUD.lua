@@ -41,6 +41,7 @@ local function Create()
   hud.mapBtn:SetPoint("TOPRIGHT", -4, -4)
   hud.tellBtn = SmallBtn(hud, L.BTN_ANNOUNCE, 62, function() ns.Announce() end)
   hud.tellBtn:SetPoint("RIGHT", hud.mapBtn, "LEFT", -2, 0)
+  ns.Loc(hud.mapBtn, "BTN_MAP"); ns.Loc(hud.tellBtn, "BTN_ANNOUNCE")
 
   hud.head = hud:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
   hud.head:SetPoint("TOPLEFT", 8, -7)

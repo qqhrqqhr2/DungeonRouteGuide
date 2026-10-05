@@ -9,6 +9,7 @@
 - Dungeon dropdown and a "Current" button that jumps back to the dungeon you are in
 - Smaller, see-through markers so the map underneath stays visible
 - The window can be dragged by the map area too
+- Language option: Auto (game language), Korean or English (Options menu or /drg lang)
 - Boss loot: item list in marker tooltips and item icons under the tip (hover for the item tooltip, Shift-click to link); trash drops on the Prep tab
 
 ## v0.2.0

@@ -34,6 +34,7 @@ Dungeon Route Guide (던전 길잡이) 0.2.0 - 와우 포에버용
 /drg               지도 창 열기/닫기
 /drg hud           다음 목표 막대 켜기/끄기
 /drg icon          화면 아이콘 보이기/숨기기
+/drg lang          언어 바꾸기 (auto 자동 · ko 한국어 · en 영어, 그냥 입력하면 차례로 바뀜)
 /drg next / undo   (예비용) 다음 단계 직접 완료 / 되돌리기
 /drg reset         진행 초기화
 /drg go            지금 보고 있는 던전의 입구 안내 (/drg go stop 으로 끄기)

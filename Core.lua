@@ -17,7 +17,7 @@ local state = ns.state
 local DEFAULTS = {
   alpha = 0.9, combatFade = true, combatAlpha = 0.35,
   mapSize = 380, showList = true, listTab = "route",
-  locked = false, autoOpen = true, hud = true, rareAlert = true, showIcon = true,
+  locked = false, autoOpen = true, hud = true, rareAlert = true, showIcon = true, lang = "auto",
   routes = {}, entrances = {}, frames = {},
 }
 
@@ -38,6 +38,7 @@ function ns.InitDB()
   DungeonRouteGuideCharDB.progress = DungeonRouteGuideCharDB.progress or { done = {}, lastSeen = 0 }
   ns.db = DungeonRouteGuideDB
   ns.char = DungeonRouteGuideCharDB
+  ns.SetLanguage(ns.db.lang)
 end
 
 ---------------------------------------------------------------------------
@@ -494,6 +495,17 @@ end
 ---------------------------------------------------------------------------
 -- Refresh fan-out
 ---------------------------------------------------------------------------
+-- Switch language (nil = cycle auto -> ko -> en) and refresh the UI.
+function ns.ChangeLanguage(want)
+  if not want then
+    local order = { auto = "ko", ko = "en", en = "auto" }
+    want = order[ns.db.lang or "auto"] or "auto"
+  end
+  ns.db.lang = want
+  ns.SetLanguage(want)
+  ns.Print(L.OPT_LANG:format(L["LANG_" .. want]))
+end
+
 function ns.RefreshAll()
   if ns.RefreshMap then ns.RefreshMap() end
   if ns.RefreshHUD then ns.RefreshHUD() end
@@ -607,6 +619,9 @@ SlashCmdList.DUNGEONROUTEGUIDE = function(msg)
   elseif cmd == "size" then
     local v = tonumber(rest); if v then ns.db.mapSize = math.max(240, math.min(800, v)); ns.RebuildMap() end
   elseif cmd == "auto" then ns.db.autoOpen = not ns.db.autoOpen; ns.Print(L.OPT_AUTO:format(ns.OnOff(ns.db.autoOpen)))
+  elseif cmd == "lang" or cmd == "language" or cmd == "언어" then
+    local want = ({ auto = "auto", ["자동"] = "auto", ko = "ko", kr = "ko", ["한국어"] = "ko", en = "en", english = "en", ["영어"] = "en" })[rest]
+    ns.ChangeLanguage(want)
   elseif cmd == "icon" then ns.SetIconShown(not ns.db.showIcon); ns.Print(L.OPT_ICON:format(ns.OnOff(ns.db.showIcon)))
   elseif cmd == "rare" then ns.db.rareAlert = not ns.db.rareAlert; ns.Print(L.OPT_RARE:format(ns.OnOff(ns.db.rareAlert)))
   elseif cmd == "go" then

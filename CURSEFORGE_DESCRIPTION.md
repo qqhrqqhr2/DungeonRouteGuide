@@ -21,7 +21,7 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 - Progress resets on its own when you re-enter a cleared dungeon or the instance is reset
 - Multi-page maps (Blackfathom Deeps), dungeon picker, adjustable size and opacity, fades in combat
 - Draggable screen icon: left-click opens the guide anywhere, right-click starts the entrance arrow
-- English and Korean (follows your game language)
+- English and Korean: automatic (game language), or pick one in Options / `/drg lang`
 
 ### Commands
 - `/drg` - open / close the map (also a key binding)
@@ -59,7 +59,7 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 - 다 깬 던전에 다시 들어가거나 인스턴스가 초기화되면 진행이 알아서 초기화
 - 여러 장 지도(검은심연의 나락), 던전 선택 목록, 크기·투명도 조절, 전투 중 흐리게
 - 끌어서 옮기는 화면 아이콘: 왼쪽 클릭으로 어디서나 공략 열기, 오른쪽 클릭으로 입구 안내
-- 한국어·영어 지원 (게임 언어를 따름)
+- 한국어·영어 지원: 자동(게임 언어) 또는 설정 메뉴·`/drg lang`에서 선택
 
 ### 명령어
 - `/drg` 또는 `/던전길잡이` - 지도 열기/닫기 (단축키 지정 가능)

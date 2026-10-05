@@ -52,7 +52,7 @@ local function Btn(parent, text, w, tip, onClick)
   if tip then
     b:SetScript("OnEnter", function(self)
       GameTooltip:SetOwner(self, "ANCHOR_TOP")
-      GameTooltip:SetText(tip, 1, 1, 1, 1, true)
+      GameTooltip:SetText(type(tip) == "function" and tip() or tip, 1, 1, 1, 1, true)
       GameTooltip:Show()
     end)
     b:SetScript("OnLeave", GameTooltip_Hide)
@@ -154,6 +154,8 @@ local MENU = {
   function() ns.db.rareAlert = not ns.db.rareAlert end,
   function() return L.OPT_FADE:format(ns.OnOff(ns.db.combatFade)) end,
   function() ns.db.combatFade = not ns.db.combatFade; ns.ApplyAlpha() end,
+  function() return L.OPT_LANG:format(L["LANG_" .. (ns.db.lang or "auto")]) end,
+  function() ns.ChangeLanguage() end,
   function() return L.OPT_ICON:format(ns.OnOff(ns.db.showIcon)) end,
   function() ns.SetIconShown(not ns.db.showIcon) end,
   function() return L.OPT_GO end,
@@ -403,19 +405,32 @@ local function Layout()
   list:SetHeight(S + (multi and PAGES_H or 0) + LEGEND_H)
 end
 
+local legendItems = {}
+local function LayoutLegend()
+  local x = 0
+  for _, it in ipairs(legendItems) do
+    it.dot:ClearAllPoints(); it.dot:SetPoint("LEFT", x, 0)
+    it.fs:ClearAllPoints(); it.fs:SetPoint("LEFT", x + 12, 0)
+    it.fs:SetText(L["LEG_" .. it.key:upper()])
+    x = x + 16 + (it.fs:GetStringWidth() or 40) + 10
+  end
+end
+
 local function CreateLegend()
   legend = CreateFrame("Frame", nil, frame)
   legend:SetSize(400, LEGEND_H)
-  local x = 0
   for _, key in ipairs({ "entrance", "boss", "rare", "npc", "quest" }) do
     local dot = Circle(legend, "ARTWORK", 9)
-    dot:ClearAllPoints(); dot:SetPoint("LEFT", x, 0)
     dot:SetVertexColor(CAT[key][1], CAT[key][2], CAT[key][3], 1)
     local fs = legend:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-    fs:SetPoint("LEFT", x + 12, 0)
-    fs:SetText(L["LEG_" .. key:upper()])
-    x = x + 16 + (fs:GetStringWidth() or 40) + 10
+    legendItems[#legendItems + 1] = { key = key, dot = dot, fs = fs }
   end
+  LayoutLegend()
+end
+
+function ns.OnLanguageChanged()
+  if legend then LayoutLegend() end
+  if ns.RefreshAll then ns.RefreshAll() end
 end
 
 local function Create()
@@ -440,13 +455,14 @@ local function Create()
   local listBtn = Btn(frame, L.BTN_LIST, 40, nil, function() ns.db.showList = not ns.db.showList; Layout(); ns.RefreshMap() end)
   listBtn:SetPoint("RIGHT", menuBtn, "LEFT", -2, 0)
   -- "current dungeon" button: back to the map of the dungeon you are in
-  currentBtn = Btn(frame, L.BTN_CURRENT, 64, L.TIP_CURRENT, function()
+  currentBtn = Btn(frame, L.BTN_CURRENT, 64, function() return L.TIP_CURRENT end, function()
     if state.current then
       state.viewed, state.selected, state.pageManual = state.current, nil, false
       picker:Hide(); ns.RefreshMap()
     end
   end)
   currentBtn:SetPoint("RIGHT", listBtn, "LEFT", -6, 0)
+  ns.Loc(menuBtn, "BTN_MENU"); ns.Loc(listBtn, "BTN_LIST"); ns.Loc(currentBtn, "BTN_CURRENT")
   -- dungeon dropdown
   local titleBtn = CreateFrame("Button", nil, frame, "BackdropTemplate")
   dropdown = titleBtn
@@ -482,7 +498,7 @@ local function Create()
   mapTex = canvas:CreateTexture(nil, "BACKGROUND")
   mapTex:SetAllPoints()
   noMapText = canvas:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  noMapText:SetPoint("CENTER"); noMapText:SetText(L.NO_MAP)
+  noMapText:SetPoint("CENTER"); ns.Loc(noMapText, "NO_MAP")
   overlay = CreateFrame("Frame", nil, canvas)
   overlay:SetAllPoints()
   overlay:SetFrameLevel(canvas:GetFrameLevel() + 2)
@@ -503,7 +519,7 @@ local function Create()
   einner:SetVertexColor(0.05, 0.15, 0.05, 0.5)
   entranceMark.text = entranceMark:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
   entranceMark.text:SetPoint("TOP", entranceMark, "BOTTOM", 0, -1)
-  entranceMark.text:SetText(L.LEG_ENTRANCE)
+  ns.Loc(entranceMark.text, "LEG_ENTRANCE")
   entranceMark.text:SetTextColor(CAT.entrance[1], CAT.entrance[2], CAT.entrance[3])
 
   -- page buttons (multi-page dungeons)
@@ -528,6 +544,7 @@ local function Create()
   tabQuest:SetPoint("LEFT", tabRoute, "RIGHT", 2, 0)
   tabNotes = Btn(list, L.TAB_NOTES, 50, nil, function() SetTab("notes") end)
   tabNotes:SetPoint("LEFT", tabQuest, "RIGHT", 2, 0)
+  ns.Loc(tabRoute, "TAB_ROUTE"); ns.Loc(tabQuest, "TAB_QUEST"); ns.Loc(tabNotes, "TAB_NOTES")
   progressText = list:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
   progressText:SetPoint("TOPRIGHT", -4, -4)
   tipText = list:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
@@ -1017,7 +1034,7 @@ function ns.ShowExport()
     exportFrame:EnableMouse(true)
     local hint = exportFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     hint:SetPoint("TOPLEFT", 8, -8)
-    hint:SetText(L.EXPORT_HINT)
+    ns.Loc(hint, "EXPORT_HINT")
     local close = Btn(exportFrame, "X", 22, nil, function() exportFrame:Hide() end)
     close:SetPoint("TOPRIGHT", -6, -4)
     local scroll = CreateFrame("ScrollFrame", nil, exportFrame, "UIPanelScrollFrameTemplate")

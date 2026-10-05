@@ -1,8 +1,9 @@
 -- Dungeon Route Guide - Locale
 local _, ns = ...
 
+-- ns.locale ("ko" / "en") is chosen by ns.SetLanguage below: "auto" follows
+-- the game client, or the player can force Korean or English.
 ns.locale = (GetLocale and GetLocale() == "koKR") and "ko" or "en"
-local isKO = ns.locale == "ko"
 
 -- Picks the localized string out of a {ko=..., en=...} table.
 function ns.T(v)
@@ -50,6 +51,10 @@ local S = {
   TRASH_LOOT      = { "일반 몹 드랍", "Trash drops" },
   LOADING         = { "불러오는 중…", "Loading…" },
   LOOT_HINT       = { "Shift+클릭: 채팅에 링크", "Shift-click: link in chat" },
+  OPT_LANG        = { "언어: %s", "Language: %s" },
+  LANG_auto       = { "자동", "Auto" },
+  LANG_ko         = { "한국어", "한국어 (Korean)" },
+  LANG_en         = { "English (영어)", "English" },
   PICK_DUNGEON    = { "던전 선택 (클릭)", "Pick a dungeon (click)" },
   PAGE            = { "지도 %d", "Map %d" },
   OPTIONAL        = { "선택", "Optional" },
@@ -106,20 +111,41 @@ local S = {
     "|cff66ccff/drg|r 지도 열기/닫기 · |cff66ccff/drg hud|r 다음 목표 표시\n" ..
     "|cff66ccff/drg next|r 다음 단계 직접 완료 · |cff66ccff/drg undo|r 되돌리기 · |cff66ccff/drg reset|r 진행 초기화\n" ..
     "|cff66ccff/drg go|r 입구 안내 · |cff66ccff/drg go stop|r 안내 끄기 · |cff66ccff/drg entrance set|r 지금 위치를 입구로 저장\n" ..
-    "|cff66ccff/drg icon|r 화면 아이콘 보이기/숨기기 · |cff66ccff/drg edit|r 표식 위치 편집 · |cff66ccff/drg export|r 편집 내보내기 · |cff66ccff/drg debug|r 던전 정보 확인",
+    "|cff66ccff/drg lang|r 언어 (auto · ko · en) · |cff66ccff/drg icon|r 화면 아이콘 보이기/숨기기 · |cff66ccff/drg edit|r 표식 위치 편집 · |cff66ccff/drg export|r 편집 내보내기 · |cff66ccff/drg debug|r 던전 정보 확인",
     "|cff66ccff/drg|r toggle map · |cff66ccff/drg hud|r next-objective bar\n" ..
     "|cff66ccff/drg next|r mark next done · |cff66ccff/drg undo|r undo · |cff66ccff/drg reset|r reset progress\n" ..
     "|cff66ccff/drg go|r guide to entrance · |cff66ccff/drg go stop|r stop · |cff66ccff/drg entrance set|r save current spot as entrance\n" ..
-    "|cff66ccff/drg icon|r show/hide icon · |cff66ccff/drg edit|r marker edit · |cff66ccff/drg export|r export edits · |cff66ccff/drg debug|r dungeon info",
+    "|cff66ccff/drg lang|r language (auto · ko · en) · |cff66ccff/drg icon|r show/hide icon · |cff66ccff/drg edit|r marker edit · |cff66ccff/drg export|r export edits · |cff66ccff/drg debug|r dungeon info",
   },
 }
 
-ns.L = {}
-for k, v in pairs(S) do ns.L[k] = isKO and v[1] or v[2] end
-setmetatable(ns.L, { __index = function(_, k) return k end })
+ns.L = setmetatable({}, { __index = function(_, k) return k end })
+ns.locWidgets = {}
 
--- Key binding labels (Bindings.xml)
-BINDING_HEADER_DUNGEONROUTEGUIDE = "Dungeon Route Guide"
-BINDING_NAME_DUNGEONROUTEGUIDE_TOGGLE = isKO and "던전 길잡이 지도 열기/닫기" or "Toggle route map"
-BINDING_NAME_DUNGEONROUTEGUIDE_NEXT = isKO and "다음 단계 완료 표시" or "Mark next step done"
-BINDING_NAME_DUNGEONROUTEGUIDE_ANNOUNCE = isKO and "다음 목표 파티에 알리기" or "Tell party the next objective"
+-- Set a widget's text from a locale key and keep it in sync on language change.
+function ns.Loc(widget, key)
+  widget:SetText(ns.L[key])
+  ns.locWidgets[#ns.locWidgets + 1] = { w = widget, key = key }
+  return widget
+end
+
+function ns.ResolveLocale(setting)
+  if setting == "ko" or setting == "en" then return setting end
+  return (GetLocale and GetLocale() == "koKR") and "ko" or "en"
+end
+
+function ns.SetLanguage(setting)
+  ns.langSetting = (setting == "ko" or setting == "en") and setting or "auto"
+  ns.locale = ns.ResolveLocale(ns.langSetting)
+  local ko = ns.locale == "ko"
+  for k, v in pairs(S) do rawset(ns.L, k, ko and v[1] or v[2]) end
+  -- Key binding labels (Bindings.xml)
+  BINDING_HEADER_DUNGEONROUTEGUIDE = "Dungeon Route Guide"
+  BINDING_NAME_DUNGEONROUTEGUIDE_TOGGLE = ko and "던전 길잡이 지도 열기/닫기" or "Toggle route map"
+  BINDING_NAME_DUNGEONROUTEGUIDE_NEXT = ko and "다음 단계 완료 표시" or "Mark next step done"
+  BINDING_NAME_DUNGEONROUTEGUIDE_ANNOUNCE = ko and "다음 목표 파티에 알리기" or "Tell party the next objective"
+  for _, e in ipairs(ns.locWidgets) do pcall(e.w.SetText, e.w, ns.L[e.key]) end
+  if ns.OnLanguageChanged then ns.OnLanguageChanged() end
+end
+
+ns.SetLanguage("auto")
