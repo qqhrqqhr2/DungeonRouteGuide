@@ -182,6 +182,17 @@ Check(#bfd.pages == 3, "BFD has 3 Atlas pages")
 Check(bfd.bliz and #bfd.bliz.pages == 3 and ns.state.pageGeo == bfd.bliz, "BFD shows 3 Blizzard pages")
 Check(TEXSET[bfd.bliz.pages[1].tiles[1][1]], "Blizzard tiles set by file ID")
 ns.state.page, ns.state.pageManual = "3", true; ns.RefreshMap()
+-- area dropdown for dungeons with several maps
+local gn = ns.DungeonByKey.gnomer
+ns.ShowMap(gn); ns.state.page, ns.state.pageManual = "4", true; ns.RefreshMap()
+local fb, fn, fl, frows = ns.AreaWidgets()
+Check(fb:IsShown() and fb.text._text:find("4/4") ~= nil, "area dropdown shows 4/4")
+Check(fn:IsShown() and fn.key == "1", "next-objective link points to area 1")
+fb._scripts.OnClick(fb); Check(fl:IsShown(), "area list opens")
+frows[2]._scripts.OnClick(frows[2]); Check(ns.state.page == "2" and not fl:IsShown(), "pick area 2")
+fn._scripts.OnClick(fn); Check(ns.state.page == "1" and not fn:IsShown(), "jump to next objective area")
+ns.ShowMap(ns.DungeonByKey.rfc); ns.RefreshMap()
+Check(not fb:IsShown(), "single-map dungeon: no dropdown")
 -- client without the art: falls back to Atlas
 local smgy = ns.DungeonByKey.smgy
 for _, set in ipairs(smgy.bliz.pages[1].tiles) do MISSING[set[1]] = true end

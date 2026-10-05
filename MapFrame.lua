@@ -6,7 +6,7 @@ local L, T = ns.L, ns.T
 local state = ns.state
 
 local HEADER, PAD, LISTW = 28, 6, 240
-local LEGEND_H, FOOT_H, PAGES_H = 16, 14, 22
+local LEGEND_H, FOOT_H = 16, 14
 local MAP_PATH = "Interface\\AddOns\\DungeonRouteGuide\\Maps\\"
 local MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 local CHECK = "Interface\\RaidFrame\\ReadyCheck-Ready"
@@ -26,10 +26,11 @@ local function Category(step)
   return CAT[step.kind] and step.kind or "boss"
 end
 
-local frame, canvas, overlay, mapTex, noMapText, title, footer, legend, pageBar, list, menu, picker
-local markers, alts, links, rows, qrows, pageBtns, masks, tiles = {}, {}, {}, {}, {}, {}, {}, {}
+local frame, canvas, overlay, mapTex, noMapText, title, footer, legend, list, menu, picker
+local markers, alts, links, rows, qrows, masks, tiles = {}, {}, {}, {}, {}, {}, {}
+local floorBtn, floorNext, floorList, floorRows = nil, nil, nil, {}
 local dropdown, currentBtn
-local card, PlaceCard, CreateCard, DrawCard
+local card, PlaceCard, CreateCard, DrawCard, CreateFloorPicker
 local CARD_W = 232
 local lootBar, lootLabel, lootBtns = nil, nil, {}
 local entranceMark, tabRoute, tabQuest, tabNotes, progressText, tipText, questNote
@@ -59,6 +60,20 @@ local function Btn(parent, text, w, tip, onClick)
     end)
     b:SetScript("OnLeave", GameTooltip_Hide)
   end
+  return b
+end
+
+-- Buttons whose label changes with the language grow to fit their text.
+local fitBtns = {}
+local function FitBtn(b)
+  local fs = b:GetFontString()
+  local sw = fs and fs:GetStringWidth() or 0
+  b:SetWidth(math.max(b.minW or 20, math.floor(sw + 14)))
+end
+local function Fit(b, minW)
+  b.minW = minW
+  fitBtns[#fitBtns + 1] = b
+  FitBtn(b)
   return b
 end
 
@@ -251,7 +266,7 @@ local function CreatePicker()
     b.lv:SetPoint("RIGHT", -4, 0)
     b:SetScript("OnClick", function()
       state.viewed = d; state.selected = nil
-      picker:Hide(); ns.RefreshMap()
+      picker:Hide(); if floorList then floorList:Hide() end; ns.RefreshMap()
     end)
     picker.buttons[k] = b
   end
@@ -428,18 +443,16 @@ end
 local function Layout()
   local S = ns.db.mapSize
   local d = state.viewed
-  local multi = d and HasMap(d) and #Geo(d).pages > 1
   local v = ViewOf(d and CurrentPage(d))
   local CW = math.floor(S * v[3] / v[4] + 0.5)
   local w = PAD + CW + PAD + (ns.db.showList and LISTW or 0)
-  local h = HEADER + S + (multi and PAGES_H or 0) + LEGEND_H + FOOT_H + 8
+  local h = HEADER + S + LEGEND_H + FOOT_H + 8
   frame:SetSize(w, h)
   canvas:SetSize(CW, S)
-  pageBar:SetShown(multi and true or false)
   legend:ClearAllPoints()
-  legend:SetPoint("TOPLEFT", canvas, "BOTTOMLEFT", 0, multi and -(PAGES_H + 2) or -3)
+  legend:SetPoint("TOPLEFT", canvas, "BOTTOMLEFT", 0, -3)
   list:SetShown(ns.db.showList)
-  list:SetHeight(S + (multi and PAGES_H or 0) + LEGEND_H)
+  list:SetHeight(S + LEGEND_H)
 end
 
 local legendItems = {}
@@ -466,9 +479,145 @@ local function CreateLegend()
 end
 
 function ns.OnLanguageChanged()
+  for _, b in ipairs(fitBtns) do FitBtn(b) end
   if legend then LayoutLegend() end
   if ns.RefreshAll then ns.RefreshAll() end
 end
+
+---------------------------------------------------------------------------
+-- area picker: dungeons with several maps (floors / wings) get a dropdown
+-- in the map corner, and a "next objective is in ..." jump link.
+---------------------------------------------------------------------------
+local function PageName(p, k) return p.name and T(p.name) or L.PAGE:format(k) end
+
+local function DarkBackdrop(f, a)
+  if not f.SetBackdrop then return end
+  f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+  f:SetBackdropColor(0, 0, 0, a)
+  f:SetBackdropBorderColor(0.65, 0.52, 0.22, 0.9)
+end
+
+function CreateFloorPicker()
+  floorBtn = CreateFrame("Button", nil, frame, "BackdropTemplate")
+  floorBtn:SetFrameLevel(overlay:GetFrameLevel() + 10)
+  floorBtn:SetPoint("TOPLEFT", canvas, "TOPLEFT", 4, -4)
+  floorBtn:SetHeight(20)
+  DarkBackdrop(floorBtn, 0.78)
+  local arrow = floorBtn:CreateTexture(nil, "ARTWORK")
+  arrow:SetTexture("Interface\\Buttons\\Arrow-Down-Up")
+  arrow:SetSize(14, 14); arrow:SetPoint("RIGHT", -4, -2)
+  floorBtn.text = floorBtn:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+  floorBtn.text:SetPoint("LEFT", 6, 0)
+  if floorBtn.text.SetWordWrap then floorBtn.text:SetWordWrap(false) end
+  local hl = floorBtn:CreateTexture(nil, "HIGHLIGHT"); hl:SetAllPoints(); hl:SetColorTexture(1, 1, 1, 0.08)
+  floorBtn:SetScript("OnClick", function() menu:Hide(); picker:Hide(); floorList:SetShown(not floorList:IsShown()) end)
+  floorBtn:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP"); GameTooltip:SetText(L.AREA_TIP:format(self.count or 0), 1, 1, 1, 1, true); GameTooltip:Show()
+  end)
+  floorBtn:SetScript("OnLeave", GameTooltip_Hide)
+
+  floorNext = CreateFrame("Button", nil, frame, "BackdropTemplate")
+  floorNext:SetFrameLevel(overlay:GetFrameLevel() + 10)
+  floorNext:SetPoint("TOPLEFT", floorBtn, "BOTTOMLEFT", 0, -2)
+  floorNext:SetHeight(16)
+  DarkBackdrop(floorNext, 0.6)
+  if floorNext.SetBackdropBorderColor then floorNext:SetBackdropBorderColor(1, 0.82, 0, 0.6) end
+  floorNext.text = floorNext:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+  floorNext.text:SetPoint("LEFT", 5, 0)
+  if floorNext.text.SetWordWrap then floorNext.text:SetWordWrap(false) end
+  local nhl = floorNext:CreateTexture(nil, "HIGHLIGHT"); nhl:SetAllPoints(); nhl:SetColorTexture(1, 0.82, 0, 0.12)
+  floorNext:SetScript("OnClick", function(self)
+    state.page, state.pageManual = self.key, true
+    floorList:Hide(); ns.RefreshMap()
+  end)
+
+  floorList = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+  Backdrop(floorList, 0.96)
+  floorList:SetFrameStrata("DIALOG")
+  floorList:SetPoint("TOPLEFT", floorBtn, "BOTTOMLEFT", 0, -2)
+  floorList:Hide()
+  floorBtn:Hide(); floorNext:Hide()
+end
+
+local function FloorRow(k)
+  local r = floorRows[k]
+  if r then return r end
+  r = CreateFrame("Button", nil, floorList)
+  r:SetHeight(18)
+  local hl = r:CreateTexture(nil, "HIGHLIGHT"); hl:SetAllPoints(); hl:SetColorTexture(1, 1, 1, 0.1)
+  r.tag = r:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+  r.tag:SetPoint("RIGHT", -4, 0)
+  r.text = r:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+  r.text:SetPoint("LEFT", 4, 0); r.text:SetPoint("RIGHT", r.tag, "LEFT", -6, 0)
+  r.text:SetJustifyH("LEFT")
+  if r.text.SetWordWrap then r.text:SetWordWrap(false) end
+  r:SetScript("OnClick", function(self)
+    state.page, state.pageManual = self.key, true
+    floorList:Hide(); ns.RefreshMap()
+  end)
+  floorRows[k] = r
+  return r
+end
+
+-- route steps still to do per page, and the page of the next objective
+local function FloorInfo(d)
+  local left, nextPage = {}, nil
+  local ni = ns.NextStep(d)
+  for i, step in ipairs(d.steps) do
+    local pg = StepGeo(d, i)
+    if pg and ns.IsMain(step) and not ns.IsDone(d, i) then left[pg] = (left[pg] or 0) + 1 end
+    if i == ni then nextPage = pg end
+  end
+  return left, nextPage
+end
+
+local function DrawFloors(d, page)
+  local pages = Geo(d).pages or {}
+  if #pages < 2 or not page then
+    floorBtn:Hide(); floorNext:Hide(); floorList:Hide()
+    return
+  end
+  if floorList.d ~= d then floorList:Hide(); floorList.d = d end
+  local left, nextPage = FloorInfo(d)
+  local idx, nextName = 1, nil
+  for k, p in ipairs(pages) do
+    if p == page then idx = k end
+    if p.key == nextPage then nextName = PageName(p, k) end
+  end
+  local cw = math.floor(ns.db.mapSize * view[3] / view[4] + 0.5)
+  floorBtn.count = #pages
+  floorBtn.text:SetText(("|cffffd100%s|r  %s"):format(L.AREA:format(idx, #pages), PageName(page, idx)))
+  floorBtn:SetWidth(math.min(cw - 8, math.floor((floorBtn.text:GetStringWidth() or 100) + 30)))
+  floorBtn:Show()
+  if nextName and nextPage ~= page.key then
+    floorNext.key = nextPage
+    floorNext.text:SetText(L.NEXT_AREA:format(nextName))
+    floorNext:SetWidth(math.min(cw - 8, math.floor((floorNext.text:GetStringWidth() or 100) + 12)))
+    floorNext:Show()
+  else
+    floorNext:Hide()
+  end
+  local w = math.max(200, floorBtn:GetWidth() or 0)
+  for k, p in ipairs(pages) do
+    local r = FloorRow(k)
+    r.key = p.key
+    r:SetWidth(w - 12)
+    r:ClearAllPoints()
+    r:SetPoint("TOPLEFT", 6, -4 - (k - 1) * 18)
+    r.text:SetText(k .. ". " .. PageName(p, k))
+    if p == page then r.text:SetTextColor(1, 0.82, 0) else r.text:SetTextColor(1, 1, 1) end
+    local tag = {}
+    if p.key == nextPage then tag[#tag + 1] = "|cffffd100" .. L.AREA_NEXT .. "|r" end
+    if left[p.key] then tag[#tag + 1] = L.AREA_LEFT:format(left[p.key]) end
+    r.tag:SetText(table.concat(tag, " · "))
+    r:Show()
+  end
+  for j = #pages + 1, #floorRows do floorRows[j]:Hide() end
+  floorList:SetSize(w, #pages * 18 + 8)
+end
+
+-- for the test harness
+function ns.AreaWidgets() return floorBtn, floorNext, floorList, floorRows end
 
 local function Create()
   frame = CreateFrame("Frame", "DungeonRouteGuideFrame", UIParent, "BackdropTemplate")
@@ -500,6 +649,7 @@ local function Create()
   end)
   currentBtn:SetPoint("RIGHT", listBtn, "LEFT", -6, 0)
   ns.Loc(menuBtn, "BTN_MENU"); ns.Loc(listBtn, "BTN_LIST"); ns.Loc(currentBtn, "BTN_CURRENT")
+  Fit(menuBtn, 40); Fit(listBtn, 36); Fit(currentBtn, 52)
   -- dungeon dropdown
   local titleBtn = CreateFrame("Button", nil, frame, "BackdropTemplate")
   dropdown = titleBtn
@@ -521,7 +671,7 @@ local function Create()
   title:SetPoint("RIGHT", arrow, "LEFT", -4, 0)
   title:SetJustifyH("LEFT")
   if title.SetWordWrap then title:SetWordWrap(false) end
-  titleBtn:SetScript("OnClick", function() menu:Hide(); picker:SetShown(not picker:IsShown()) end)
+  titleBtn:SetScript("OnClick", function() menu:Hide(); floorList:Hide(); picker:SetShown(not picker:IsShown()) end)
   titleBtn:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_TOP"); GameTooltip:SetText(L.PICK_DUNGEON, 1, 1, 1); GameTooltip:Show()
   end)
@@ -560,10 +710,7 @@ local function Create()
   ns.Loc(entranceMark.text, "LEG_ENTRANCE")
   entranceMark.text:SetTextColor(CAT.entrance[1], CAT.entrance[2], CAT.entrance[3])
 
-  -- page buttons (multi-page dungeons)
-  pageBar = CreateFrame("Frame", nil, frame)
-  pageBar:SetPoint("TOPLEFT", canvas, "BOTTOMLEFT", 0, -2)
-  pageBar:SetSize(400, 20)
+  CreateFloorPicker()
 
   CreateLegend()
   footer = frame:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
@@ -583,6 +730,7 @@ local function Create()
   tabNotes = Btn(list, L.TAB_NOTES, 50, nil, function() SetTab("notes") end)
   tabNotes:SetPoint("LEFT", tabQuest, "RIGHT", 2, 0)
   ns.Loc(tabRoute, "TAB_ROUTE"); ns.Loc(tabQuest, "TAB_QUEST"); ns.Loc(tabNotes, "TAB_NOTES")
+  Fit(tabRoute, 40); Fit(tabQuest, 40); Fit(tabNotes, 36)
   progressText = list:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
   progressText:SetPoint("TOPRIGHT", -4, -4)
   tipText = list:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
@@ -601,7 +749,11 @@ local function Create()
   CreateMenu()
   CreatePicker()
   CreateCard()
-  frame:SetScript("OnHide", function() if menu then menu:Hide() end; if picker then picker:Hide() end end)
+  frame:SetScript("OnHide", function()
+    if menu then menu:Hide() end
+    if picker then picker:Hide() end
+    if floorList then floorList:Hide() end
+  end)
   Layout()
   ns.ApplyAlpha()
 end
@@ -937,33 +1089,6 @@ local function HideMapLayer()
   entranceMark:Hide()
 end
 
-local function DrawPages(d, page)
-  local multi = HasMap(d) and #Geo(d).pages > 1
-  if not multi then pageBar:Hide(); return end
-  pageBar:Show()
-  local pages = Geo(d).pages
-  local cw = math.floor(ns.db.mapSize * view[3] / view[4] + 0.5)
-  local bw = math.min(80, math.floor(cw / #pages) - 4)
-  for k, p in ipairs(pages) do
-    local b = pageBtns[k]
-    if not b then
-      b = Btn(pageBar, "", 80, nil, function(self)
-        state.page, state.pageManual = self.key, true
-        ns.RefreshMap()
-      end)
-      pageBtns[k] = b
-    end
-    b:SetWidth(bw)
-    b:ClearAllPoints()
-    b:SetPoint("LEFT", pageBar, "LEFT", (k - 1) * (bw + 4), 0)
-    b.key = p.key
-    b:SetText(p.name and T(p.name) or L.PAGE:format(k))
-    b:SetAlpha(p == page and 1 or 0.55)
-    b:Show()
-  end
-  for j = #pages + 1, #pageBtns do pageBtns[j]:Hide() end
-end
-
 local function RowTag(step)
   if step.outside then return L.OUTSIDE end
   if step.unconfirmed and step.kind ~= "fork" then return L.UNCONFIRMED end
@@ -1127,7 +1252,7 @@ function ns.RefreshMap()
     page = CurrentPage(d)
   end
   view = ViewOf(page)
-  local sig = tostring(d) .. tostring(view) .. tostring(HasMap(d) and #Geo(d).pages) .. tostring(ns.db.mapSize) .. tostring(ns.db.showList)
+  local sig = tostring(d) .. tostring(view) .. tostring(ns.db.mapSize) .. tostring(ns.db.showList)
   if frame.layoutSig ~= sig then frame.layoutSig = sig; Layout() end
   local sc = Scale()
   title:SetText(("%s |cffaaaaaa%s|r"):format(T(d.name), d.levels or ""))
@@ -1152,10 +1277,10 @@ function ns.RefreshMap()
     noMapText:Show()
     HideMapLayer()
   end
-  DrawPages(d, page)
+  DrawFloors(d, page)
   if ns.db.showList then
     local done, total = ns.Counts(d)
-    progressText:SetText(L.PROGRESS:format(done, total))
+    progressText:SetText(("|TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:12:12|t %d/%d"):format(done, total))
     local tab = ns.db.listTab
     if tab == "quest" then DrawQuestList(d) elseif tab == "notes" then DrawNotes(d) else DrawRouteList(d, nextIndex) end
     tabRoute:SetAlpha((tab ~= "quest" and tab ~= "notes") and 1 or 0.55)

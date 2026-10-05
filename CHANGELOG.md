@@ -5,6 +5,8 @@
 - Sharper maps: the game's own dungeon map art (read from the client, nothing extra to download) for 13 dungeons; Atlas maps stay as a fallback and for Wailing Caverns. Switch with Options > Map art or /drg map
 - Click a boss to open a card with its 3D model (drag to rotate, wheel to zoom) and the full loot list
 - Fixed loot icons being covered by their quality colour
+- Dungeons with several maps: area dropdown in the map corner ("Area 2/4"), with a "Next objective →" link when the next stop is on another map
+- English layout: header buttons and tabs size to their text, boss count shown with a skull icon
 - The map window no longer closes with ESC; use the X button (or /drg)
 - Route lines removed; numbered markers show the order and the next one glows
 - Edit mode now just moves markers (/drg edit)
