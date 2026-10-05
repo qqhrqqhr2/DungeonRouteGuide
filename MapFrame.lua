@@ -418,7 +418,7 @@ local function Create()
   frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing(); SavePosition() end)
   local pos = ns.db.frames.map
   if pos then frame:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4]) else frame:SetPoint("CENTER", 200, 40) end
-  if UISpecialFrames then tinsert(UISpecialFrames, "DungeonRouteGuideFrame") end
+  -- Not registered in UISpecialFrames: ESC must not close the map, only the X button.
 
   -- header
   local prev = Btn(frame, "<", 22, nil, function() ns.CycleViewed(-1) end)

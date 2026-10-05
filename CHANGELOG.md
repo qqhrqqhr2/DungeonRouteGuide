@@ -1,5 +1,9 @@
 # Dungeon Route Guide
 
+## Unreleased
+
+- The map window no longer closes with ESC; use the X button (or /drg)
+
 ## v0.2.0
 
 - 18 WoW Forever dungeons from the wowf.io guides: route order, bosses, rares, NPCs and quest spots
