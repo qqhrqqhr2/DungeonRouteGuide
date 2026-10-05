@@ -1,8 +1,8 @@
 # Dungeon Route Guide
 
-## Unreleased
+## v0.3.0
 
-- Sharper maps: the game's own dungeon map art (read from the client, nothing extra to download) for 13 dungeons; Atlas maps stay as a fallback and for Wailing Caverns. Switch with Options > Map art or /drg map
+- Sharper maps: the game's own dungeon map art (read from the client, nothing extra to download) for 13 dungeons; Atlas maps stay as a fallback and for Wailing Caverns. Switch with Options > Map art or /drg map. Place names on these maps follow the game client language
 - Click a boss to open a card with its 3D model (drag to rotate, wheel to zoom) and the full loot list
 - Fixed loot icons being covered by their quality colour
 - Dungeons with several maps: area dropdown in the map corner ("Area 2/4"), with a "Next objective →" link when the next stop is on another map

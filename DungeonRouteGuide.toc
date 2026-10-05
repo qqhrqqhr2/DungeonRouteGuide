@@ -9,7 +9,7 @@
 ## IconTexture: Interface\AddOns\DungeonRouteGuide\Media\icon
 ## X-License: GPL-2.0
 ## X-Website: https://github.com/qqhrqqhr2/DungeonRouteGuide
-## X-Credits: Dungeon maps from Atlas (Dan Gilbert, Arith and the Atlas Team), GPL-2.0
+## X-Credits: Dungeon maps: game client map art; fallback maps from Atlas (Dan Gilbert, Arith and the Atlas Team), GPL-2.0
 ## SavedVariables: DungeonRouteGuideDB
 ## SavedVariablesPerCharacter: DungeonRouteGuideCharDB
 
