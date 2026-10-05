@@ -475,6 +475,12 @@ local function Create()
   overlay = CreateFrame("Frame", nil, canvas)
   overlay:SetAllPoints()
   overlay:SetFrameLevel(canvas:GetFrameLevel() + 2)
+  -- The canvas takes mouse input (edit clicks), so it must also forward
+  -- drags to the window or the map area could not be used to move it.
+  canvas:EnableMouse(true)
+  canvas:RegisterForDrag("LeftButton")
+  canvas:SetScript("OnDragStart", function() if not ns.db.locked then frame:StartMoving() end end)
+  canvas:SetScript("OnDragStop", function() frame:StopMovingOrSizing(); SavePosition() end)
   canvas:SetScript("OnMouseUp", function(_, button) ns.EditClick(button) end)
 
   entranceMark = CreateFrame("Frame", nil, overlay)
@@ -878,7 +884,6 @@ end
 function ns.SetEditMode(on)
   state.edit = on and true or false
   if on and (not frame or not frame:IsShown()) then ns.ShowMap(state.viewed or state.current) end
-  if canvas then canvas:EnableMouse(state.edit) end
   ns.Print(state.edit and L.EDIT_ON or L.EDIT_OFF)
   ns.RefreshMap()
 end

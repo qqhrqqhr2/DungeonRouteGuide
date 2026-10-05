@@ -8,6 +8,7 @@
 - Hand-drawn sketch maps for Hall of Thanes, Excavation Site and Ruins of Lordaeron
 - Dungeon dropdown and a "Current" button that jumps back to the dungeon you are in
 - Smaller, see-through markers so the map underneath stays visible
+- The window can be dragged by the map area too
 
 ## v0.2.0
 
