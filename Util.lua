@@ -87,6 +87,7 @@ function ns.ItemInfo(id)
   local name, link, quality, _, _, _, _, _, _, icon = ns.Safe(getInfo, id)
   if not icon then icon = ns.Safe((C_Item and C_Item.GetItemIconByID) or GetItemIcon, id) end
   if not name then ns.Safe(C_Item and C_Item.RequestLoadItemDataByID, id) end
+  if not ns.Readable(icon) or (type(icon) ~= "number" and type(icon) ~= "string") then icon = nil end
   return ns.Str(name), ns.Str(link), ns.Num(quality), icon
 end
 
