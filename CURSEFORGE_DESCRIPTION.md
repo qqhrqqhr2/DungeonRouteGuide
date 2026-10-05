@@ -13,6 +13,7 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 - The **next stop glows** on the map; cleared stops turn grey with a check mark
 - **Automatic boss checks** (your target, party targets, nameplates, corpses, loot and encounter events), with right-click as a manual fallback
 - **Next-objective bar** with the boss's key abilities; target a boss to see its tip; "Tell party" posts the tip to party chat
+- **Boss loot**: hover a boss to see its drops; item icons under the tip show the real item tooltip (Shift-click to link)
 - **Rare alerts** with a raid warning and sound
 - **Quests tab**: done / in your log / not taken for every dungeon quest
 - **Prep tab**: what to bring and watch out for, plus the entrance coordinates
@@ -50,6 +51,7 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 - 다음에 갈 곳은 지도에서 **노랗게 빛나고**, 잡은 곳은 회색과 체크 표시
 - **보스 자동 체크** (내 대상, 파티원 대상, 이름표, 시체, 전리품, 전투 종료 이벤트). 오른쪽 클릭으로 직접 체크도 가능
 - **다음 목표 막대**에 보스 주요 기술 표시, 보스를 대상으로 잡으면 그 보스 팁, "파티 알림"으로 파티 채팅에 공유
+- **보스 전리품**: 보스에 마우스를 올리면 드랍 아이템 목록, 팁 아래 아이콘에서 아이템 툴팁 확인 (Shift+클릭으로 채팅 링크)
 - **희귀 몹 알림** (경고 문구와 소리)
 - **퀘스트 탭**: 던전 퀘스트마다 완료 / 진행 중 / 미수락 표시
 - **준비 탭**: 챙길 것과 주의 사항, 입구 좌표

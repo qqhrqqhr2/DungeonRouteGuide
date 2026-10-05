@@ -507,7 +507,7 @@ local EVENTS = {
   "ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_LOGOUT", "PLAYER_ENTERING_WORLD",
   "ZONE_CHANGED_NEW_AREA", "ZONE_CHANGED", "ZONE_CHANGED_INDOORS",
   "PLAYER_TARGET_CHANGED", "UNIT_HEALTH", "NAME_PLATE_UNIT_ADDED",
-  "LOOT_OPENED", "ENCOUNTER_END", "BOSS_KILL", "UPDATE_MOUSEOVER_UNIT", "UNIT_TARGET", "CHAT_MSG_SYSTEM",
+  "LOOT_OPENED", "ENCOUNTER_END", "BOSS_KILL", "UPDATE_MOUSEOVER_UNIT", "UNIT_TARGET", "CHAT_MSG_SYSTEM", "GET_ITEM_INFO_RECEIVED",
   "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
 }
 for _, e in ipairs(EVENTS) do pcall(ev.RegisterEvent, ev, e) end
@@ -537,6 +537,12 @@ handlers.PLAYER_TARGET_CHANGED = UpdateTarget
 handlers.UNIT_HEALTH = function(unit) if state.current and Watched(unit) then CheckUnitDeath(unit) end end
 handlers.NAME_PLATE_UNIT_ADDED = function(unit) NoteInstance(unit); RareAlert(unit); CheckUnitDeath(unit) end
 handlers.LOOT_OPENED = CheckLoot
+local itemRefreshQueued = false
+handlers.GET_ITEM_INFO_RECEIVED = function()
+  if itemRefreshQueued or not (C_Timer and C_Timer.After) then return end
+  itemRefreshQueued = true
+  C_Timer.After(0.3, function() itemRefreshQueued = false; if ns.RefreshMap then ns.RefreshMap() end end)
+end
 handlers.CHAT_MSG_SYSTEM = OnSystemMessage
 handlers.UPDATE_MOUSEOVER_UNIT = function() NoteInstance("mouseover"); CheckUnitDeath("mouseover") end
 handlers.UNIT_TARGET = function(unit)

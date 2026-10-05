@@ -107,6 +107,12 @@ C_Map = {
   GetMapInfo = function(id) return { name = "Map" .. id } end,
 }
 GetPlayerFacing = function() return FACING end
+C_Item = {
+  GetItemInfo = function(id) if id % 2 == 0 then return "Item" .. id, "|cff0070dd|Hitem:" .. id .. "|h[Item]|h|r", 3, 20, 15, "Armor", "Cloth", 1, "INVTYPE_WAIST", 133000 + id end end,
+  GetItemIconByID = function(id) return 134400 end,
+  RequestLoadItemDataByID = function(id) REQUESTED = (REQUESTED or 0) + 1 end,
+}
+ITEM_QUALITY_COLORS = { [3] = { r = 0, g = 0.44, b = 0.87, hex = "|cff0070dd" } }
 
 -- load addon files in toc order
 local ns = {}
@@ -149,6 +155,14 @@ for _, tab in ipairs({ "route", "quest", "notes" }) do
   for _, dd in ipairs(ns.Dungeons) do ns.ShowMap(dd); ns.RefreshMap() end
 end
 Check(#ns.Dungeons == 18, "18 dungeons loaded")
+local wcd = ns.DungeonByKey.wc
+Check(wcd.steps[3].loot and #wcd.steps[3].loot > 0, "Cobrahn has loot")
+ns.ShowMap(wcd); ns.state.selected = 3; ns.db.listTab = "route"; ns.RefreshMap()
+Check((REQUESTED or 0) > 0, "uncached items requested from the client")
+Fire("GET_ITEM_INFO_RECEIVED", 6460, true)
+ns.db.listTab = "notes"; ns.RefreshMap()
+Check(wcd.trash and #wcd.trash > 0, "trash loot listed")
+ns.state.selected = nil
 local bfd = ns.DungeonByKey.bfd
 ns.ShowMap(bfd); ns.db.listTab = "route"; ns.RefreshMap()
 Check(#bfd.pages == 3, "BFD has 3 map pages")

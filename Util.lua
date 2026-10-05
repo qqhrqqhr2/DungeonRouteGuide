@@ -79,6 +79,23 @@ function ns.InCombat()
   return ns.True(ns.Safe(InCombatLockdown))
 end
 
+-- Item data comes from the game client (names, icons, quality follow the
+-- game language). Returns name, link, quality, icon; name is nil until the
+-- client has the item cached (GET_ITEM_INFO_RECEIVED refreshes the UI).
+function ns.ItemInfo(id)
+  local getInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+  local name, link, quality, _, _, _, _, _, _, icon = ns.Safe(getInfo, id)
+  if not icon then icon = ns.Safe((C_Item and C_Item.GetItemIconByID) or GetItemIcon, id) end
+  if not name then ns.Safe(C_Item and C_Item.RequestLoadItemDataByID, id) end
+  return ns.Str(name), ns.Str(link), ns.Num(quality), icon
+end
+
+function ns.QualityHex(q)
+  local c = q and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[q]
+  if c and c.hex then return c.hex end
+  return "|cffffffff"
+end
+
 -- First sentence of a tip, for party call-outs.
 function ns.FirstSentence(s)
   if type(s) ~= "string" then return "" end

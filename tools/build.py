@@ -4,6 +4,36 @@ from texts import TIPS, NOTES
 from routes import ROUTES, FROM
 
 W = json.load(open("wowf.json", encoding="utf-8"))
+LOOT = json.load(open("loot.json", encoding="utf-8")) if os.path.exists("loot.json") else {}
+# loot boss labels that differ from the guide step names
+LOOT_ALIAS = {
+ ("wailing-caverns", "돌연변이 요정용"): 7,
+ ("deadmines", "스니드의 벌목기"): 3,
+ ("scarlet-monastery-graveyard", "무쇠해골"): 3,
+ ("scarlet-monastery-graveyard", "잠들지 않는 아즈쉬르"): 3,
+ ("scarlet-monastery-graveyard", "타락한 용사"): 3,
+}
+TRASH = ("일반 몹", "—", "")
+
+def loot_for(slug, stops):
+    by_step, trash = {}, []
+    for it in LOOT.get(slug, []):
+        hit = False
+        for b in it["bosses"] or [""]:
+            n = LOOT_ALIAS.get((slug, b))
+            if n is None:
+                for s in stops:
+                    nm = s["name"] or ""
+                    if nm and (nm == b or (b and b in nm)):
+                        n = s["n"]; break
+            if n is not None:
+                lst = by_step.setdefault(n, [])
+                if it["id"] not in lst: lst.append(it["id"])
+                hit = True
+            elif b in TRASH or True:
+                pass
+        if not hit and it["id"] not in trash: trash.append(it["id"])
+    return by_step, trash
 P = json.load(open("placed.json", encoding="utf-8"))
 
 ORDER = ["ragefire-chasm", "hall-of-thanes", "wailing-caverns", "deadmines", "ruins-of-lordaeron", "shadowfang-keep",
@@ -195,6 +225,7 @@ def build():
                 labs.append("{ page = %s, pos = %s, text = %s }" % (lua_str(lab["page"]), pt(lab["pos"]), L(lab["label"], enl or lab["label"])))
             if labs:
                 lines.append("    links = {"); lines += ["      " + l + "," for l in labs]; lines.append("    },")
+        loot, trash = loot_for(slug, ko["stops"])
         # steps
         lines.append("    steps = {")
         prev_page = start[0] if start else None
@@ -224,6 +255,7 @@ def build():
                     if path is not None: fields.append("path = { %s }" % ", ".join(pt(p) for p in path))
                     fr = FROM.get(slug, {}).get(n)
                     if fr: fields.append("from = %s" % pt(fr))
+            if loot.get(n): fields.append("loot = { %s }" % ", ".join(map(str, loot[n])))
             qids = sorted(set(q["id"] for q in s["quests"]))
             if qids: fields.append("quests = { %s }" % ", ".join(map(str, qids)))
             fields.append("tip = %s" % L(*tip))
@@ -241,6 +273,8 @@ def build():
                 f.append("giver = %s" % L(*q["desc"]))
                 lines.append("      { " + ", ".join(f) + " },")
             lines.append("    },")
+        if trash:
+            lines.append("    trash = { %s }," % ", ".join(map(str, trash)))
         notes = NOTES.get(slug, [])
         if notes:
             lines.append("    notes = { %s }," % ", ".join(L(a, b) for a, b in notes))

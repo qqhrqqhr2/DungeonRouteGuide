@@ -29,6 +29,7 @@ end
 local frame, canvas, overlay, mapTex, noMapText, title, footer, legend, pageBar, list, menu, picker
 local lines, markers, alts, links, rows, qrows, pageBtns, masks = {}, {}, {}, {}, {}, {}, {}, {}
 local dropdown, currentBtn
+local lootBar, lootLabel, lootBtns = nil, nil, {}
 local entranceMark, tabRoute, tabQuest, tabNotes, progressText, tipText, questNote
 
 ---------------------------------------------------------------------------
@@ -88,6 +89,16 @@ local function StepTooltip(owner, d, i)
   GameTooltip:AddLine(kind, 0.7, 0.7, 0.7)
   if step.quest then GameTooltip:AddLine("! " .. L.QUEST_MARK, 1, 0.82, 0) end
   GameTooltip:AddLine(T(step.tip), 1, 1, 1, true)
+  if step.loot and #step.loot > 0 then
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine(L.LOOT, 1, 0.82, 0)
+    for k, id in ipairs(step.loot) do
+      if k > 12 then GameTooltip:AddLine(("+%d"):format(#step.loot - 12), 0.7, 0.7, 0.7); break end
+      local name, _, q, icon = ns.ItemInfo(id)
+      local tex = icon and ("|T" .. icon .. ":14:14|t ") or ""
+      GameTooltip:AddLine(tex .. (name and (ns.QualityHex(q) .. name .. "|r") or ("|cff888888#" .. id .. " " .. L.LOADING .. "|r")))
+    end
+  end
   GameTooltip:AddLine(L.CLICK_HINT, 0.5, 0.8, 1, true)
   GameTooltip:Show()
 end
@@ -522,6 +533,12 @@ local function Create()
   tipText = list:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
   tipText:SetJustifyH("LEFT"); tipText:SetJustifyV("TOP")
   tipText:SetWidth(LISTW - 16)
+  -- item icons of the selected / next boss (bottom of the list panel)
+  lootBar = CreateFrame("Frame", nil, list)
+  lootBar:SetPoint("BOTTOMLEFT", 0, 0)
+  lootBar:SetSize(LISTW - PAD, 62)
+  lootLabel = lootBar:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+  lootLabel:SetPoint("TOPLEFT", 4, 0)
   questNote = list:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
   questNote:SetJustifyH("LEFT"); questNote:SetJustifyV("TOP")
   questNote:SetWidth(LISTW - 16)
@@ -701,6 +718,61 @@ local function RowTag(step)
   return ""
 end
 
+local function GetLootBtn(k)
+  local b = lootBtns[k]
+  if b then return b end
+  b = CreateFrame("Button", nil, lootBar)
+  b:SetSize(22, 22)
+  b.icon = b:CreateTexture(nil, "ARTWORK"); b.icon:SetAllPoints()
+  b.border = b:CreateTexture(nil, "OVERLAY")
+  b.border:SetPoint("TOPLEFT", -1, 1); b.border:SetPoint("BOTTOMRIGHT", 1, -1)
+  b.border:SetColorTexture(1, 1, 1, 0)
+  local hl = b:CreateTexture(nil, "HIGHLIGHT"); hl:SetAllPoints(); hl:SetColorTexture(1, 1, 1, 0.25)
+  b:RegisterForClicks("LeftButtonUp")
+  b:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    if not pcall(GameTooltip.SetItemByID, GameTooltip, self.id) then
+      GameTooltip:SetHyperlink("item:" .. self.id)
+    end
+    GameTooltip:AddLine(L.LOOT_HINT, 0.5, 0.8, 1)
+    GameTooltip:Show()
+  end)
+  b:SetScript("OnLeave", GameTooltip_Hide)
+  b:SetScript("OnClick", function(self)
+    local _, link = ns.ItemInfo(self.id)
+    if link and IsModifiedClick and IsModifiedClick("CHATLINK") and ChatEdit_InsertLink then ChatEdit_InsertLink(link)
+    elseif link and HandleModifiedItemClick then HandleModifiedItemClick(link) end
+  end)
+  lootBtns[k] = b
+  return b
+end
+
+-- Show item icons for ids (nil hides the bar). Returns the bar height used.
+local function DrawLoot(ids, label)
+  if not ids or #ids == 0 then lootBar:Hide(); return 0 end
+  lootBar:Show()
+  lootLabel:SetText(label)
+  local perRow = math.floor((LISTW - PAD) / 24)
+  local maxBtn = perRow * 2
+  for k, id in ipairs(ids) do
+    if k > maxBtn then break end
+    local b = GetLootBtn(k)
+    b.id = id
+    local _, _, q, icon = ns.ItemInfo(id)
+    b.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
+    local c = q and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[q]
+    if c then b.border:SetColorTexture(c.r, c.g, c.b, 0.9) else b.border:SetColorTexture(0, 0, 0, 0) end
+    b:ClearAllPoints()
+    local row, col = math.floor((k - 1) / perRow), (k - 1) % perRow
+    b:SetPoint("TOPLEFT", lootBar, "TOPLEFT", 2 + col * 24, -14 - row * 24)
+    b:Show()
+  end
+  for j = math.min(#ids, maxBtn) + 1, #lootBtns do lootBtns[j]:Hide() end
+  local rows_ = math.min(2, math.ceil(#ids / perRow))
+  lootBar:SetHeight(14 + rows_ * 24)
+  return 14 + rows_ * 24 + 4
+end
+
 local function DrawRouteList(d, nextIndex)
   local avail = list:GetHeight() - 26 - 70
   local count = 0
@@ -735,9 +807,11 @@ local function DrawRouteList(d, nextIndex)
   end
   for j = k + 1, #rows do rows[j]:Hide() end
   local i = state.selected or nextIndex
+  local step = i and d.steps[i]
+  local used = DrawLoot(step and step.loot, L.LOOT .. (step and (" · " .. T(step.name)) or ""))
   tipText:ClearAllPoints()
   tipText:SetPoint("TOPLEFT", 4, y - 6)
-  tipText:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", -4, 0)
+  tipText:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", -4, used)
   if i then
     local step = d.steps[i]
     tipText:SetText("|cffffd100" .. step.n .. ". " .. T(step.name) .. "|r\n" .. T(step.tip))
@@ -752,6 +826,7 @@ end
 local function DrawQuestList(d)
   for j = 1, #rows do rows[j]:Hide() end
   tipText:Hide()
+  DrawLoot(nil)
   local y, k = -26, 0
   local maxRows = math.floor((list:GetHeight() - 60) / 31)
   for _, q in ipairs(d.quests or {}) do
@@ -787,9 +862,10 @@ local function DrawNotes(d)
   if d.entrance then
     parts[#parts + 1] = ("|cff4fd96f%s|r %s (%.1f, %.1f)"):format(L.LEG_ENTRANCE, T(d.entrance.zone), d.entrance.x, d.entrance.y)
   end
+  local used = DrawLoot(d.trash, L.TRASH_LOOT)
   tipText:ClearAllPoints()
   tipText:SetPoint("TOPLEFT", 4, -30)
-  tipText:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", -4, 0)
+  tipText:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", -4, used)
   tipText:SetText(#parts > 0 and table.concat(parts, "\n\n") or L.NO_NOTES)
   tipText:Show()
 end
