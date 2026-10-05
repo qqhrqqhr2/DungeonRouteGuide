@@ -921,14 +921,12 @@ function ns.RefreshMap()
     tabQuest:SetAlpha(tab == "quest" and 1 or 0.55)
     tabNotes:SetAlpha(tab == "notes" and 1 or 0.55)
   end
-  local foot
-  if page and page.schematic then foot = L.SCHEMATIC .. " · " .. L.SOURCE
-  elseif page and page.blank then foot = L.BLANK_MAP .. " · " .. L.SOURCE
-  elseif page then foot = (page.credit or "") .. " · " .. L.SOURCE
-  else foot = L.SOURCE end
-  if state.current ~= d then foot = "|cffaaaaaa" .. L.BROWSE_ONLY .. "|r " .. foot end
-  if state.edit then foot = "|cffff5555EDIT|r · " .. foot end
-  footer:SetText(foot)
+  -- Only notes that matter while playing (credits live in CREDITS.txt).
+  local parts = {}
+  if state.edit then parts[#parts + 1] = "|cffff5555EDIT|r" end
+  if state.current ~= d then parts[#parts + 1] = L.BROWSE_ONLY end
+  if page and page.schematic then parts[#parts + 1] = L.SCHEMATIC end
+  footer:SetText(table.concat(parts, " · "))
   RefreshMenu()
 end
 
