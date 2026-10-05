@@ -1,4 +1,4 @@
--- Dungeon Route Guide - main window: Atlas map pages, route lines, markers
+-- Dungeon Route Guide - main window: map pages (Blizzard map art or Atlas), markers
 -- (entrance / boss / rare / NPC / quest spot, alternate spawn spots), legend,
 -- route / quest / prep tabs, dungeon picker, options menu, route edit mode.
 local _, ns = ...
@@ -27,8 +27,10 @@ local function Category(step)
 end
 
 local frame, canvas, overlay, mapTex, noMapText, title, footer, legend, pageBar, list, menu, picker
-local lines, markers, alts, links, rows, qrows, pageBtns, masks = {}, {}, {}, {}, {}, {}, {}, {}
+local markers, alts, links, rows, qrows, pageBtns, masks, tiles = {}, {}, {}, {}, {}, {}, {}, {}
 local dropdown, currentBtn
+local card, PlaceCard, CreateCard, DrawCard
+local CARD_W = 232
 local lootBar, lootLabel, lootBtns = nil, nil, {}
 local entranceMark, tabRoute, tabQuest, tabNotes, progressText, tipText, questNote
 
@@ -74,9 +76,41 @@ local function Circle(parent, layer, size, sub)
   return t
 end
 
-local function Scale() return (ns.db.mapSize or 380) / 512 end
+-- Map styles: "blizzard" = the game's own dungeon map art (4 x 3 tiles of
+-- 256 px read from the client by file ID; the wowf positions fit it as they
+-- are), "atlas" = the bundled Atlas images. Atlas is used for dungeons
+-- without Blizzard art, or when the client has none of a page's tile files.
+local BVIEW = { 8, 8, 986, 652 }    -- shown part of the 1002 x 668 map (frame trimmed)
+local AVIEW = { 0, 0, 512, 512 }
+local blizFailed = {}
 
-local function HasMap(d) return d.pages and #d.pages > 0 end
+local function UseBliz(d)
+  return (d and d.bliz and ns.db.mapStyle ~= "atlas" and not blizFailed[d.key]) and true or false
+end
+local function Geo(d)
+  if UseBliz(d) then return d.bliz end
+  return d
+end
+local function HasMap(d) local g = Geo(d); return g.pages and #g.pages > 0 end
+local function ViewOf(page) return (page and page.tiles) and BVIEW or AVIEW end
+
+-- page, position and alternate spots of a step in the shown map style
+local function StepGeo(d, i)
+  local step = d.steps[i]
+  local e = ns.Edits(d, step)
+  if UseBliz(d) then
+    local g = d.bliz.steps and d.bliz.steps[step.id]
+    if not g then return nil end
+    return g.page, (e and e.bpos) or g.pos, g.alt
+  end
+  if not step.pos then return nil end
+  return step.page, (e and e.pos) or step.pos, step.alt
+end
+ns.StepGeo = StepGeo
+
+-- map pixels -> screen pixels for the page being drawn
+local view = AVIEW
+local function Scale() return (ns.db.mapSize or 380) / view[4] end
 
 local function StepTooltip(owner, d, i)
   local step = d.steps[i]
@@ -108,8 +142,8 @@ local function StepClick(d, i, button)
     ns.SetDone(d, i, not ns.IsDone(d, i))
   else
     state.selected = (state.selected == i) and nil or i
-    local step = d.steps[i]
-    if step.page then state.page, state.pageManual = step.page, true end
+    local pg = StepGeo(d, i)
+    if pg then state.page, state.pageManual = pg, true end
     ns.RefreshMap()
   end
 end
@@ -117,14 +151,17 @@ end
 -- current map page of the viewed dungeon
 local function CurrentPage(d)
   if not HasMap(d) then return nil end
-  if state.pageDungeon ~= d then state.pageDungeon, state.page, state.pageManual = d, nil, false end
+  local g = Geo(d)
+  if state.pageDungeon ~= d or state.pageGeo ~= g then
+    state.pageDungeon, state.pageGeo, state.page, state.pageManual = d, g, nil, false
+  end
   if state.pageManual and state.page then
-    for _, p in ipairs(d.pages) do if p.key == state.page then return p end end
+    for _, p in ipairs(g.pages) do if p.key == state.page then return p end end
   end
   local i = ns.NextStep(d)
-  local want = i and d.steps[i].page
-  for _, p in ipairs(d.pages) do if p.key == want then return p end end
-  return d.pages[1]
+  local want = i and StepGeo(d, i)
+  for _, p in ipairs(g.pages) do if p.key == want then return p end end
+  return g.pages[1]
 end
 
 ---------------------------------------------------------------------------
@@ -154,6 +191,8 @@ local MENU = {
   function() ns.db.rareAlert = not ns.db.rareAlert end,
   function() return L.OPT_FADE:format(ns.OnOff(ns.db.combatFade)) end,
   function() ns.db.combatFade = not ns.db.combatFade; ns.ApplyAlpha() end,
+  function() return L.OPT_MAPSTYLE:format(ns.db.mapStyle == "atlas" and L.MAP_ATLAS or L.MAP_BLIZ) end,
+  function() ns.SetMapStyle(ns.db.mapStyle == "atlas" and "blizzard" or "atlas") end,
   function() return L.OPT_LANG:format(L["LANG_" .. (ns.db.lang or "auto")]) end,
   function() ns.ChangeLanguage() end,
   function() return L.OPT_ICON:format(ns.OnOff(ns.db.showIcon)) end,
@@ -307,11 +346,6 @@ local function GetLink(k)
   return l
 end
 
-local function GetLine(k)
-  if not lines[k] then lines[k] = overlay:CreateLine(nil, "ARTWORK") end
-  return lines[k]
-end
-
 ---------------------------------------------------------------------------
 -- list panel widgets
 ---------------------------------------------------------------------------
@@ -388,16 +422,19 @@ local function SetTab(tab) ns.db.listTab = tab; ns.RefreshMap() end
 local function SavePosition()
   local p, _, rp, x, y = frame:GetPoint(1)
   ns.db.frames.map = { p, rp, x, y }
+  if card and card:IsShown() then PlaceCard() end
 end
 
 local function Layout()
   local S = ns.db.mapSize
   local d = state.viewed
-  local multi = d and HasMap(d) and #d.pages > 1
-  local w = PAD + S + PAD + (ns.db.showList and LISTW or 0)
+  local multi = d and HasMap(d) and #Geo(d).pages > 1
+  local v = ViewOf(d and CurrentPage(d))
+  local CW = math.floor(S * v[3] / v[4] + 0.5)
+  local w = PAD + CW + PAD + (ns.db.showList and LISTW or 0)
   local h = HEADER + S + (multi and PAGES_H or 0) + LEGEND_H + FOOT_H + 8
   frame:SetSize(w, h)
-  canvas:SetSize(S, S)
+  canvas:SetSize(CW, S)
   pageBar:SetShown(multi and true or false)
   legend:ClearAllPoints()
   legend:SetPoint("TOPLEFT", canvas, "BOTTOMLEFT", 0, multi and -(PAGES_H + 2) or -3)
@@ -497,6 +534,7 @@ local function Create()
   bg:SetAllPoints(); bg:SetColorTexture(0, 0, 0, 0.5)
   mapTex = canvas:CreateTexture(nil, "BACKGROUND")
   mapTex:SetAllPoints()
+  for k = 1, 12 do tiles[k] = canvas:CreateTexture(nil, "BACKGROUND") end
   noMapText = canvas:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
   noMapText:SetPoint("CENTER"); ns.Loc(noMapText, "NO_MAP")
   overlay = CreateFrame("Frame", nil, canvas)
@@ -562,9 +600,195 @@ local function Create()
 
   CreateMenu()
   CreatePicker()
+  CreateCard()
   frame:SetScript("OnHide", function() if menu then menu:Hide() end; if picker then picker:Hide() end end)
   Layout()
   ns.ApplyAlpha()
+end
+
+
+---------------------------------------------------------------------------
+-- boss card: 3D model and the full loot list of the selected step
+---------------------------------------------------------------------------
+local function LootOnEnter(self)
+  GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+  if not pcall(GameTooltip.SetItemByID, GameTooltip, self.id) then
+    GameTooltip:SetHyperlink("item:" .. self.id)
+  end
+  GameTooltip:AddLine(L.LOOT_HINT, 0.5, 0.8, 1)
+  GameTooltip:Show()
+end
+
+local function LootOnClick(self)
+  local _, link = ns.ItemInfo(self.id)
+  if link and IsModifiedClick and IsModifiedClick("CHATLINK") and ChatEdit_InsertLink then ChatEdit_InsertLink(link)
+  elseif link and HandleModifiedItemClick then HandleModifiedItemClick(link) end
+end
+
+local function QualityBorder(t, q)
+  local c = q and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[q]
+  if c then t:SetColorTexture(c.r, c.g, c.b, 0.9) else t:SetColorTexture(0, 0, 0, 0) end
+end
+
+local cardRows = {}
+local MODEL_H = 170
+
+local function CardRow(k)
+  local r = cardRows[k]
+  if r then return r end
+  r = CreateFrame("Button", nil, card)
+  r:SetSize(CARD_W - 16, 20)
+  r.icon = r:CreateTexture(nil, "ARTWORK")
+  r.icon:SetSize(18, 18); r.icon:SetPoint("LEFT", 1, 0)
+  r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+  r.border = r:CreateTexture(nil, "BACKGROUND")
+  r.border:SetPoint("TOPLEFT", r.icon, "TOPLEFT", -1, 1); r.border:SetPoint("BOTTOMRIGHT", r.icon, "BOTTOMRIGHT", 1, -1)
+  r.name = r:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+  r.name:SetPoint("LEFT", r.icon, "RIGHT", 5, 0); r.name:SetPoint("RIGHT", -2, 0)
+  r.name:SetJustifyH("LEFT")
+  if r.name.SetWordWrap then r.name:SetWordWrap(false) end
+  local hl = r:CreateTexture(nil, "HIGHLIGHT"); hl:SetAllPoints(); hl:SetColorTexture(1, 1, 1, 0.08)
+  r:RegisterForClicks("LeftButtonUp")
+  r:SetScript("OnEnter", LootOnEnter)
+  r:SetScript("OnLeave", GameTooltip_Hide)
+  r:SetScript("OnClick", LootOnClick)
+  cardRows[k] = r
+  return r
+end
+
+local function ModelCall(m, method, ...)
+  if not m[method] then return false end
+  return (pcall(m[method], m, ...))
+end
+
+local function ModelRotate(self)
+  local x = GetCursorPosition()
+  self.rot = (self.rot or 0) + (x - (self.dragX or x)) * 0.012
+  self.dragX = x
+  ModelCall(self, "SetRotation", self.rot)
+end
+
+function CreateCard()
+  card = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+  Backdrop(card, 0.92)
+  card:SetWidth(CARD_W)
+  card:EnableMouse(true)
+  local close = Btn(card, "X", 22, nil, function() state.selected = nil; ns.RefreshMap() end)
+  close:SetPoint("TOPRIGHT", -4, -4)
+  card.title = card:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+  card.title:SetPoint("TOPLEFT", 8, -8); card.title:SetPoint("RIGHT", close, "LEFT", -4, 0)
+  card.title:SetJustifyH("LEFT")
+  if card.title.SetWordWrap then card.title:SetWordWrap(false) end
+  card.kind = card:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+  card.kind:SetPoint("TOPLEFT", card.title, "BOTTOMLEFT", 0, -3)
+  local mbg = card:CreateTexture(nil, "BACKGROUND", nil, 1)
+  mbg:SetPoint("TOPLEFT", 6, -44); mbg:SetPoint("TOPRIGHT", -6, -44); mbg:SetHeight(MODEL_H)
+  mbg:SetColorTexture(0, 0, 0, 0.45)
+  local m = CreateFrame("PlayerModel", nil, card)
+  m:SetAllPoints(mbg)
+  m:EnableMouse(true)
+  if m.EnableMouseWheel then m:EnableMouseWheel(true) end
+  m:SetScript("OnMouseDown", function(self, button)
+    if button == "RightButton" then
+      self.rot, self.zoom = 0.5, 1
+      ModelCall(self, "SetRotation", self.rot); ModelCall(self, "SetCamDistanceScale", self.zoom)
+    else
+      self.dragX = GetCursorPosition()
+      self:SetScript("OnUpdate", ModelRotate)
+    end
+  end)
+  m:SetScript("OnMouseUp", function(self) self:SetScript("OnUpdate", nil) end)
+  m:SetScript("OnHide", function(self) self:SetScript("OnUpdate", nil) end)
+  m:SetScript("OnMouseWheel", function(self, delta)
+    self.zoom = math.max(0.4, math.min(2.5, (self.zoom or 1) - delta * 0.1))
+    ModelCall(self, "SetCamDistanceScale", self.zoom)
+  end)
+  m:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP"); GameTooltip:SetText(L.MODEL_HINT, 1, 1, 1, 1, true); GameTooltip:Show()
+  end)
+  m:SetScript("OnLeave", GameTooltip_Hide)
+  card.model = m
+  card.noModel = card:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+  card.noModel:SetPoint("CENTER", mbg, "CENTER")
+  ns.Loc(card.noModel, "NO_MODEL")
+  card.lootLabel = card:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+  card.lootLabel:SetPoint("TOPLEFT", mbg, "BOTTOMLEFT", 2, -8)
+  ns.Loc(card.lootLabel, "LOOT")
+  card.more = card:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+  card.more:SetJustifyH("LEFT")
+  card:SetScript("OnShow", function() card.modelFor = nil end)
+  card:Hide()
+end
+
+function PlaceCard()
+  card:ClearAllPoints()
+  local right = frame:GetRight() or 0
+  local screen = (UIParent and UIParent:GetRight()) or (GetScreenWidth and GetScreenWidth()) or 1e6
+  if right + CARD_W + 4 > screen then
+    card:SetPoint("TOPRIGHT", frame, "TOPLEFT", -2, 0)
+  else
+    card:SetPoint("TOPLEFT", frame, "TOPRIGHT", 2, 0)
+  end
+  card:SetHeight(frame:GetHeight())
+end
+
+local function SetCardModel(step)
+  local m = card.model
+  local id = step.model or (step.npc and step.npc[1])
+  if card.modelFor == id then return end   -- keep the angle the player turned it to
+  card.modelFor = id
+  m.rot, m.zoom = 0.5, 1
+  m:Show()   -- a hidden model frame may ignore the new model
+  ModelCall(m, "ClearModel")
+  local ok = false
+  if step.model then ok = ModelCall(m, "SetDisplayInfo", step.model) end
+  if not ok and step.npc then ok = ModelCall(m, "SetCreature", step.npc[1]) end
+  if ok then
+    ModelCall(m, "SetPortraitZoom", 0)
+    ModelCall(m, "SetCamDistanceScale", m.zoom)
+    ModelCall(m, "SetRotation", m.rot)
+  end
+  m:SetShown(ok)
+  card.noModel:SetShown(not ok)
+end
+
+function DrawCard(d)
+  local i = state.selected
+  local step = i and d.steps[i]
+  if not step or not (step.model or step.npc or (step.loot and #step.loot > 0)) then
+    card:Hide(); card.modelFor = nil
+    return
+  end
+  card:Show()
+  PlaceCard()
+  card.title:SetText(step.n .. ". " .. T(step.name))
+  local kind = L["KIND_" .. step.kind] or step.kind
+  if step.optional then kind = kind .. " · " .. L.OPTIONAL end
+  card.kind:SetText(kind)
+  SetCardModel(step)
+  local ids = step.loot or {}
+  local avail = card:GetHeight() - (44 + MODEL_H + 28) - 22
+  local maxRows = math.max(1, math.floor(avail / 21))
+  local shown = 0
+  for k, id in ipairs(ids) do
+    if k > maxRows then break end
+    local r = CardRow(k)
+    r.id = id
+    local name, _, q, icon = ns.ItemInfo(id)
+    r.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
+    QualityBorder(r.border, q)
+    r.name:SetText(name and (ns.QualityHex(q) .. name .. "|r") or ("|cff888888#" .. id .. " " .. L.LOADING .. "|r"))
+    r:ClearAllPoints()
+    r:SetPoint("TOPLEFT", card.lootLabel, "BOTTOMLEFT", -2, -4 - (k - 1) * 21)
+    r:Show()
+    shown = k
+  end
+  for j = shown + 1, #cardRows do cardRows[j]:Hide() end
+  card.more:ClearAllPoints()
+  card.more:SetPoint("TOPLEFT", card.lootLabel, "BOTTOMLEFT", 0, -6 - shown * 21)
+  if #ids == 0 then card.more:SetText(L.NO_LOOT)
+  elseif #ids > shown then card.more:SetText(("+%d"):format(#ids - shown))
+  else card.more:SetText("") end
 end
 
 ---------------------------------------------------------------------------
@@ -572,44 +796,20 @@ end
 ---------------------------------------------------------------------------
 local function Place(f, sc, p, dx, dy)
   f:ClearAllPoints()
-  f:SetPoint("CENTER", canvas, "TOPLEFT", p[1] * sc + (dx or 0), -p[2] * sc + (dy or 0))
-end
-
-local function DrawRoute(d, page, nextIndex, sc)
-  local k = 0
-  for i, step in ipairs(d.steps) do
-    if step.page == page.key then
-      local pts = ns.StepSegment(d, i)
-      if pts then
-        local done = ns.IsDone(d, i)
-        local r, g, b, a, w
-        if done then r, g, b, a, w = 0.6, 0.6, 0.6, 0.35, 2
-        elseif i == nextIndex then r, g, b, a, w = 1, 0.82, 0, 0.95, 4
-        else r, g, b, a, w = 1, 1, 1, 0.5, 2.5 end
-        for p = 1, #pts - 1 do
-          k = k + 1
-          local ln = GetLine(k)
-          ln:SetColorTexture(r, g, b, a)
-          ln:SetThickness(w)
-          ln:SetStartPoint("TOPLEFT", canvas, pts[p][1] * sc, -pts[p][2] * sc)
-          ln:SetEndPoint("TOPLEFT", canvas, pts[p + 1][1] * sc, -pts[p + 1][2] * sc)
-          ln:Show()
-        end
-      end
-    end
-  end
-  for j = k + 1, #lines do lines[j]:Hide() end
+  f:SetPoint("CENTER", canvas, "TOPLEFT", (p[1] - view[1]) * sc + (dx or 0), -(p[2] - view[2]) * sc + (dy or 0))
 end
 
 local function DrawMarkers(d, page, nextIndex, sc)
   local k, ka = 0, 0
+  local g = Geo(d)
   for i, step in ipairs(d.steps) do
-    if step.pos and step.page == page.key and ns.StepVisible(step) then
+    local spage, spos, salt = StepGeo(d, i)
+    if spos and spage == page.key and ns.StepVisible(step) then
       local done = ns.IsDone(d, i)
       local cat = Category(step)
       local c = done and CAT.done or CAT[cat]
       -- alternate spawn spots
-      for _, ap in ipairs(step.alt or {}) do
+      for _, ap in ipairs(salt or {}) do
         ka = ka + 1
         local a = GetAlt(ka)
         a.index = i
@@ -621,7 +821,7 @@ local function DrawMarkers(d, page, nextIndex, sc)
       k = k + 1
       local m = GetMarker(k)
       m.index = i
-      Place(m, sc, ns.StepPos(d, i))
+      Place(m, sc, spos)
       -- see-through so the map under the marker stays readable
       m.circle:SetVertexColor(c[1], c[2], c[3], step.optional and 0.45 or 0.6)
       if state.selected == i then m.ring:SetVertexColor(1, 1, 1, 0.9) else m.ring:SetVertexColor(0, 0, 0, 0.5) end
@@ -638,10 +838,10 @@ local function DrawMarkers(d, page, nextIndex, sc)
   for j = k + 1, #markers do markers[j]:Hide() end
   for j = ka + 1, #alts do alts[j]:Hide() end
   -- entrance and floor links
-  if d.start and d.start.page == page.key then
-    Place(entranceMark, sc, d.start.pos)
+  if g.start and g.start.page == page.key then
+    Place(entranceMark, sc, g.start.pos)
     entranceMark.text:ClearAllPoints()
-    if d.start.pos[2] > 470 then
+    if (g.start.pos[2] - view[2]) / view[4] > 0.92 then
       entranceMark.text:SetPoint("BOTTOM", entranceMark, "TOP", 0, 1)
     else
       entranceMark.text:SetPoint("TOP", entranceMark, "BOTTOM", 0, -1)
@@ -651,7 +851,7 @@ local function DrawMarkers(d, page, nextIndex, sc)
     entranceMark:Hide()
   end
   local kl = 0
-  for _, ln in ipairs(d.links or {}) do
+  for _, ln in ipairs(g.links or {}) do
     if ln.page == page.key then
       kl = kl + 1
       local l = GetLink(kl)
@@ -695,8 +895,41 @@ local function DrawMasks(page, sc)
   for j = k + 1, #masks do masks[j].outer:Hide(); masks[j].inner:Hide() end
 end
 
+-- Blizzard map: pick the first tile set the client has (some maps moved to
+-- other file IDs between client versions). nil = none of them loads.
+local function TileSet(page)
+  if page.set ~= nil then return page.set or nil end
+  page.set = false
+  for _, set in ipairs(page.tiles) do
+    local ok, loaded = pcall(tiles[1].SetTexture, tiles[1], set[1])
+    if ok and loaded ~= false then page.set = set; break end
+  end
+  return page.set or nil
+end
+
+local function DrawTiles(page, sc)
+  local set = page and page.tiles and TileSet(page)
+  for k = 1, 12 do
+    local t = tiles[k]
+    local col, row = (k - 1) % 4, math.floor((k - 1) / 4)
+    local tx, ty = col * 256, row * 256
+    local x0, x1 = math.max(tx, view[1]), math.min(tx + 256, view[1] + view[3])
+    local y0, y1 = math.max(ty, view[2]), math.min(ty + 256, view[2] + view[4])
+    if set and x1 > x0 and y1 > y0 then
+      t:SetTexture(set[k])
+      t:SetTexCoord((x0 - tx) / 256, (x1 - tx) / 256, (y0 - ty) / 256, (y1 - ty) / 256)
+      t:ClearAllPoints()
+      t:SetPoint("TOPLEFT", canvas, "TOPLEFT", (x0 - view[1]) * sc, -(y0 - view[2]) * sc)
+      t:SetSize((x1 - x0) * sc, (y1 - y0) * sc)
+      t:Show()
+    else
+      t:Hide()
+    end
+  end
+  return set ~= nil
+end
+
 local function HideMapLayer()
-  for _, t in ipairs(lines) do t:Hide() end
   for _, t in ipairs(markers) do t:Hide() end
   for _, t in ipairs(alts) do t:Hide() end
   for _, t in ipairs(links) do t:Hide() end
@@ -705,25 +938,30 @@ local function HideMapLayer()
 end
 
 local function DrawPages(d, page)
-  local multi = HasMap(d) and #d.pages > 1
+  local multi = HasMap(d) and #Geo(d).pages > 1
   if not multi then pageBar:Hide(); return end
   pageBar:Show()
-  for k, p in ipairs(d.pages) do
+  local pages = Geo(d).pages
+  local cw = math.floor(ns.db.mapSize * view[3] / view[4] + 0.5)
+  local bw = math.min(80, math.floor(cw / #pages) - 4)
+  for k, p in ipairs(pages) do
     local b = pageBtns[k]
     if not b then
       b = Btn(pageBar, "", 80, nil, function(self)
         state.page, state.pageManual = self.key, true
         ns.RefreshMap()
       end)
-      b:SetPoint("LEFT", (k - 1) * 84, 0)
       pageBtns[k] = b
     end
+    b:SetWidth(bw)
+    b:ClearAllPoints()
+    b:SetPoint("LEFT", pageBar, "LEFT", (k - 1) * (bw + 4), 0)
     b.key = p.key
     b:SetText(p.name and T(p.name) or L.PAGE:format(k))
     b:SetAlpha(p == page and 1 or 0.55)
     b:Show()
   end
-  for j = #d.pages + 1, #pageBtns do pageBtns[j]:Hide() end
+  for j = #pages + 1, #pageBtns do pageBtns[j]:Hide() end
 end
 
 local function RowTag(step)
@@ -741,25 +979,16 @@ local function GetLootBtn(k)
   b = CreateFrame("Button", nil, lootBar)
   b:SetSize(22, 22)
   b.icon = b:CreateTexture(nil, "ARTWORK"); b.icon:SetAllPoints()
-  b.border = b:CreateTexture(nil, "OVERLAY")
+  b.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+  -- quality frame sits behind the icon so only a 1px edge shows
+  b.border = b:CreateTexture(nil, "BACKGROUND")
   b.border:SetPoint("TOPLEFT", -1, 1); b.border:SetPoint("BOTTOMRIGHT", 1, -1)
   b.border:SetColorTexture(1, 1, 1, 0)
   local hl = b:CreateTexture(nil, "HIGHLIGHT"); hl:SetAllPoints(); hl:SetColorTexture(1, 1, 1, 0.25)
   b:RegisterForClicks("LeftButtonUp")
-  b:SetScript("OnEnter", function(self)
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    if not pcall(GameTooltip.SetItemByID, GameTooltip, self.id) then
-      GameTooltip:SetHyperlink("item:" .. self.id)
-    end
-    GameTooltip:AddLine(L.LOOT_HINT, 0.5, 0.8, 1)
-    GameTooltip:Show()
-  end)
+  b:SetScript("OnEnter", LootOnEnter)
   b:SetScript("OnLeave", GameTooltip_Hide)
-  b:SetScript("OnClick", function(self)
-    local _, link = ns.ItemInfo(self.id)
-    if link and IsModifiedClick and IsModifiedClick("CHATLINK") and ChatEdit_InsertLink then ChatEdit_InsertLink(link)
-    elseif link and HandleModifiedItemClick then HandleModifiedItemClick(link) end
-  end)
+  b:SetScript("OnClick", LootOnClick)
   lootBtns[k] = b
   return b
 end
@@ -777,8 +1006,7 @@ local function DrawLoot(ids, label)
     b.id = id
     local _, _, q, icon = ns.ItemInfo(id)
     b.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
-    local c = q and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[q]
-    if c then b.border:SetColorTexture(c.r, c.g, c.b, 0.9) else b.border:SetColorTexture(0, 0, 0, 0) end
+    QualityBorder(b.border, q)
     b:ClearAllPoints()
     local row, col = math.floor((k - 1) / perRow), (k - 1) % perRow
     b:SetPoint("TOPLEFT", lootBar, "TOPLEFT", 2 + col * 24, -14 - row * 24)
@@ -891,23 +1119,36 @@ function ns.RefreshMap()
   if not frame or not frame:IsShown() then return end
   local d = state.viewed
   if not d then return end
-  if frame.layoutFor ~= d then frame.layoutFor = d; Layout() end
+  local nextIndex = ns.NextStep(d)
+  local page = CurrentPage(d)
+  -- Blizzard art missing from this client: fall back to Atlas for the dungeon
+  if page and page.tiles and not TileSet(page) then
+    blizFailed[d.key] = true
+    page = CurrentPage(d)
+  end
+  view = ViewOf(page)
+  local sig = tostring(d) .. tostring(view) .. tostring(HasMap(d) and #Geo(d).pages) .. tostring(ns.db.mapSize) .. tostring(ns.db.showList)
+  if frame.layoutSig ~= sig then frame.layoutSig = sig; Layout() end
   local sc = Scale()
   title:SetText(("%s |cffaaaaaa%s|r"):format(T(d.name), d.levels or ""))
   local away = state.current ~= nil and state.current ~= d
   currentBtn:SetEnabled(away)
   currentBtn:SetAlpha(away and 1 or 0.45)
-  local nextIndex = ns.NextStep(d)
-  local page = CurrentPage(d)
   if page then
-    mapTex:SetTexture(MAP_PATH .. page.map)
-    mapTex:Show()
+    if page.tiles then
+      mapTex:Hide()
+      DrawTiles(page, sc)
+    else
+      DrawTiles(nil)
+      mapTex:SetTexture(MAP_PATH .. page.map)
+      mapTex:Show()
+    end
     noMapText:SetShown(false)
     DrawMasks(page, sc)
-    for _, ln in ipairs(lines) do ln:Hide() end   -- route lines removed (markers show the order)
     DrawMarkers(d, page, nextIndex, sc)
   else
     mapTex:Hide()
+    DrawTiles(nil)
     noMapText:Show()
     HideMapLayer()
   end
@@ -927,6 +1168,7 @@ function ns.RefreshMap()
   if state.current ~= d then parts[#parts + 1] = L.BROWSE_ONLY end
   if page and page.schematic then parts[#parts + 1] = L.SCHEMATIC end
   footer:SetText(table.concat(parts, " · "))
+  DrawCard(d)
   RefreshMenu()
 end
 
@@ -939,8 +1181,19 @@ end
 
 function ns.RebuildMap()
   if not frame then return end
+  frame.layoutSig = nil
   Layout()
   ns.RefreshMap()
+end
+
+function ns.SetMapStyle(style)
+  ns.db.mapStyle = (style == "atlas") and "atlas" or "blizzard"
+  for k in pairs(blizFailed) do blizFailed[k] = nil end
+  for _, d in ipairs(ns.Dungeons) do
+    for _, p in ipairs(d.bliz and d.bliz.pages or {}) do p.set = nil end
+  end
+  ns.Print(L.MAPSTYLE_SET:format(ns.db.mapStyle == "atlas" and L.MAP_ATLAS or L.MAP_BLIZ))
+  ns.RebuildMap()
 end
 
 function ns.ShowMap(d, auto)
@@ -988,14 +1241,15 @@ function ns.EditClick(button)
   local cx, cy = GetCursorPosition()
   local s = canvas:GetEffectiveScale()
   local sc = Scale()
-  local x = math.floor((cx / s - canvas:GetLeft()) / sc + 0.5)
-  local y = math.floor((canvas:GetTop() - cy / s) / sc + 0.5)
+  local x = math.floor((cx / s - canvas:GetLeft()) / sc + view[1] + 0.5)
+  local y = math.floor((canvas:GetTop() - cy / s) / sc + view[2] + 0.5)
+  local field = UseBliz(d) and "bpos" or "pos"
   if button == "RightButton" then
-    local r = ns.db.routes[d.key]
-    if r then r[step.id] = nil end
+    local e = ns.Edits(d, step)
+    if e then e[field] = nil end
     ns.Print(L.EDIT_CLEAR:format(T(step.name)))
   else
-    ns.Edits(d, step, true).pos = { x, y }
+    ns.Edits(d, step, true)[field] = { x, y }
     ns.Print(L.EDIT_MARK:format(T(step.name), x, y))
   end
   ns.RefreshMap()
@@ -1012,6 +1266,7 @@ function ns.ShowExport()
         if e then
           local parts = {}
           if e.pos then parts[#parts + 1] = ("pos = { %d, %d }"):format(e.pos[1], e.pos[2]) end
+          if e.bpos then parts[#parts + 1] = ("bliz = { %d, %d }"):format(e.bpos[1], e.bpos[2]) end
           if e.path then
             local pts = {}
             for _, p in ipairs(e.path) do pts[#pts + 1] = ("{ %d, %d }"):format(p[1], p[2]) end

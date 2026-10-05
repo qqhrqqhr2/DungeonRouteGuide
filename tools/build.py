@@ -2,6 +2,8 @@ import json, re, os
 from anchors import CFG
 from texts import TIPS, NOTES
 from routes import ROUTES, FROM
+from blizmaps import TILES
+import place as _place
 
 W = json.load(open("wowf.json", encoding="utf-8"))
 LOOT = json.load(open("loot.json", encoding="utf-8")) if os.path.exists("loot.json") else {}
@@ -35,6 +37,63 @@ def loot_for(slug, stops):
         if not hit and it["id"] not in trash: trash.append(it["id"])
     return by_step, trash
 P = json.load(open("placed.json", encoding="utf-8"))
+# creature display IDs (classic DB) for the 3D boss preview
+DISP = json.load(open("displays.json", encoding="utf-8")) if os.path.exists("displays.json") else {}
+
+# Blizzard world-map pages: wowf % positions are relative to these maps,
+# so they are used as they are (1002 x 668 map pixels).
+BW, BH = 1002, 668
+def bliz_block(slug, ko, en):
+    floors = TILES.get(slug)
+    if not floors: return None
+    if any(f["id"] not in floors or "-client" not in f["img"] for f in ko["floors"]): return None
+    multi = len(ko["floors"]) > 1
+    efl = {f["id"]: f for f in en["floors"]}
+    def px(pos): return (int(round(pos[0] * BW / 100)), int(round(pos[1] * BH / 100)))
+    pages, stops, links, start = [], {}, [], None
+    for f in ko["floors"]:
+        key = str(f["id"])
+        pg = {"key": key, "tiles": floors[f["id"]]}
+        if multi and f.get("caption"):
+            pg["name"] = (f["caption"], efl.get(f["id"], {}).get("caption") or f["caption"])
+        pages.append(pg)
+        en_pins = {tuple(p["pos"]): p for p in efl.get(f["id"], {}).get("pins", [])}
+        for p in f["pins"]:
+            xy = px(p["pos"])
+            if "stop" in p:
+                e = stops.setdefault(p["stop"], {"page": key, "pos": None, "alt": []})
+                if p.get("alt"): e["alt"].append(xy)
+                else: e["pos"] = xy; e["page"] = key
+            elif p["label"] == "입구":
+                if start is None: start = (key, xy)
+            else:
+                enl = en_pins.get(tuple(p["pos"]), {}).get("label") or p["label"]
+                links.append((key, xy, p["label"], enl))
+    # stops placed by hand on the Atlas map (no wowf pin): Atlas -> wowf % fit
+    for (sl, n), (pg, x, y) in FIXED.items():
+        if sl != slug or (n in stops and stops[n]["pos"]): continue
+        cfg = CFG[slug]; src, dst = [], []
+        for (afl, ref, ax, ay) in cfg["anchors"]:
+            if afl != 1: continue
+            r = _place.ref_pos(ko, 1, ref)
+            if r: src.append((ax, ay)); dst.append(r)
+        f, _ = _place.fit(src, dst)
+        if f is None: continue
+        w = f((x, y))
+        stops.setdefault(n, {"page": "1", "alt": []})
+        stops[n]["pos"] = px((float(w[0]), float(w[1]))); stops[n]["page"] = "1"
+    # keep markers apart (they are drawn ~16 px wide)
+    placed = []
+    for n in sorted(stops):
+        e = stops[n]
+        if not e["pos"]: continue
+        x, y = e["pos"]
+        for _ in range(6):
+            if not [q for q in placed if q[0] == e["page"] and abs(q[1] - x) < 22 and abs(q[2] - y) < 22]: break
+            x += 26
+        e["pos"] = (min(BW - 12, x), y)
+        placed.append((e["page"], x, y))
+    return pages, stops, links, start
 
 ORDER = ["ragefire-chasm", "hall-of-thanes", "wailing-caverns", "deadmines", "ruins-of-lordaeron", "shadowfang-keep",
          "blackfathom-deeps", "stockade", "excavation-site", "dalaran", "gnomeregan", "razorfen-kraul",
@@ -225,6 +284,30 @@ def build():
                 labs.append("{ page = %s, pos = %s, text = %s }" % (lua_str(lab["page"]), pt(lab["pos"]), L(lab["label"], enl or lab["label"])))
             if labs:
                 lines.append("    links = {"); lines += ["      " + l + "," for l in labs]; lines.append("    },")
+        bz = bliz_block(slug, ko, en)
+        if bz:
+            bpages, bstops, blinks, bstart = bz
+            lines.append("    bliz = {")
+            lines.append("      pages = {")
+            for pg in bpages:
+                tl = ", ".join("{ %s }" % ", ".join(map(str, t)) for t in pg["tiles"])
+                nm = (", name = " + L(*pg["name"])) if pg.get("name") else ""
+                lines.append("        { key = %s, tiles = { %s }%s }," % (lua_str(pg["key"]), tl, nm))
+            lines.append("      },")
+            if bstart: lines.append("      start = { page = %s, pos = %s }," % (lua_str(bstart[0]), pt(bstart[1])))
+            if blinks:
+                lines.append("      links = {")
+                for (pg, xy, a, b) in blinks:
+                    lines.append("        { page = %s, pos = %s, text = %s }," % (lua_str(pg), pt(xy), L(a, b)))
+                lines.append("      },")
+            lines.append("      steps = {")
+            for n in sorted(bstops):
+                e = bstops[n]
+                if not e["pos"]: continue
+                al = (", alt = { %s }" % ", ".join(pt(a) for a in e["alt"])) if e["alt"] else ""
+                lines.append("        s%d = { page = %s, pos = %s%s }," % (n, lua_str(e["page"]), pt(e["pos"]), al))
+            lines.append("      },")
+            lines.append("    },")
         loot, trash = loot_for(slug, ko["stops"])
         # steps
         lines.append("    steps = {")
@@ -243,7 +326,10 @@ def build():
             if s.get("where"):
                 fields.append("outside = %s" % L(s["where"], e.get("where") or s["where"]))
             ids = IDS.get(slug, {}).get(n)
-            if ids: fields.append("npc = { %s }" % ", ".join(map(str, ids)))
+            if ids:
+                fields.append("npc = { %s }" % ", ".join(map(str, ids)))
+                dm = DISP.get(str(ids[0]))
+                if dm and dm["models"]: fields.append("model = %d" % dm["models"][0])
             fields.append("name = %s" % L(name_ko, name_en))
             if pos:
                 fields.append('page = "%s"' % page)

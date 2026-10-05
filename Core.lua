@@ -18,6 +18,7 @@ local DEFAULTS = {
   alpha = 0.9, combatFade = true, combatAlpha = 0.35,
   mapSize = 380, showList = true, listTab = "route",
   locked = false, autoOpen = true, hud = true, rareAlert = true, showIcon = true, lang = "auto",
+  mapStyle = "blizzard",
   routes = {}, entrances = {}, frames = {},
 }
 
@@ -622,6 +623,9 @@ SlashCmdList.DUNGEONROUTEGUIDE = function(msg)
   elseif cmd == "lang" or cmd == "language" or cmd == "언어" then
     local want = ({ auto = "auto", ["자동"] = "auto", ko = "ko", kr = "ko", ["한국어"] = "ko", en = "en", english = "en", ["영어"] = "en" })[rest]
     ns.ChangeLanguage(want)
+  elseif cmd == "map" then
+    if rest == "atlas" or rest == "blizzard" then ns.SetMapStyle(rest)
+    else ns.SetMapStyle(ns.db.mapStyle == "atlas" and "blizzard" or "atlas") end
   elseif cmd == "icon" then ns.SetIconShown(not ns.db.showIcon); ns.Print(L.OPT_ICON:format(ns.OnOff(ns.db.showIcon)))
   elseif cmd == "rare" then ns.db.rareAlert = not ns.db.rareAlert; ns.Print(L.OPT_RARE:format(ns.OnOff(ns.db.rareAlert)))
   elseif cmd == "go" then

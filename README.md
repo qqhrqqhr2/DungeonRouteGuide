@@ -6,6 +6,6 @@ WoW Forever dungeon route overlay. Opens a semi-transparent map when you enter a
 
 - `/drg` toggle map · `/drg go` entrance arrow · `/drg icon` screen icon · `/drg help`
 - Classic and new Forever dungeons, updated as Forever opens more (route data referenced from wowf.io guides)
-- Maps: Atlas Classic (GPL-2.0). See `CREDITS.txt`.
+- Maps: the game's own dungeon map art (loaded from the client by file ID), Atlas Classic (GPL-2.0) as fallback. See `CREDITS.txt`.
 
 License: GPL-2.0

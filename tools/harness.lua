@@ -40,6 +40,12 @@ MOCK_CreateAnimationGroup = function() return mock("ag") end
 MOCK_CreateAnimation = function() return mock("anim") end
 MOCK_RegisterEvent = function(s, e) local t = rawget(s, "_events") or {}; rawset(s, "_events", t); t[e] = true end
 MOCK_GetXY = function(s) return s.x, s.y end
+-- textures: remember what was set; file IDs listed in MISSING do not load
+TEXSET = {}
+MISSING = {}
+MOCK_SetTexture = function(s, f) rawset(s, "_tex", f); TEXSET[f] = true; return not MISSING[f] end
+MOCK_SetSize = function(s, w, h) rawset(s, "_w", w); rawset(s, "_h", h) end
+MOCK_SetDisplayInfo = function(s, id) rawset(s, "_display", id) end
 
 local frames = {}
 function CreateFrame(kind, name, parent, template)
@@ -163,10 +169,31 @@ Fire("GET_ITEM_INFO_RECEIVED", 6460, true)
 ns.db.listTab = "notes"; ns.RefreshMap()
 Check(wcd.trash and #wcd.trash > 0, "trash loot listed")
 ns.state.selected = nil
+-- boss card: 3D model of the selected boss
+local model
+for _, f in ipairs(frames) do if f._name == "PlayerModel" then model = f end end
+Check(model ~= nil, "boss card model created")
+ns.state.selected = 3; ns.RefreshMap()
+Check(rawget(model, "_display") == wcd.steps[3].model and wcd.steps[3].model ~= nil, "Cobrahn 3D model shown")
+Check(ns.state.pageGeo == wcd, "WC uses Atlas (no Blizzard positions)")
 local bfd = ns.DungeonByKey.bfd
 ns.ShowMap(bfd); ns.db.listTab = "route"; ns.RefreshMap()
-Check(#bfd.pages == 3, "BFD has 3 map pages")
-ns.state.page, ns.state.pageManual = "C", true; ns.RefreshMap()
+Check(#bfd.pages == 3, "BFD has 3 Atlas pages")
+Check(bfd.bliz and #bfd.bliz.pages == 3 and ns.state.pageGeo == bfd.bliz, "BFD shows 3 Blizzard pages")
+Check(TEXSET[bfd.bliz.pages[1].tiles[1][1]], "Blizzard tiles set by file ID")
+ns.state.page, ns.state.pageManual = "3", true; ns.RefreshMap()
+-- client without the art: falls back to Atlas
+local smgy = ns.DungeonByKey.smgy
+for _, set in ipairs(smgy.bliz.pages[1].tiles) do MISSING[set[1]] = true end
+Slash("map blizzard")
+ns.ShowMap(smgy); ns.RefreshMap()
+Check(ns.state.pageGeo == smgy, "missing Blizzard art -> Atlas")
+for _, set in ipairs(smgy.bliz.pages[1].tiles) do MISSING[set[1]] = nil end
+MISSING[smgy.bliz.pages[1].tiles[1][1]] = true
+Slash("map blizzard")
+ns.ShowMap(smgy); ns.RefreshMap()
+Check(ns.state.pageGeo == smgy.bliz and smgy.bliz.pages[1].set == smgy.bliz.pages[1].tiles[2], "second tile set used when the first is missing")
+MISSING = {}
 ns.ShowMap(ns.DungeonByKey.dala); ns.RefreshMap()
 Check(#ns.DungeonByKey.dala.pages == 0, "Dalaran list-only")
 DungeonRouteGuideFrame:Hide()
@@ -220,10 +247,17 @@ Slash("size 460"); Slash("alpha 50"); Check(ns.db.alpha == 0.5, "alpha 50 -> 0.5
 Slash("edit")
 ns.state.selected = BAZ
 ns.EditClick("LeftButton")
-Check(ns.db.routes.rfc.s6.pos[1] == math.floor((300 - 100) / (460 / 512) + 0.5), "edit moves marker")
+Check(ns.db.routes.rfc.s6.bpos[1] == math.floor((300 - 100) / (460 / 652) + 8 + 0.5), "edit moves marker (Blizzard map)")
 Slash("export")
 ns.EditClick("RightButton")
-Check(ns.db.routes.rfc.s6 == nil, "edit clear")
+Check(ns.db.routes.rfc.s6.bpos == nil, "edit clear")
+Slash("map atlas")
+Check(ns.state.pageGeo == d, "/drg map atlas")
+ns.EditClick("LeftButton")
+Check(ns.db.routes.rfc.s6.pos[1] == math.floor((300 - 100) / (460 / 512) + 0.5), "edit moves marker (Atlas)")
+ns.EditClick("RightButton")
+Slash("map blizzard")
+Check(ns.state.pageGeo == d.bliz, "/drg map blizzard")
 Slash("edit")
 ns.db.listTab = "quest"; ns.RefreshMap()
 ns.db.listTab = "notes"; ns.RefreshMap()

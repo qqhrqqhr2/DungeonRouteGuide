@@ -10,6 +10,13 @@ Dungeon map images (Maps/CL_*.blp) / 던전 지도 이미지
   The addon draws small dark dots over Atlas' own legend numbers at run time
   so that only this addon's step numbers are visible; the files are unchanged.
 
+Blizzard dungeon map art (default map style)
+  The game's own world-map tiles (interface/worldmap/...) are loaded from the
+  WoW client at run time by file ID. No Blizzard image is included in this
+  addon. File IDs were looked up in the community listfile (wowdev/wow-listfile).
+  3D boss previews use the client's creature models; display IDs from the
+  CMaNGOS classic database (github.com/cmangos/classic-db).
+
 Maps/Thanes.tga, Maps/Excavation.tga, Maps/RuinsLordaeron.tga: hand-drawn sketch maps
 made for this addon (layout referenced from the WOWF.IO guides; no pixels copied).
 
@@ -18,7 +25,8 @@ Dungeon facts / 던전 정보 참고
   quest lists, boss loot (item IDs) and entrance coordinates for WoW Forever
   were referenced from
   WOWF.IO dungeon guides (https://wowf.io/ko/dungeons, accessed 2026-10-06).
-  Positions were converted onto the Atlas maps; descriptions were rewritten
+  Positions are used as they are on the Blizzard maps and were converted onto
+  the Atlas maps; descriptions were rewritten
   for this addon (quest objective lines are the game's quest text).
   New Forever dungeons (Hall of Thanes, Excavation Site, Ruins of Lordaeron)
   use the hand-drawn sketches above; City of Dalaran is list-only.

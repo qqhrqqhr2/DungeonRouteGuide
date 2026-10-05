@@ -8,6 +8,8 @@
 WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a semi-transparent map as soon as you zone in and shows **where to go next**: the boss order, rares, NPCs and quest spots. Bosses are checked off automatically when they die, and a small bar at the top of the screen always shows the next objective with a one-line tip.
 
 ### Features
+- **Sharp dungeon maps**: the game's own dungeon map art, loaded from your client (Atlas maps as a fallback)
+- **Boss card**: click a boss for its 3D model and full loot list
 - **Classic dungeons and the new Forever dungeons**, including all four Scarlet Monastery wings; more are added as Forever opens them
 - Map markers in the order you clear them: **entrance, boss, rare, NPC, quest spot**, a **!** for quest-related spots and faint circles for **alternate spawn spots** of wandering bosses and rares
 - The **next stop glows** on the map; cleared stops turn grey with a check mark
@@ -33,7 +35,7 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 - `/drg debug` - dungeon detection info for bug reports
 
 ### Data and credits
-- Dungeon maps: **Atlas** classic maps (Dan Gilbert, Arith and the Atlas Team), GPL-2.0, included unmodified.
+- Dungeon maps: the game's own map art is read from your WoW client (no Blizzard files are included). Fallback: **Atlas** classic maps (Dan Gilbert, Arith and the Atlas Team), GPL-2.0, included unmodified.
 - Route order, positions and quests: referenced from the **WOWF.IO** dungeon guides; tips rewritten for this addon.
 - The new Forever dungeons (Hall of Thanes, Excavation Site, Ruins of Lordaeron) use hand-drawn sketch maps; City of Dalaran is list-only for now.
 - Wandering bosses and rares can be slightly off the marked spot. Reports are welcome in the comments or on GitHub.
@@ -46,6 +48,8 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 와우 포에버는 던전 안에서 지도를 볼 수 없습니다. Dungeon Route Guide는 던전에 들어가면 반투명 지도를 띄워 **다음에 어디로 가야 하는지** 보여줍니다. 보스 순서, 희귀 몹, NPC, 퀘스트 장소를 지도에 표시하고, 보스를 잡으면 자동으로 체크합니다. 화면 위쪽 막대에는 늘 다음 목표와 공략 한 줄이 나옵니다.
 
 ### 기능
+- **선명한 던전 지도**: 게임 클라이언트 안의 블리자드 원본 던전 지도를 그대로 사용 (없으면 Atlas 지도)
+- **보스 카드**: 보스를 클릭하면 3D 모델과 전리품 전체 목록
 - **클래식 던전과 포에버 신규 던전** (붉은십자군 수도원 네 날개 포함). 포에버에 던전이 열리는 대로 계속 추가
 - 진행 순서대로 번호가 붙은 표식: **입구, 우두머리, 희귀 몹, NPC, 퀘스트 장소**, 퀘스트 관련 지점의 **!** 표시, 돌아다니는 보스·희귀 몹의 **다른 출현 지점**
 - 다음에 갈 곳은 지도에서 **노랗게 빛나고**, 잡은 곳은 회색과 체크 표시
@@ -71,7 +75,7 @@ WoW Forever has no dungeon maps inside instances. Dungeon Route Guide opens a se
 - `/drg debug` - 오류 제보용 던전 인식 정보
 
 ### 자료와 크레딧
-- 던전 지도: **Atlas** 클래식 지도 (Dan Gilbert, Arith, Atlas 팀), GPL-2.0, 원본 그대로 포함
+- 던전 지도: 게임 클라이언트의 블리자드 원본 지도를 불러와 사용 (블리자드 파일은 포함하지 않음). 대체 지도: **Atlas** 클래식 지도 (Dan Gilbert, Arith, Atlas 팀), GPL-2.0, 원본 그대로 포함
 - 진행 순서·위치·퀘스트: **WOWF.IO** 던전 공략을 참고했고, 공략 문구는 새로 썼습니다
 - 포에버 신규 던전(영주의 전당, 발굴 현장, 로데론의 폐허)은 직접 그린 약도로, 달라란은 아직 목록만 제공합니다
 - 돌아다니는 보스·희귀 몹은 표시 위치와 조금 다를 수 있습니다. 댓글이나 GitHub로 제보해 주세요

@@ -52,6 +52,13 @@ local S = {
   LOADING         = { "불러오는 중…", "Loading…" },
   LOOT_HINT       = { "Shift+클릭: 채팅에 링크", "Shift-click: link in chat" },
   OPT_LANG        = { "언어: %s", "Language: %s" },
+  OPT_MAPSTYLE    = { "지도 그림: %s", "Map art: %s" },
+  MAP_BLIZ        = { "블리자드 원본", "Blizzard" },
+  MAP_ATLAS       = { "Atlas", "Atlas" },
+  MAPSTYLE_SET    = { "지도 그림: %s", "Map art: %s" },
+  MODEL_HINT      = { "끌기: 회전 · 휠: 확대/축소 · 오른쪽 클릭: 처음 각도", "Drag: rotate · Wheel: zoom · Right-click: reset" },
+  NO_MODEL        = { "3D 모델 정보 없음", "No 3D model" },
+  NO_LOOT         = { "등록된 전리품이 없습니다.", "No loot listed." },
   LANG_auto       = { "자동", "Auto" },
   LANG_ko         = { "한국어", "한국어 (Korean)" },
   LANG_en         = { "English (영어)", "English" },
@@ -111,11 +118,11 @@ local S = {
     "|cff66ccff/drg|r 지도 열기/닫기 · |cff66ccff/drg hud|r 다음 목표 표시\n" ..
     "|cff66ccff/drg next|r 다음 단계 직접 완료 · |cff66ccff/drg undo|r 되돌리기 · |cff66ccff/drg reset|r 진행 초기화\n" ..
     "|cff66ccff/drg go|r 입구 안내 · |cff66ccff/drg go stop|r 안내 끄기 · |cff66ccff/drg entrance set|r 지금 위치를 입구로 저장\n" ..
-    "|cff66ccff/drg lang|r 언어 (auto · ko · en) · |cff66ccff/drg icon|r 화면 아이콘 보이기/숨기기 · |cff66ccff/drg edit|r 표식 위치 편집 · |cff66ccff/drg export|r 편집 내보내기 · |cff66ccff/drg debug|r 던전 정보 확인",
+    "|cff66ccff/drg lang|r 언어 (auto · ko · en) · |cff66ccff/drg map|r 지도 그림 (블리자드 원본 · Atlas) · |cff66ccff/drg icon|r 화면 아이콘 보이기/숨기기 · |cff66ccff/drg edit|r 표식 위치 편집 · |cff66ccff/drg export|r 편집 내보내기 · |cff66ccff/drg debug|r 던전 정보 확인",
     "|cff66ccff/drg|r toggle map · |cff66ccff/drg hud|r next-objective bar\n" ..
     "|cff66ccff/drg next|r mark next done · |cff66ccff/drg undo|r undo · |cff66ccff/drg reset|r reset progress\n" ..
     "|cff66ccff/drg go|r guide to entrance · |cff66ccff/drg go stop|r stop · |cff66ccff/drg entrance set|r save current spot as entrance\n" ..
-    "|cff66ccff/drg lang|r language (auto · ko · en) · |cff66ccff/drg icon|r show/hide icon · |cff66ccff/drg edit|r marker edit · |cff66ccff/drg export|r export edits · |cff66ccff/drg debug|r dungeon info",
+    "|cff66ccff/drg lang|r language (auto · ko · en) · |cff66ccff/drg map|r map art (Blizzard · Atlas) · |cff66ccff/drg icon|r show/hide icon · |cff66ccff/drg edit|r marker edit · |cff66ccff/drg export|r export edits · |cff66ccff/drg debug|r dungeon info",
   },
 }
 
