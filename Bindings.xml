@@ -1,0 +1,11 @@
+<Bindings>
+  <Binding name="DUNGEONROUTEGUIDE_TOGGLE" header="DUNGEONROUTEGUIDE" category="ADDONS">
+    DungeonRouteGuide_Toggle()
+  </Binding>
+  <Binding name="DUNGEONROUTEGUIDE_NEXT" category="ADDONS">
+    DungeonRouteGuide_MarkNext()
+  </Binding>
+  <Binding name="DUNGEONROUTEGUIDE_ANNOUNCE" category="ADDONS">
+    DungeonRouteGuide_Announce()
+  </Binding>
+</Bindings>

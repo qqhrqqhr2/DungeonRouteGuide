@@ -1,0 +1,25 @@
+Dungeon Route Guide - credits / 크레딧
+
+Dungeon map images (Maps/CL_*.blp) / 던전 지도 이미지
+  Atlas - https://github.com/nanderson11/Atlas
+  Commit 30c7b4c820345c8b41f5ddbb34ba30bb551c675d, Images/Atlas_ClassicWoW
+  16 files used unmodified. Map authors credited on the images:
+  Niflheim, Grimm, Dan Gilbert, Arith, worldofwar.net, wowguru.com
+  Atlas addon: Dan Gilbert, Arith and the Atlas Team and contributors
+  License: GNU GPL v2 (LICENSE.txt)
+  The addon draws small dark dots over Atlas' own legend numbers at run time
+  so that only this addon's step numbers are visible; the files are unchanged.
+
+Maps/Blank.tga: original parchment texture made for this addon.
+
+Dungeon facts / 던전 정보 참고
+  Step order, boss / NPC / rare / quest-spot positions, alternate spawn spots,
+  quest lists and entrance coordinates for WoW Forever were referenced from
+  WOWF.IO dungeon guides (https://wowf.io/ko/dungeons, accessed 2026-10-06).
+  Positions were converted onto the Atlas maps; descriptions were rewritten
+  for this addon (quest objective lines are the game's quest text).
+  New Forever dungeons (Hall of Thanes, Excavation Site, Ruins of Lordaeron)
+  show positions on a blank sheet; City of Dalaran is list-only.
+
+This addon is distributed under the GNU General Public License v2 (LICENSE.txt).
+World of Warcraft is a trademark of Blizzard Entertainment, Inc.

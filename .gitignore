@@ -1,0 +1,4 @@
+tools/wowf/
+tools/atlas/
+tools/*.json
+__pycache__/

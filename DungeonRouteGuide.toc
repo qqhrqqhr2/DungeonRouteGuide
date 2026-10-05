@@ -1,0 +1,22 @@
+## Interface: 16001
+## Title: Dungeon Route Guide
+## Title-koKR: Dungeon Route Guide (던전 길잡이)
+## Notes: Dungeon route overlay for WoW Forever: map, boss order, auto check, entrance arrow.
+## Notes-koKR: 와우 포에버 던전 공략 길잡이 - 지도 위 진행 경로, 보스 순서, 자동 체크, 입구 화살표
+## Author: qqhrqqhr2
+## Version: @project-version@
+## Category: Dungeons
+## X-License: GPL-2.0
+## X-Website: https://github.com/qqhrqqhr2/DungeonRouteGuide
+## X-Credits: Dungeon maps from Atlas (Dan Gilbert, Arith and the Atlas Team), GPL-2.0
+## SavedVariables: DungeonRouteGuideDB
+## SavedVariablesPerCharacter: DungeonRouteGuideCharDB
+
+Locale.lua
+Util.lua
+Data.lua
+Core.lua
+MapFrame.lua
+HUD.lua
+Entrance.lua
+Icon.lua
