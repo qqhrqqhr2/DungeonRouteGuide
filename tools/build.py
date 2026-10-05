@@ -30,9 +30,9 @@ META = {
      subzones=["훈련장", "보병 무기고", "십자군 무기고", "용사의 전당", "Training Grounds", "Footman's Armory", "Crusader's Armory", "Hall of Champions", "Armory"]),
  "scarlet-monastery-cathedral": dict(key="smcath", ids=[189], match=["대성당", "Cathedral"], map=1420,
      subzones=["예배당 정원", "십자군 예배당", "대성당", "Chapel Gardens", "Crusader's Chapel", "Cathedral"]),
- "hall-of-thanes": dict(key="thanes", ids=[3065], match=["영주의 전당", "Hall of Thanes"], map=1455, blank=True),
- "excavation-site": dict(key="excav", ids=[2998], match=["발굴 현장", "Excavation Site"], map=1437, blank=True),
- "ruins-of-lordaeron": dict(key="rol", ids=[2999], match=["로데론의 폐허", "Ruins of Lordaeron"], map=None, blank=True),
+ "hall-of-thanes": dict(key="thanes", ids=[3065], match=["영주의 전당", "Hall of Thanes"], map=1455, blank=True, sketch="Thanes"),
+ "excavation-site": dict(key="excav", ids=[2998], match=["발굴 현장", "Excavation Site"], map=1437, blank=True, sketch="Excavation"),
+ "ruins-of-lordaeron": dict(key="rol", ids=[2999], match=["로데론의 폐허", "Ruins of Lordaeron"], map=None, blank=True, sketch="RuinsLordaeron"),
  "dalaran": dict(key="dala", ids=[], match=["달라란", "Dalaran"], map=None, nomap=True),
 }
 SM_RESET = ["붉은십자군 수도원", "Scarlet Monastery"]
@@ -145,7 +145,7 @@ def build():
                              (", name = " + L(*nm)) if nm else "",
                              (", mask = { %s }" % ", ".join(pt(m) for m in mask)) if mask else ""))
         elif meta.get("blank"):
-            pages.append('{ key = "main", map = "Blank", blank = true }')
+            pages.append('{ key = "main", map = "%s", schematic = true }' % meta["sketch"])
         lines.append("    pages = { %s }," % ", ".join(pages))
         # positions
         def pos_of(n):

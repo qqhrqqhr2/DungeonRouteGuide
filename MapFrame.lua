@@ -28,6 +28,7 @@ end
 
 local frame, canvas, overlay, mapTex, noMapText, title, footer, legend, pageBar, list, menu, picker
 local lines, markers, alts, links, rows, qrows, pageBtns, masks = {}, {}, {}, {}, {}, {}, {}, {}
+local dropdown, currentBtn
 local entranceMark, tabRoute, tabQuest, tabNotes, progressText, tipText, questNote
 
 ---------------------------------------------------------------------------
@@ -183,7 +184,7 @@ local function CreatePicker()
   picker = CreateFrame("Frame", nil, frame, "BackdropTemplate")
   Backdrop(picker, 0.97)
   picker:SetFrameStrata("DIALOG")
-  picker:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, -HEADER)
+  picker:SetPoint("TOPLEFT", dropdown, "BOTTOMLEFT", 0, -2)
   local n = #ns.Dungeons
   picker:SetSize(250, n * 20 + 8)
   picker.buttons = {}
@@ -220,10 +221,10 @@ local function GetMarker(k)
   local m = markers[k]
   if m then return m end
   m = CreateFrame("Button", nil, overlay)
-  m:SetSize(22, 22)
+  m:SetSize(16, 16)
   m:SetFrameLevel(overlay:GetFrameLevel() + 4)
-  m.glow = Circle(m, "BACKGROUND", 36)
-  m.glow:SetVertexColor(1, 0.82, 0, 0.75)
+  m.glow = Circle(m, "BACKGROUND", 26)
+  m.glow:SetVertexColor(1, 0.82, 0, 0.55)
   m.glow:SetBlendMode("ADD")
   if m.glow.CreateAnimationGroup then
     local ag = m.glow:CreateAnimationGroup()
@@ -232,20 +233,20 @@ local function GetMarker(k)
     ag:SetLooping("BOUNCE")
     m.pulse = ag
   end
-  m.ring = Circle(m, "BORDER", 25)
-  m.circle = Circle(m, "ARTWORK", 21)
+  m.ring = Circle(m, "BORDER", 17)
+  m.circle = Circle(m, "ARTWORK", 14)
   m.text = m:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   m.text:SetPoint("CENTER", 0, 0)
-  m.badge = Circle(m, "OVERLAY", 11, 1)
-  m.badge:ClearAllPoints(); m.badge:SetPoint("TOPRIGHT", 4, 4)
+  m.badge = Circle(m, "OVERLAY", 8, 1)
+  m.badge:ClearAllPoints(); m.badge:SetPoint("TOPRIGHT", 3, 3)
   m.badge:SetVertexColor(1, 0.82, 0, 1)
   m.badgeText = m:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
   m.badgeText:SetPoint("CENTER", m.badge, "CENTER", 0, 0)
   m.badgeText:SetText("!"); m.badgeText:SetTextColor(0, 0, 0)
   m.check = m:CreateTexture(nil, "OVERLAY", nil, 3)
   m.check:SetTexture(CHECK)
-  m.check:SetSize(16, 16)
-  m.check:SetPoint("BOTTOMRIGHT", 7, -5)
+  m.check:SetSize(12, 12)
+  m.check:SetPoint("BOTTOMRIGHT", 5, -4)
   m:RegisterForClicks("LeftButtonUp", "RightButtonUp")
   m:SetScript("OnEnter", function(self) StepTooltip(self, state.viewed, self.index) end)
   m:SetScript("OnLeave", GameTooltip_Hide)
@@ -258,14 +259,14 @@ local function GetAlt(k)
   local a = alts[k]
   if a then return a end
   a = CreateFrame("Button", nil, overlay)
-  a:SetSize(14, 14)
+  a:SetSize(11, 11)
   a:SetFrameLevel(overlay:GetFrameLevel() + 2)
-  a.ring = Circle(a, "BORDER", 14)
-  a.inner = Circle(a, "ARTWORK", 10)
-  a.inner:SetVertexColor(0, 0, 0, 0.55)
+  a.ring = Circle(a, "BORDER", 11)
+  a.inner = Circle(a, "ARTWORK", 8)
+  a.inner:SetVertexColor(0, 0, 0, 0.3)
   a.text = a:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   a.text:SetPoint("CENTER", 0, 0)
-  a:SetAlpha(0.7)
+  a:SetAlpha(0.6)
   a:SetScript("OnEnter", function(self)
     StepTooltip(self, state.viewed, self.index)
     GameTooltip:AddLine(L.LEG_ALT, 0.8, 0.8, 0.8); GameTooltip:Show()
@@ -421,22 +422,39 @@ local function Create()
   -- Not registered in UISpecialFrames: ESC must not close the map, only the X button.
 
   -- header
-  local prev = Btn(frame, "<", 22, nil, function() ns.CycleViewed(-1) end)
-  prev:SetPoint("TOPLEFT", PAD, -4)
-  local nxt = Btn(frame, ">", 22, nil, function() ns.CycleViewed(1) end)
-  nxt:SetPoint("LEFT", prev, "RIGHT", 2, 0)
   local close = Btn(frame, "X", 22, nil, function() frame:Hide() end)
   close:SetPoint("TOPRIGHT", -PAD, -4)
   local menuBtn = Btn(frame, L.BTN_MENU, 44, nil, function() picker:Hide(); menu:SetShown(not menu:IsShown()) end)
   menuBtn:SetPoint("RIGHT", close, "LEFT", -2, 0)
   local listBtn = Btn(frame, L.BTN_LIST, 40, nil, function() ns.db.showList = not ns.db.showList; Layout(); ns.RefreshMap() end)
   listBtn:SetPoint("RIGHT", menuBtn, "LEFT", -2, 0)
-  local titleBtn = CreateFrame("Button", nil, frame)
-  titleBtn:SetPoint("LEFT", nxt, "RIGHT", 6, 0)
-  titleBtn:SetPoint("RIGHT", listBtn, "LEFT", -6, 0)
+  -- "current dungeon" button: back to the map of the dungeon you are in
+  currentBtn = Btn(frame, L.BTN_CURRENT, 64, L.TIP_CURRENT, function()
+    if state.current then
+      state.viewed, state.selected, state.pageManual = state.current, nil, false
+      picker:Hide(); ns.RefreshMap()
+    end
+  end)
+  currentBtn:SetPoint("RIGHT", listBtn, "LEFT", -6, 0)
+  -- dungeon dropdown
+  local titleBtn = CreateFrame("Button", nil, frame, "BackdropTemplate")
+  dropdown = titleBtn
+  titleBtn:SetPoint("TOPLEFT", PAD, -4)
+  titleBtn:SetPoint("RIGHT", currentBtn, "LEFT", -6, 0)
   titleBtn:SetHeight(20)
+  if titleBtn.SetBackdrop then
+    titleBtn:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+    titleBtn:SetBackdropColor(0, 0, 0, 0.6)
+    titleBtn:SetBackdropBorderColor(0.65, 0.52, 0.22, 0.9)
+  end
+  local arrow = titleBtn:CreateTexture(nil, "ARTWORK")
+  arrow:SetTexture("Interface\\Buttons\\Arrow-Down-Up")
+  arrow:SetSize(14, 14)
+  arrow:SetPoint("RIGHT", -4, -2)
+  local thl = titleBtn:CreateTexture(nil, "HIGHLIGHT"); thl:SetAllPoints(); thl:SetColorTexture(1, 1, 1, 0.08)
   title = titleBtn:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-  title:SetAllPoints()
+  title:SetPoint("LEFT", 6, 0)
+  title:SetPoint("RIGHT", arrow, "LEFT", -4, 0)
   title:SetJustifyH("LEFT")
   if title.SetWordWrap then title:SetWordWrap(false) end
   titleBtn:SetScript("OnClick", function() menu:Hide(); picker:SetShown(not picker:IsShown()) end)
@@ -460,12 +478,12 @@ local function Create()
   canvas:SetScript("OnMouseUp", function(_, button) ns.EditClick(button) end)
 
   entranceMark = CreateFrame("Frame", nil, overlay)
-  entranceMark:SetSize(20, 20)
+  entranceMark:SetSize(15, 15)
   entranceMark:SetFrameLevel(overlay:GetFrameLevel() + 3)
-  local ering = Circle(entranceMark, "BORDER", 20)
+  local ering = Circle(entranceMark, "BORDER", 15)
   ering:SetVertexColor(CAT.entrance[1], CAT.entrance[2], CAT.entrance[3], 1)
-  local einner = Circle(entranceMark, "ARTWORK", 12)
-  einner:SetVertexColor(0.05, 0.15, 0.05, 1)
+  local einner = Circle(entranceMark, "ARTWORK", 9)
+  einner:SetVertexColor(0.05, 0.15, 0.05, 0.5)
   entranceMark.text = entranceMark:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
   entranceMark.text:SetPoint("TOP", entranceMark, "BOTTOM", 0, -1)
   entranceMark.text:SetText(L.LEG_ENTRANCE)
@@ -564,8 +582,9 @@ local function DrawMarkers(d, page, nextIndex, sc)
       local m = GetMarker(k)
       m.index = i
       Place(m, sc, ns.StepPos(d, i))
-      m.circle:SetVertexColor(c[1], c[2], c[3], step.optional and 0.8 or 0.95)
-      if state.selected == i then m.ring:SetVertexColor(1, 1, 1, 1) else m.ring:SetVertexColor(0, 0, 0, 0.85) end
+      -- see-through so the map under the marker stays readable
+      m.circle:SetVertexColor(c[1], c[2], c[3], step.optional and 0.45 or 0.6)
+      if state.selected == i then m.ring:SetVertexColor(1, 1, 1, 0.9) else m.ring:SetVertexColor(0, 0, 0, 0.5) end
       m.text:SetText(step.n)
       m.check:SetShown(done)
       local showBadge = step.quest and not done
@@ -776,6 +795,9 @@ function ns.RefreshMap()
   if frame.layoutFor ~= d then frame.layoutFor = d; Layout() end
   local sc = Scale()
   title:SetText(("%s |cffaaaaaa%s|r"):format(T(d.name), d.levels or ""))
+  local away = state.current ~= nil and state.current ~= d
+  currentBtn:SetEnabled(away)
+  currentBtn:SetAlpha(away and 1 or 0.45)
   local nextIndex = ns.NextStep(d)
   local page = CurrentPage(d)
   if page then
@@ -801,7 +823,8 @@ function ns.RefreshMap()
     tabNotes:SetAlpha(tab == "notes" and 1 or 0.55)
   end
   local foot
-  if page and page.blank then foot = L.BLANK_MAP .. " · " .. L.SOURCE
+  if page and page.schematic then foot = L.SCHEMATIC .. " · " .. L.SOURCE
+  elseif page and page.blank then foot = L.BLANK_MAP .. " · " .. L.SOURCE
   elseif page then foot = (page.credit or "") .. " · " .. L.SOURCE
   else foot = L.SOURCE end
   if state.current ~= d then foot = "|cffaaaaaa" .. L.BROWSE_ONLY .. "|r " .. foot end

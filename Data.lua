@@ -34,7 +34,7 @@ ns.Dungeons = {
     name = { ko = "영주의 전당", en = "The Hall of Thanes" },
     instanceIDs = { 3065 }, nameMatch = { "영주의 전당", "Hall of Thanes" },
     entrance = { map = 1455, x = 43.6, y = 51.7, zone = { ko = "아이언포지 왕좌의 방(마그니 왕)에서 왼쪽 길로 내려가 옛 아이언포지로", en = "Take the left path from King Magni's throne room down into Old Ironforge" } },
-    pages = { { key = "main", map = "Blank", blank = true } },
+    pages = { { key = "main", map = "Thanes", schematic = true } },
     start = { page = "main", pos = { 251, 493 } },
     steps = {
       { id = "s1", n = "1", kind = "boss", name = { ko = "팔드림 앤빌마", en = "Faldrim Anvilmar" }, page = "main", pos = { 255, 341 }, tip = { ko = "입구 다음 큰 방(앤빌마의 휴식처). 망령이 가득하니 앞만 비우든 방을 다 치우든 편한 대로. 정신 분열은 차단, 탱커 공속을 늦추는 저주를 겁니다.", en = "Big hall past the entrance, full of ghosts; clear in front or the whole room. Interrupt Mind Blast; curse slows the tank's attacks." } },
@@ -49,7 +49,7 @@ ns.Dungeons = {
       { id = 96403, level = 15, name = { ko = "중요한 가보", en = "Important Heirlooms" }, giver = { ko = "영주의 전당에서 드워프 가보 8개를 입수해야 합니다.", en = "Collect 8 Dwarven Heirlooms from the Hall of Thanes." } },
       { id = 96395, level = 15, name = { ko = "해묵은 원한", en = "An Ancient Grudge" }, giver = { ko = "영주의 전당에서 팔드림 앤빌마의 영혼에게 안식을 선사해야 합니다.", en = "Put the spirit of Faldrim Anvilmar to rest in the Hall of Thanes." } },
     },
-    notes = { { ko = "내려가는 길 아래가 용암입니다. 길에서 벗어나지 마세요.", en = "Lava below the descending path; stay on it." }, { ko = "마그마투스 구간은 화염 저항 물약이 도움이 됩니다.", en = "Fire resistance potions help for Magmatus." }, { ko = "이 던전은 지형 그림 없이 상대 위치만 표시합니다.", en = "No terrain art for this dungeon; markers show relative positions only." } },
+    notes = { { ko = "내려가는 길 아래가 용암입니다. 길에서 벗어나지 마세요.", en = "Lava below the descending path; stay on it." }, { ko = "마그마투스 구간은 화염 저항 물약이 도움이 됩니다.", en = "Fire resistance potions help for Magmatus." }, { ko = "지도는 직접 그린 약도라 실제 지형과 조금 다를 수 있습니다.", en = "The map is a hand-drawn sketch and may differ slightly from the real layout." } },
   },
   {
     key = "wc", slug = "wailing-caverns", levels = "15-24",
@@ -119,7 +119,7 @@ ns.Dungeons = {
     key = "rol", slug = "ruins-of-lordaeron", levels = "15-20",
     name = { ko = "로데론의 폐허", en = "Ruins of Lordaeron" },
     instanceIDs = { 2999 }, nameMatch = { "로데론의 폐허", "Ruins of Lordaeron" },
-    pages = { { key = "main", map = "Blank", blank = true } },
+    pages = { { key = "main", map = "RuinsLordaeron", schematic = true } },
     start = { page = "main", pos = { 323, 112 } },
     steps = {
       { id = "s1", n = "1", kind = "npc", optional = true, name = { ko = "트루먼 대위", en = "Captain Truman" }, page = "main", pos = { 347, 91 }, quest = true, quests = { 95250 }, tip = { ko = "입구를 나와 바로 왼쪽(북쪽) 벽돌 길의 NPC. 얼라이언스 '흉측한 괴물들'을 주고받습니다(남작의 머리).", en = "Just left (north) of the entrance on the brick path. Alliance quest Abominable Creatures (the Baron's head)." } },
@@ -143,7 +143,7 @@ ns.Dungeons = {
       { id = 92421, faction = "Horde", level = 22, name = { ko = "빛의 정의", en = "Light's Justice" }, giver = { ko = "언더시티에 있는 모빈 라이트베인을 위해 로데론의 폐허에서 온전한 사지 25개를 수집해야 합니다.", en = "Collect 25 Intact Limbs within The Ruins of Lordaeron for Morbin Lightbane in the Undercity." } },
       { id = 95216, faction = "Horde", level = 22, name = { ko = "새로운 역병", en = "The New Plague" }, giver = { ko = "로데론의 폐허에 있는 쇠퇴송곳니에게서 맹독성 균주를 얻어 언더시티에 있는 시어도어 그리프스에게 가져가야 합니다.", en = "Collect the Highly Toxic Strain from Witherfang in Ruins of Lordaeron for Theodore Griffs in Undercity." } },
     },
-    notes = { { ko = "쇠퇴송곳니가 쫄을 데리고 순찰합니다. 경로를 보고 시작하세요.", en = "Witherfang patrols with adds; watch her path." }, { ko = "'로데론의 문장'은 자리가 고정되지 않습니다. 건물 바닥을 살펴보세요.", en = "The Crest of Lordaeron has no fixed spot; check building floors." }, { ko = "이 던전은 지형 그림 없이 상대 위치만 표시합니다.", en = "No terrain art; relative positions only." } },
+    notes = { { ko = "쇠퇴송곳니가 쫄을 데리고 순찰합니다. 경로를 보고 시작하세요.", en = "Witherfang patrols with adds; watch her path." }, { ko = "'로데론의 문장'은 자리가 고정되지 않습니다. 건물 바닥을 살펴보세요.", en = "The Crest of Lordaeron has no fixed spot; check building floors." }, { ko = "지도는 직접 그린 약도라 실제 지형과 조금 다를 수 있습니다.", en = "The map is a hand-drawn sketch and may differ slightly from the real layout." } },
   },
   {
     key = "sfk", slug = "shadowfang-keep", levels = "20-30",
@@ -260,7 +260,7 @@ ns.Dungeons = {
     name = { ko = "발굴 현장: 저습지", en = "Excavation Site: Wetlands" },
     instanceIDs = { 2998 }, nameMatch = { "발굴 현장", "Excavation Site" },
     entrance = { map = 1437, x = 47.8, y = 56.3, zone = { ko = "저습지 웰가르의 발굴현장 남동쪽 언덕 위의 포털", en = "Portal on the hill southeast of Whelgar's Excavation Site, Wetlands" } },
-    pages = { { key = "main", map = "Blank", blank = true } },
+    pages = { { key = "main", map = "Excavation", schematic = true } },
     start = { page = "main", pos = { 343, 242 } },
     steps = {
       { id = "s1", n = "1", kind = "boss", name = { ko = "소금가시", en = "Saltspine" }, page = "main", pos = { 239, 251 }, tip = { ko = "잃어버린 늪의 악어 우두머리(정예 야수). 기술 정보는 아직 없습니다.", en = "Crocolisk boss of the Lost Marsh (elite beast). Abilities not known yet." } },
@@ -278,7 +278,7 @@ ns.Dungeons = {
       { id = 95772, level = 31, name = { ko = "Songblade Search", en = "Songblade Search" }, giver = { ko = "웰가르의 발굴현장에서 도린 송블레이드의 형제 Daewyn을 찾아야 합니다.", en = "Look for Dorin Songblade's brother, Daewyn, in Whelgar's Excavation Site." } },
       { id = 95682, level = 31, name = { ko = "용아귀 열기", en = "Open the Maw" }, giver = { ko = "발굴 현장에서 용아귀 파괴공작원 2명과 용아귀 감시병 4명을 처치하고 용아귀 급보를 가져와야 합니다.", en = "Kill 2 Dragonmaw Saboteurs and 4 Dragonmaw Warders in the Excavation Site and bring back the Dragonmaw Dispatch." } },
     },
-    notes = { { ko = "만남의 돌은 저습지 53.4, 65.3입니다.", en = "Meeting stone: Wetlands 53.4, 65.3." }, { ko = "추적자의 숲에 정예 랩터가 많습니다.", en = "Many elite raptors in Stalker's Thicket." }, { ko = "이 던전은 지형 그림 없이 상대 위치만 표시합니다.", en = "No terrain art; relative positions only." } },
+    notes = { { ko = "만남의 돌은 저습지 53.4, 65.3입니다.", en = "Meeting stone: Wetlands 53.4, 65.3." }, { ko = "추적자의 숲에 정예 랩터가 많습니다.", en = "Many elite raptors in Stalker's Thicket." }, { ko = "지도는 직접 그린 약도라 실제 지형과 조금 다를 수 있습니다.", en = "The map is a hand-drawn sketch and may differ slightly from the real layout." } },
   },
   {
     key = "dala", slug = "dalaran", levels = "28-33",

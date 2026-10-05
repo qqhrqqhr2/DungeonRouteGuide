@@ -5,6 +5,9 @@
 - The map window no longer closes with ESC; use the X button (or /drg)
 - Route lines removed; numbered markers show the order and the next one glows
 - Edit mode now just moves markers (/drg edit)
+- Hand-drawn sketch maps for Hall of Thanes, Excavation Site and Ruins of Lordaeron
+- Dungeon dropdown and a "Current" button that jumps back to the dungeon you are in
+- Smaller, see-through markers so the map underneath stays visible
 
 ## v0.2.0
 

@@ -10,7 +10,8 @@ Dungeon map images (Maps/CL_*.blp) / 던전 지도 이미지
   The addon draws small dark dots over Atlas' own legend numbers at run time
   so that only this addon's step numbers are visible; the files are unchanged.
 
-Maps/Blank.tga: original parchment texture made for this addon.
+Maps/Thanes.tga, Maps/Excavation.tga, Maps/RuinsLordaeron.tga: hand-drawn sketch maps
+made for this addon (layout referenced from the WOWF.IO guides; no pixels copied).
 
 Dungeon facts / 던전 정보 참고
   Step order, boss / NPC / rare / quest-spot positions, alternate spawn spots,
@@ -19,7 +20,7 @@ Dungeon facts / 던전 정보 참고
   Positions were converted onto the Atlas maps; descriptions were rewritten
   for this addon (quest objective lines are the game's quest text).
   New Forever dungeons (Hall of Thanes, Excavation Site, Ruins of Lordaeron)
-  show positions on a blank sheet; City of Dalaran is list-only.
+  use the hand-drawn sketches above; City of Dalaran is list-only.
 
 This addon is distributed under the GNU General Public License v2 (LICENSE.txt).
 World of Warcraft is a trademark of Blizzard Entertainment, Inc.
