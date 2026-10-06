@@ -1,5 +1,9 @@
 # Dungeon Route Guide
 
+## v1.0.2
+
+- Skipped bosses no longer block the guide: the next objective continues after the furthest boss you have killed, and a boss left behind is marked "Skipped" in the list (it comes back as the objective only at the end)
+
 ## v1.0.1
 
 - Support link: Options > Support the addon, or /drg donate (shows the Buy Me a Coffee address to copy)

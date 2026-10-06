@@ -70,6 +70,7 @@ local S = {
   AREA_NEXT       = { "다음", "next" },
   AREA_LEFT       = { "남은 %d", "%d left" },
   OPTIONAL        = { "선택", "Optional" },
+  SKIPPED         = { "건너뜀", "Skipped" },
   Q_DONE          = { "완료", "Done" },
   Q_ACTIVE        = { "진행 중", "In log" },
   Q_MISSING       = { "미수락", "Not taken" },

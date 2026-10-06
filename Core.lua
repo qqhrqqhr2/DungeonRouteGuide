@@ -138,10 +138,31 @@ function ns.Counts(d)
   return done, total
 end
 
+-- Index of the furthest route step that is done (0 = none yet).
+local function LastDoneMain(d)
+  local last = 0
+  for i, step in ipairs(d.steps) do
+    if ns.IsMain(step) and ns.IsDone(d, i) then last = i end
+  end
+  return last
+end
+
+-- A route step left behind: not done, but a later route step is.
+function ns.IsSkipped(d, i)
+  local step = d.steps[i]
+  return ns.IsMain(step) and not ns.IsDone(d, i) and i < LastDoneMain(d)
+end
+
+-- Next objective: the first open route step after the furthest one done
+-- (groups often skip a boss); skipped steps come back only at the end.
 function ns.NextStep(d)
   if not d then return end
   local done, total = ns.Counts(d)
   if total > 0 and done >= total then return end
+  local last = LastDoneMain(d)
+  for i = last + 1, #d.steps do
+    if ns.IsMain(d.steps[i]) and not ns.IsDone(d, i) then return i end
+  end
   for i, step in ipairs(d.steps) do
     if ns.IsMain(step) and not ns.IsDone(d, i) then return i end
   end

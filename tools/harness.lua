@@ -239,6 +239,14 @@ Fire("UNIT_HEALTH", "nameplate4")
 Check(ns.IsDone(d, JER), "Jergosh detected by name")
 Check((DungeonRouteGuideHUD.line._text:find("바잘란") or DungeonRouteGuideHUD.line._text:find("Bazzalan")) ~= nil, "HUD shows next: Bazzalan")
 
+-- skipped boss: the next objective moves past it
+local rfk = ns.DungeonByKey.rfk
+ns.char.progress = { key = "rfk", done = { s2 = true, s3 = true, s4 = true }, lastSeen = time() }
+Check(ns.NextStep(rfk) == 7, "skipped Roogug: next = Agathelos")
+Check(ns.IsSkipped(rfk, 1), "Roogug marked skipped")
+ns.char.progress = { key = "rfk", done = { s2 = true, s3 = true, s4 = true, s7 = true, s11 = true }, lastSeen = time() }
+Check(ns.NextStep(rfk) == 1, "after the last boss the skipped one comes back")
+ns.char.progress = { key = "rfc", done = { s2 = true, s5 = true, s7 = true, s3 = true }, lastSeen = time() }
 Slash("next"); Check(ns.IsDone(d, BAZ), "/drg next")
 Slash("undo"); Check(not ns.IsDone(d, BAZ), "/drg undo")
 INGROUP = true
