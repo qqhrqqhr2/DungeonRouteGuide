@@ -1,5 +1,9 @@
 # Dungeon Route Guide
 
+## Unreleased
+
+- Only bosses are numbered (1, 2, 3 … in route order); NPCs, rares and quest spots show an icon instead (speech bubble, star, "!")
+
 ## v1.0.2
 
 - Skipped bosses no longer block the guide: the next objective continues after the furthest boss you have killed, and a boss left behind is marked "Skipped" in the list (it comes back as the objective only at the end)

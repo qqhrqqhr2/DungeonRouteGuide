@@ -77,7 +77,7 @@ function ns.RefreshHUD()
   if not i or ns.IsDone(d, i) then i, label = ns.NextStep(d), L.NEXT end
   if i then
     local step = d.steps[i]
-    hud.line:SetText(("|cffffd100%s:|r %s. %s"):format(label, step.n, T(step.name)))
+    hud.line:SetText(("|cffffd100%s:|r %s"):format(label, ns.StepTitle(d, i)))
     hud.tip:SetText(ns.FirstSentence(T(step.tip)))
   else
     hud.line:SetText("|cff55ff55" .. L.DONE_ALL .. "|r")

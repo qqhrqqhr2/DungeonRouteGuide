@@ -138,6 +138,43 @@ function ns.Counts(d)
   return done, total
 end
 
+-- Bosses are numbered in route order; other steps show an icon instead,
+-- so the numbers on the map are boss numbers only.
+local KIND_ICON = {
+  npc    = "Interface\\GossipFrame\\GossipGossipIcon",
+  rare   = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1",
+  object = "Interface\\GossipFrame\\AvailableQuestIcon",
+  task   = "Interface\\GossipFrame\\AvailableQuestIcon",
+}
+function ns.KindIcon(step) return KIND_ICON[step.kind] end
+
+function ns.BossNumber(d, i)
+  if d.steps[i].kind ~= "boss" then return nil end
+  local n = 0
+  for j = 1, i do
+    local s = d.steps[j]
+    if s.kind == "boss" and ns.StepVisible(s) then n = n + 1 end
+  end
+  return n
+end
+
+-- "3" for a boss, an inline icon for any other step
+function ns.StepTag(d, i, size)
+  local b = ns.BossNumber(d, i)
+  if b then return tostring(b) end
+  local ic = KIND_ICON[d.steps[i].kind]
+  size = size or 14
+  return ic and ("|T" .. ic .. ":" .. size .. ":" .. size .. "|t") or "-"
+end
+
+-- "3. Name" for a boss, "<icon> Name" otherwise
+function ns.StepTitle(d, i)
+  local b = ns.BossNumber(d, i)
+  local name = ns.T(d.steps[i].name)
+  if b then return b .. ". " .. name end
+  return ns.StepTag(d, i) .. " " .. name
+end
+
 -- Index of the furthest route step that is done (0 = none yet).
 local function LastDoneMain(d)
   local last = 0
@@ -507,7 +544,8 @@ function ns.Announce()
   if not i or state.current ~= d or ns.IsDone(d, i) then i = ns.NextStep(d) end
   if not i then return end
   local step = d.steps[i]
-  local msg = ("[%s] %s %s: %s"):format(L.TITLE, step.n, T(step.name), ns.FirstSentence(T(step.tip)))
+  local b = ns.BossNumber(d, i)
+  local msg = ("[%s] %s%s: %s"):format(L.TITLE, b and (b .. " ") or "", T(step.name), ns.FirstSentence(T(step.tip)))
   if #msg > 250 then msg = msg:sub(1, 247) .. "..." end
   local inInstanceGroup = LE_PARTY_CATEGORY_INSTANCE and ns.True(ns.Safe(IsInGroup, LE_PARTY_CATEGORY_INSTANCE))
   local channel = inInstanceGroup and "INSTANCE_CHAT" or (ns.True(ns.Safe(IsInGroup)) and "PARTY") or nil

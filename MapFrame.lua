@@ -130,7 +130,7 @@ local function Scale() return (ns.db.mapSize or 380) / view[4] end
 local function StepTooltip(owner, d, i)
   local step = d.steps[i]
   GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
-  GameTooltip:SetText(step.n .. ". " .. T(step.name), 1, 0.82, 0)
+  GameTooltip:SetText(ns.StepTitle(d, i), 1, 0.82, 0)
   local kind = L["KIND_" .. step.kind] or step.kind
   if step.optional then kind = kind .. " · " .. L.OPTIONAL end
   if step.unconfirmed then kind = kind .. " · " .. L.UNCONFIRMED end
@@ -309,6 +309,8 @@ local function GetMarker(k)
   m.circle = Circle(m, "ARTWORK", 14)
   m.text = m:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   m.text:SetPoint("CENTER", 0, 0)
+  m.icon = m:CreateTexture(nil, "OVERLAY")
+  m.icon:SetSize(11, 11); m.icon:SetPoint("CENTER", 0, 0)
   m.badge = Circle(m, "OVERLAY", 8, 1)
   m.badge:ClearAllPoints(); m.badge:SetPoint("TOPRIGHT", 3, 3)
   m.badge:SetVertexColor(1, 0.82, 0, 1)
@@ -338,6 +340,8 @@ local function GetAlt(k)
   a.inner:SetVertexColor(0, 0, 0, 0.3)
   a.text = a:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   a.text:SetPoint("CENTER", 0, 0)
+  a.icon = a:CreateTexture(nil, "OVERLAY")
+  a.icon:SetSize(8, 8); a.icon:SetPoint("CENTER", 0, 0)
   a:SetAlpha(0.6)
   a:SetScript("OnEnter", function(self)
     StepTooltip(self, state.viewed, self.index)
@@ -382,6 +386,8 @@ local function GetRow(k)
   r.check:SetTexture(CHECK); r.check:SetSize(14, 14); r.check:SetPoint("LEFT", 1, 0)
   r.num = r:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
   r.num:SetPoint("LEFT", 14, 0); r.num:SetWidth(18); r.num:SetJustifyH("RIGHT")
+  r.kicon = r:CreateTexture(nil, "ARTWORK")
+  r.kicon:SetSize(13, 13); r.kicon:SetPoint("RIGHT", r.num, "RIGHT", 1, 0)
   r.tag = r:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
   r.tag:SetPoint("RIGHT", -2, 0)
   r.name = r:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
@@ -918,7 +924,7 @@ function DrawCard(d)
   end
   card:Show()
   PlaceCard()
-  card.title:SetText(step.n .. ". " .. T(step.name))
+  card.title:SetText(ns.StepTitle(d, i))
   local kind = L["KIND_" .. step.kind] or step.kind
   if step.optional then kind = kind .. " · " .. L.OPTIONAL end
   card.kind:SetText(kind)
@@ -972,7 +978,9 @@ local function DrawMarkers(d, page, nextIndex, sc)
         a.index = i
         Place(a, sc, ap)
         a.ring:SetVertexColor(c[1], c[2], c[3], 1)
-        a.text:SetText(step.n)
+        local abn, aic = ns.BossNumber(d, i), ns.KindIcon(step)
+        a.text:SetText(abn and tostring(abn) or "")
+        if not abn and aic then a.icon:SetTexture(aic); a.icon:Show() else a.icon:Hide() end
         a:Show()
       end
       k = k + 1
@@ -982,9 +990,11 @@ local function DrawMarkers(d, page, nextIndex, sc)
       -- see-through so the map under the marker stays readable
       m.circle:SetVertexColor(c[1], c[2], c[3], step.optional and 0.45 or 0.6)
       if state.selected == i then m.ring:SetVertexColor(1, 1, 1, 0.9) else m.ring:SetVertexColor(0, 0, 0, 0.5) end
-      m.text:SetText(step.n)
+      local bn, ic = ns.BossNumber(d, i), ns.KindIcon(step)
+      m.text:SetText(bn and tostring(bn) or "")
+      if not bn and ic then m.icon:SetTexture(ic); m.icon:Show() else m.icon:Hide() end
       m.check:SetShown(done)
-      local showBadge = step.quest and not done
+      local showBadge = step.quest and not done and step.kind ~= "object" and step.kind ~= "task"
       m.badge:SetShown(showBadge); m.badgeText:SetShown(showBadge)
       local isNext = (i == nextIndex) or (state.targetStep == i and state.current == d)
       m.glow:SetShown(isNext)
@@ -1169,7 +1179,9 @@ local function DrawRouteList(d, nextIndex)
       local c = CAT[Category(step)]
       r.dot:SetVertexColor(c[1], c[2], c[3], 1)
       r.dot:SetShown(not done and step.kind ~= "fork")
-      r.num:SetText(step.n)
+      local rbn, ric = ns.BossNumber(d, i), ns.KindIcon(step)
+      r.num:SetText(rbn and tostring(rbn) or "")
+      if not rbn and ric then r.kicon:SetTexture(ric); r.kicon:Show() else r.kicon:Hide() end
       r.name:SetText(T(step.name))
       if done then r.name:SetTextColor(0.55, 0.55, 0.55)
       elseif i == nextIndex then r.name:SetTextColor(1, 0.82, 0)
@@ -1191,7 +1203,7 @@ local function DrawRouteList(d, nextIndex)
   tipText:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", -4, used)
   if i then
     local step = d.steps[i]
-    tipText:SetText("|cffffd100" .. step.n .. ". " .. T(step.name) .. "|r\n" .. T(step.tip))
+    tipText:SetText("|cffffd100" .. ns.StepTitle(d, i) .. "|r\n" .. T(step.tip))
   else
     tipText:SetText("|cff55ff55" .. L.DONE_ALL .. "|r")
   end
