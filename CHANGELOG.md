@@ -1,6 +1,6 @@
 # Dungeon Route Guide
 
-## Unreleased
+## v1.0.3
 
 - Next objective follows the group: after each kill it points to the nearest open step on the map (steps left behind count as farther), so killing bosses out of order no longer sends you back to boss 1
 - A boss killed out of order only ticks off the talks / quest spots on its own stretch of the route
