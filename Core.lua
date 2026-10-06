@@ -190,19 +190,70 @@ function ns.IsSkipped(d, i)
   return ns.IsMain(step) and not ns.IsDone(d, i) and i < LastDoneMain(d)
 end
 
--- Next objective: the first open route step after the furthest one done
--- (groups often skip a boss); skipped steps come back only at the end.
+-- Map spot of a step (Blizzard map positions when there are any: one
+-- coordinate space per dungeon, whichever map style is shown).
+local function SpotOf(d, i)
+  local step = d.steps[i]
+  local g = d.bliz and d.bliz.steps and d.bliz.steps[step.id]
+  if g then return g.page, g.pos end
+  if step.pos then return step.page, step.pos end
+end
+
+-- Where the group is: the step checked most recently (a kill, a talk, a
+-- rare) that has a map spot; else the furthest route step done.
+local function HereIndex(d)
+  local p = ns.char.progress
+  if p.key == d.key and p.history then
+    for k = #p.history, 1, -1 do
+      local id = p.history[k]
+      if p.done[id] then
+        for i, s in ipairs(d.steps) do
+          if s.id == id and SpotOf(d, i) then return i end
+        end
+      end
+    end
+  end
+  local last = LastDoneMain(d)
+  return last > 0 and last or nil
+end
+
+local SKIPPED_WEIGHT = 2.5   -- steps left behind count as this much farther
+local OTHER_AREA = 1e6       -- steps on another map page come after this page
+
+-- Next objective: groups do not always follow the numbers, so this is the
+-- open route step nearest to where the group last checked something off
+-- (straight-line distance on the map; steps left behind count as farther,
+-- other map pages come last). Before anything is done: route order.
 function ns.NextStep(d)
   if not d then return end
   local done, total = ns.Counts(d)
   if total > 0 and done >= total then return end
-  local last = LastDoneMain(d)
-  for i = last + 1, #d.steps do
-    if ns.IsMain(d.steps[i]) and not ns.IsDone(d, i) then return i end
+  local here = HereIndex(d)
+  local hp, hpos
+  if here then hp, hpos = SpotOf(d, here) end
+  if not hpos then
+    for i, step in ipairs(d.steps) do
+      if ns.IsMain(step) and not ns.IsDone(d, i) then return i end
+    end
+    return
   end
+  local furthest = LastDoneMain(d)
+  local best, bestScore
   for i, step in ipairs(d.steps) do
-    if ns.IsMain(step) and not ns.IsDone(d, i) then return i end
+    if ns.IsMain(step) and not ns.IsDone(d, i) then
+      local pg, pos = SpotOf(d, i)
+      local score
+      if pos and pg == hp then
+        local dx, dy = pos[1] - hpos[1], pos[2] - hpos[2]
+        score = math.sqrt(dx * dx + dy * dy)
+      else
+        score = OTHER_AREA + math.abs(i - here)
+      end
+      if i < furthest then score = score * SKIPPED_WEIGHT end
+      if not bestScore or score < bestScore then best, bestScore = i, score end
+    end
   end
+  return best
 end
 
 function ns.SetDone(d, i, value, auto)
@@ -218,10 +269,13 @@ function ns.SetDone(d, i, value, auto)
   if value then
     -- Non-boss steps (talks, objects, tasks) before a defeated boss are
     -- behind the group already.
+    -- Only the stretch since the previous boss in route order: a boss
+    -- killed out of order does not tick off talks elsewhere.
     if step.kind == "boss" then
-      for j = 1, i - 1 do
+      for j = i - 1, 1, -1 do
         local s = d.steps[j]
-        if s.kind ~= "boss" and s.kind ~= "rare" and not s.optional then p.done[s.id] = true end
+        if s.kind == "boss" then break end
+        if s.kind ~= "rare" and not s.optional then p.done[s.id] = true end
       end
     end
     if auto then

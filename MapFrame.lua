@@ -1105,7 +1105,6 @@ local function HideMapLayer()
 end
 
 local function RowTag(step, d, i)
-  if d and ns.IsSkipped(d, i) then return L.SKIPPED end
   if step.outside then return L.OUTSIDE end
   if step.unconfirmed and step.kind ~= "fork" then return L.UNCONFIRMED end
   if step.kind == "rare" then return L.KIND_rare end
@@ -1185,7 +1184,6 @@ local function DrawRouteList(d, nextIndex)
       r.name:SetText(T(step.name))
       if done then r.name:SetTextColor(0.55, 0.55, 0.55)
       elseif i == nextIndex then r.name:SetTextColor(1, 0.82, 0)
-      elseif ns.IsSkipped(d, i) then r.name:SetTextColor(0.72, 0.6, 0.6)
       elseif step.kind == "fork" then r.name:SetTextColor(0.7, 0.7, 0.7)
       elseif step.optional then r.name:SetTextColor(0.82, 0.7, 1)
       else r.name:SetTextColor(1, 1, 1) end

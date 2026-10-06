@@ -241,10 +241,16 @@ Check((DungeonRouteGuideHUD.line._text:find("바잘란") or DungeonRouteGuideHUD
 
 -- skipped boss: the next objective moves past it
 local rfk = ns.DungeonByKey.rfk
-ns.char.progress = { key = "rfk", done = { s2 = true, s3 = true, s4 = true }, lastSeen = time() }
-Check(ns.NextStep(rfk) == 7, "skipped Roogug: next = Agathelos")
+ns.char.progress = { key = "rfk", done = { s2 = true, s3 = true, s4 = true }, history = { "s2", "s3", "s4" }, lastSeen = time() }
+Check(ns.NextStep(rfk) == 10, "skipped Roogug: next = nearest step ahead (Heralath)")
 Check(ns.IsSkipped(rfk, 1), "Roogug marked skipped")
-ns.char.progress = { key = "rfk", done = { s2 = true, s3 = true, s4 = true, s7 = true, s11 = true }, lastSeen = time() }
+-- out of order: Agathelos (far west) first -> next is what is near him
+ns.char.progress = { key = "rfk", done = {}, history = {}, lastSeen = time() }
+ns.SetDone(rfk, 7, true)
+Check(not ns.IsDone(rfk, 6) or rfk.steps[6].kind == "rare", "out-of-order kill does not tick far steps")
+Check(ns.NextStep(rfk) == 11 or ns.NextStep(rfk) == 8, "next after Agathelos is a nearby step")
+Check(ns.NextStep(rfk) ~= 1, "not sent back to boss 1")
+ns.char.progress = { key = "rfk", done = { s2 = true, s3 = true, s4 = true, s7 = true, s9 = true, s10 = true, s11 = true }, lastSeen = time() }
 Check(ns.NextStep(rfk) == 1, "after the last boss the skipped one comes back")
 ns.char.progress = { key = "rfc", done = { s2 = true, s5 = true, s7 = true, s3 = true }, lastSeen = time() }
 Slash("next"); Check(ns.IsDone(d, BAZ), "/drg next")
