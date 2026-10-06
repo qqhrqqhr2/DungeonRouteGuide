@@ -4,6 +4,7 @@
 
 - Next objective follows the group: after each kill it points to the nearest open step on the map (steps left behind count as farther), so killing bosses out of order no longer sends you back to boss 1
 - A boss killed out of order only ticks off the talks / quest spots on its own stretch of the route
+- No more "Skipped" label in the list: bosses taken later are just open
 - Only bosses are numbered (1, 2, 3 … in route order); NPCs, rares and quest spots show an icon instead (speech bubble, star, "!")
 
 ## v1.0.2
