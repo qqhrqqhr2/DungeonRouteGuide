@@ -91,6 +91,9 @@ function ns.ItemState(id)
   local name = ns.ItemInfo(id)
   if name then ns.itemMissing[id] = nil; return "ok" end   -- late answers still count
   if ns.itemMissing[id] then return "missing" end
+  -- not in the client's item table at all: this game version lacks it
+  local exists = ns.Safe(C_Item and C_Item.DoesItemExistByID, id)
+  if ns.Readable(exists) and exists == false then ns.itemMissing[id] = true; return "missing" end
   local now = ns.Num(ns.Safe(GetTime)) or 0
   local asked = ns.itemAsked[id]
   if not asked then ns.itemAsked[id] = now
@@ -113,7 +116,13 @@ function ns.ItemInfo(id)
   local getInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
   local name, link, quality, _, _, _, _, _, _, icon = ns.Safe(getInfo, id)
   if not icon then icon = ns.Safe((C_Item and C_Item.GetItemIconByID) or GetItemIcon, id) end
-  if not name then ns.Safe(C_Item and C_Item.RequestLoadItemDataByID, id) end
+  if not ns.Str(name) then
+    ns.Safe(C_Item and C_Item.RequestLoadItemDataByID, id)
+    -- The full item info waits for the server, but the client's own item
+    -- table already knows the name and quality of most items.
+    name = ns.Safe(C_Item and C_Item.GetItemNameByID, id)
+    quality = quality or ns.Safe(C_Item and C_Item.GetItemQualityByID, id)
+  end
   if not ns.Readable(icon) or (type(icon) ~= "number" and type(icon) ~= "string") then icon = nil end
   return ns.Str(name), ns.Str(link), ns.Num(quality), icon
 end

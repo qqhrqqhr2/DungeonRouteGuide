@@ -812,6 +812,16 @@ SlashCmdList.DUNGEONROUTEGUIDE = function(msg)
   elseif cmd == "edit" then ns.SetEditMode(not state.edit)
   elseif cmd == "export" then ns.ShowExport()
   elseif cmd == "donate" or cmd == "support" or cmd == "후원" then ns.ShowDonate()
+  elseif cmd == "item" then
+    -- what the client knows about an item (for loot that stays "loading")
+    local id = tonumber(rest)
+    if id then
+      local full = ns.Str(ns.Safe((C_Item and C_Item.GetItemInfo) or GetItemInfo, id))
+      local short = ns.Str(ns.Safe(C_Item and C_Item.GetItemNameByID, id))
+      local exists = ns.Safe(C_Item and C_Item.DoesItemExistByID, id)
+      ns.Print(("item %d: info=%s name=%s exists=%s state=%s"):format(id, tostring(full), tostring(short),
+        tostring(ns.Readable(exists) and exists), ns.ItemState(id)))
+    end
   elseif cmd == "debug" then Debug()
   elseif cmd == "verbose" then ns.db.debug = not ns.db.debug; ns.Print("debug " .. ns.OnOff(ns.db.debug))
   else

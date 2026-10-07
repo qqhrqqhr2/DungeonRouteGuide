@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Item names show right away from the game's own item table instead of waiting for the server; /drg item <id> shows what the game knows about an item
 - Loading bar while item info is still coming from the server; items the game does not have are marked as such instead of "Loading…" forever
 - Long loot lists scroll: the card next to the window has a scroll bar, and the icon rows under the tip scroll with the mouse wheel
 - Loot refreshed for all dungeons from the current wowf.io lists

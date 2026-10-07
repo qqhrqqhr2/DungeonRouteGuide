@@ -118,6 +118,8 @@ GetPlayerFacing = function() return FACING end
 C_Item = {
   GetItemInfo = function(id) if id % 2 == 0 then return "Item" .. id, "|cff0070dd|Hitem:" .. id .. "|h[Item]|h|r", 3, 20, 15, "Armor", "Cloth", 1, "INVTYPE_WAIST", 133000 + id end end,
   GetItemIconByID = function(id) return 134400 end,
+  GetItemNameByID = function(id) if id % 3 == 0 then return "Local" .. id end end,
+  GetItemQualityByID = function(id) return 2 end,
   RequestLoadItemDataByID = function(id) REQUESTED = (REQUESTED or 0) + 1 end,
 }
 ITEM_QUALITY_COLORS = { [3] = { r = 0, g = 0.44, b = 0.87, hex = "|cff0070dd" } }
@@ -193,6 +195,8 @@ NOW = NOW + 30
 local set2, tot2, miss2 = ns.ItemProgress(ulda.trashGroups[#ulda.trashGroups].loot)
 Check(set2 == tot2 and miss2 > 0, "items that never answer count as missing")
 Fire("GET_ITEM_INFO_RECEIVED", 999999, false); Check(ns.itemMissing[999999], "server says no such item")
+Check(ns.ItemInfo(9) == "Local9" and ns.ItemState(9) == "ok", "client item table name used while the server is slow")
+Slash("item 9431")
 bar._scripts.OnMouseWheel(bar, -1); Check(bar.offset == 1, "mouse wheel scrolls the icons")
 ns.ShowMap(ns.DungeonByKey.dm)
 ns.state.cardTrash = nil
