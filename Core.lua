@@ -393,6 +393,17 @@ local function LeaveDungeon()
   if ns.HideMapIfAuto then ns.HideMapIfAuto() end
 end
 
+-- Sub-zone the player stands in (normalized). Dungeon floors are told apart
+-- by these names (positions are not readable inside instances).
+local function UpdateArea()
+  local z = ns.Normalize(ns.Str(ns.Safe(GetSubZoneText)))
+  if not z or z == "" then z = ns.Normalize(ns.Str(ns.Safe(GetMinimapZoneText))) end
+  if z ~= state.area then
+    state.area = z
+    state.areaChanged = true   -- the map floor follows the player again
+  end
+end
+
 function ns.UpdateLocation()
   local d = ns.DetectDungeon()
   if d ~= state.current then
@@ -407,6 +418,7 @@ function ns.UpdateLocation()
     end
   else
     state.warnedUnknown = nil
+    UpdateArea()
   end
   ns.RefreshAll()
 end
@@ -583,9 +595,11 @@ local function UpdateTarget()
   NoteInstance("target")
   local i = state.current and StepByNpc(state.current, ns.UnitNpcID("target"))
   if not i and state.current then i = StepByName(state.current, ns.Str(ns.Safe(UnitName, "target"))) end
+  local changed = state.targetStep ~= i
   state.targetStep = i
   CheckUnitDeath("target")
   if ns.RefreshHUD then ns.RefreshHUD() end
+  if changed and i and ns.RefreshMap then ns.RefreshMap() end   -- floor of the target
 end
 
 ---------------------------------------------------------------------------

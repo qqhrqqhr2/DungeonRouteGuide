@@ -1,5 +1,9 @@
 # Dungeon Route Guide
 
+## Unreleased
+
+- Multi-floor dungeons switch the map floor by themselves: by the sub-zone you stand in (Deadmines, Gnomeregan, Blackfathom Deeps, Uldaman) and by the boss or NPC you target. Picking a floor by hand holds until you walk into another area
+
 ## v1.0.3
 
 - Next objective follows the group: after each kill it points to the nearest open step on the map (steps left behind count as farther), so killing bosses out of order no longer sends you back to boss 1

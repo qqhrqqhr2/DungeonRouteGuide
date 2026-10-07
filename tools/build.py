@@ -3,6 +3,7 @@ from anchors import CFG
 from texts import TIPS, NOTES
 from routes import ROUTES, FROM
 from blizmaps import TILES
+from floorareas import AREAS
 import place as _place
 
 W = json.load(open("wowf.json", encoding="utf-8"))
@@ -53,7 +54,7 @@ def bliz_block(slug, ko, en):
     pages, stops, links, start = [], {}, [], None
     for f in ko["floors"]:
         key = str(f["id"])
-        pg = {"key": key, "tiles": floors[f["id"]]}
+        pg = {"key": key, "tiles": floors[f["id"]], "areas": AREAS.get(slug, {}).get(f["id"])}
         if multi and f.get("caption"):
             pg["name"] = (f["caption"], efl.get(f["id"], {}).get("caption") or f["caption"])
         pages.append(pg)
@@ -230,9 +231,14 @@ def build():
             for pk, mf in cfg["pages"].items():
                 nm = PAGE_NAMES.get((slug, pk))
                 mask = MASKS.get(mf, [])
+                areas = []
+                if len(cfg["pages"]) > 1:
+                    for fl, fpk in cfg["floors"].items():
+                        if fpk == pk: areas += [a for a in AREAS.get(slug, {}).get(fl, []) if a not in areas]
                 pages.append('{ key = %s, map = %s, credit = %s%s%s }' % (lua_str(pk), lua_str(mf), lua_str("Map: %s · Atlas" % CREDIT.get(mf, "Atlas")),
                              (", name = " + L(*nm)) if nm else "",
-                             (", mask = { %s }" % ", ".join(pt(m) for m in mask)) if mask else ""))
+                             ((", mask = { %s }" % ", ".join(pt(m) for m in mask)) if mask else "") +
+                             ((", areas = { %s }" % ", ".join(lua_str(a) for a in areas)) if areas else "")))
         elif meta.get("blank"):
             pages.append('{ key = "main", map = "%s", schematic = true }' % meta["sketch"])
         lines.append("    pages = { %s }," % ", ".join(pages))
@@ -292,6 +298,7 @@ def build():
             for pg in bpages:
                 tl = ", ".join("{ %s }" % ", ".join(map(str, t)) for t in pg["tiles"])
                 nm = (", name = " + L(*pg["name"])) if pg.get("name") else ""
+                if pg.get("areas"): nm += ", areas = { %s }" % ", ".join(lua_str(a) for a in pg["areas"])
                 lines.append("        { key = %s, tiles = { %s }%s }," % (lua_str(pg["key"]), tl, nm))
             lines.append("      },")
             if bstart: lines.append("      start = { page = %s, pos = %s }," % (lua_str(bstart[0]), pt(bstart[1])))

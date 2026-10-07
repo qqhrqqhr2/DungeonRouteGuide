@@ -109,8 +109,8 @@ ns.Dungeons = {
     },
     bliz = {
       pages = {
-        { key = "1", tiles = { { 449591, 449595, 449596, 449597, 449598, 449599, 449600, 449601, 449602, 449592, 449593, 449594 } }, name = { ko = "죽음의 폐광", en = "The Deadmines" } },
-        { key = "2", tiles = { { 449603, 449607, 449608, 449609, 449610, 449611, 449612, 449613, 449614, 449604, 449605, 449606 } }, name = { ko = "철갑 동굴", en = "Ironclad Cove" } },
+        { key = "1", tiles = { { 449591, 449595, 449596, 449597, 449598, 449599, 449600, 449601, 449602, 449592, 449593, 449594 } }, name = { ko = "죽음의 폐광", en = "The Deadmines" }, areas = { "Goblin Foundry", "고블린 주물 공장", "Mast Room", "목재 작업장" } },
+        { key = "2", tiles = { { 449603, 449607, 449608, 449609, 449610, 449611, 449612, 449613, 449614, 449604, 449605, 449606 } }, name = { ko = "철갑 동굴", en = "Ironclad Cove" }, areas = { "Ironclad Cove", "철갑 동굴", "Goblin Foundry", "고블린 주물 공장" } },
       },
       start = { page = "1", pos = { 266, 90 } },
       links = {
@@ -276,7 +276,7 @@ ns.Dungeons = {
     name = { ko = "검은심연의 나락", en = "Blackfathom Deeps" },
     instanceIDs = { 48 }, nameMatch = { "검은심연", "Blackfathom" },
     entrance = { map = 1440, x = 16.5, y = 11.0, zone = { ko = "잿빛 골짜기 조람 해안의 물에 잠긴 사원", en = "Sunken temple on the Zoram Strand, Ashenvale" } },
-    pages = { { key = "A", map = "CL_BlackfathomDeepsA", credit = "Map: Arith · Atlas", name = { ko = "1층", en = "Level 1" }, mask = { { 299, 64 }, { 210, 317 }, { 210, 211 }, { 39, 211 }, { 109, 391 }, { 375, 299 }, { 432, 343 }, { 475, 360 } } }, { key = "B", map = "CL_BlackfathomDeepsB", credit = "Map: Arith · Atlas", name = { ko = "2층", en = "Level 2" }, mask = { { 90, 62 }, { 132, 80 }, { 58, 194 }, { 32, 314 }, { 104, 355 }, { 192, 373 }, { 454, 397 } } }, { key = "C", map = "CL_BlackfathomDeepsC", credit = "Map: Arith · Atlas", name = { ko = "물속", en = "Underwater" }, mask = { { 442, 245 } } } },
+    pages = { { key = "A", map = "CL_BlackfathomDeepsA", credit = "Map: Arith · Atlas", name = { ko = "1층", en = "Level 1" }, mask = { { 299, 64 }, { 210, 317 }, { 210, 211 }, { 39, 211 }, { 109, 391 }, { 375, 299 }, { 432, 343 }, { 475, 360 } }, areas = { "The Pool of Ask'ar", "아스카르 연못", "The Drowned Sacellum", "가라앉은 제단" } }, { key = "B", map = "CL_BlackfathomDeepsB", credit = "Map: Arith · Atlas", name = { ko = "2층", en = "Level 2" }, mask = { { 90, 62 }, { 132, 80 }, { 58, 194 }, { 32, 314 }, { 104, 355 }, { 192, 373 }, { 454, 397 } }, areas = { "The Forgotten Pool", "잊혀진 웅덩이", "Moonshrine Ruins", "달의 제단 폐허", "Aku'mai's Lair", "아쿠마이의 둥지", "Moonshrine Sanctum", "달의 제단 성소" } }, { key = "C", map = "CL_BlackfathomDeepsC", credit = "Map: Arith · Atlas", name = { ko = "물속", en = "Underwater" }, mask = { { 442, 245 } }, areas = { "The Forgotten Pool", "잊혀진 웅덩이" } } },
     start = { page = "A", pos = { 299, 64 } },
     links = {
       { page = "A", pos = { 416, 376 }, text = { ko = "나감 → 달의 제단 성소 6", en = "Out → Moonshrine Sanctum 6" } },
@@ -286,9 +286,9 @@ ns.Dungeons = {
     },
     bliz = {
       pages = {
-        { key = "1", tiles = { { 447578, 447582, 447583, 447584, 447585, 447586, 447587, 447588, 447589, 447579, 447580, 447581 } }, name = { ko = "아스카르 연못", en = "The Pool of Ask'Ar" } },
-        { key = "2", tiles = { { 447590, 447594, 447595, 447596, 447597, 447598, 447599, 447600, 447601, 447591, 447592, 447593 } }, name = { ko = "달의 제단 성소", en = "Moonshrine Sanctum" } },
-        { key = "3", tiles = { { 447602, 447606, 447607, 447608, 447609, 447610, 447611, 447612, 447613, 447603, 447604, 447605 } }, name = { ko = "잊혀진 웅덩이", en = "The Forgotten Pool" } },
+        { key = "1", tiles = { { 447578, 447582, 447583, 447584, 447585, 447586, 447587, 447588, 447589, 447579, 447580, 447581 } }, name = { ko = "아스카르 연못", en = "The Pool of Ask'Ar" }, areas = { "The Pool of Ask'ar", "아스카르 연못", "The Drowned Sacellum", "가라앉은 제단" } },
+        { key = "2", tiles = { { 447590, 447594, 447595, 447596, 447597, 447598, 447599, 447600, 447601, 447591, 447592, 447593 } }, name = { ko = "달의 제단 성소", en = "Moonshrine Sanctum" }, areas = { "The Forgotten Pool", "잊혀진 웅덩이", "Moonshrine Ruins", "달의 제단 폐허", "Aku'mai's Lair", "아쿠마이의 둥지", "Moonshrine Sanctum", "달의 제단 성소" } },
+        { key = "3", tiles = { { 447602, 447606, 447607, 447608, 447609, 447610, 447611, 447612, 447613, 447603, 447604, 447605 } }, name = { ko = "잊혀진 웅덩이", en = "The Forgotten Pool" }, areas = { "The Forgotten Pool", "잊혀진 웅덩이" } },
       },
       start = { page = "1", pos = { 449, 71 } },
       links = {
@@ -450,10 +450,10 @@ ns.Dungeons = {
     },
     bliz = {
       pages = {
-        { key = "1", tiles = { { 449580, 449584, 449585, 449586, 449587, 449588, 449589, 449590, 449627, 449581, 449582, 449583 } }, name = { ko = "톱니바퀴의 전당", en = "The Hall of Gears" } },
-        { key = "2", tiles = { { 449628, 449632, 449633, 449634, 449635, 449636, 449637, 449638, 449639, 449629, 449630, 449631 } }, name = { ko = "거주 지구", en = "The Dormitory" } },
-        { key = "3", tiles = { { 449640, 449644, 449645, 449646, 449647, 449648, 449649, 449650, 449651, 449641, 449642, 449643 } }, name = { ko = "출격실", en = "Launch Bay" } },
-        { key = "4", tiles = { { 449652, 449656, 449657, 449658, 449659, 449660, 449661, 449662, 449663, 449653, 449654, 449655 } }, name = { ko = "땜장이 왕실", en = "Tinkers' Court" } },
+        { key = "1", tiles = { { 449580, 449584, 449585, 449586, 449587, 449588, 449589, 449590, 449627, 449581, 449582, 449583 } }, name = { ko = "톱니바퀴의 전당", en = "The Hall of Gears" }, areas = { "The Hall of Gears", "톱니바퀴의 전당", "The Dormitory", "거주 지구", "The Clean Zone", "정화 지역", "The Clockwerk Run", "태엽장치 통로" } },
+        { key = "2", tiles = { { 449628, 449632, 449633, 449634, 449635, 449636, 449637, 449638, 449639, 449629, 449630, 449631 } }, name = { ko = "거주 지구", en = "The Dormitory" }, areas = { "The Dormitory", "거주 지구", "Launch Bay", "출격실", "The Hall of Gears", "톱니바퀴의 전당", "The Clean Zone", "정화 지역" } },
+        { key = "3", tiles = { { 449640, 449644, 449645, 449646, 449647, 449648, 449649, 449650, 449651, 449641, 449642, 449643 } }, name = { ko = "출격실", en = "Launch Bay" }, areas = { "Engineering Labs", "기계공학 연구소", "Launch Bay", "출격실" } },
+        { key = "4", tiles = { { 449652, 449656, 449657, 449658, 449659, 449660, 449661, 449662, 449663, 449653, 449654, 449655 } }, name = { ko = "땜장이 왕실", en = "Tinkers' Court" }, areas = { "Engineering Labs", "기계공학 연구소", "Tinkers' Court", "땜장이 왕실" } },
       },
       start = { page = "1", pos = { 644, 193 } },
       links = {
@@ -737,8 +737,8 @@ ns.Dungeons = {
     },
     bliz = {
       pages = {
-        { key = "1", tiles = { { 448430, 448434, 448435, 448436, 448437, 448438, 448439, 448440, 448441, 448431, 448432, 448433 } }, name = { ko = "수호자의 전당", en = "Hall of the Keepers" } },
-        { key = "2", tiles = { { 448442, 448446, 448447, 448448, 448449, 448450, 448451, 448452, 448453, 448443, 448444, 448445 } }, name = { ko = "카즈고로스의 왕좌", en = "Khaz'Goroth's Seat" } },
+        { key = "1", tiles = { { 448430, 448434, 448435, 448436, 448437, 448438, 448439, 448440, 448441, 448431, 448432, 448433 } }, name = { ko = "수호자의 전당", en = "Hall of the Keepers" }, areas = { "Map Chamber", "발굴 지도실", "Echomok Cavern", "메아리 동굴", "Hall of the Keepers", "수호자의 전당", "Temple Hall", "신전 전당", "Hall of the Crafters", "장인의 전당", "Dig Three", "제3 발굴지", "Dig One", "제1 발굴지", "Dig Two", "제2 발굴지", "The Stone Vault", "지하 석실" } },
+        { key = "2", tiles = { { 448442, 448446, 448447, 448448, 448449, 448450, 448451, 448452, 448453, 448443, 448444, 448445 } }, name = { ko = "카즈고로스의 왕좌", en = "Khaz'Goroth's Seat" }, areas = { "Hall of the Crafters", "장인의 전당", "Khaz'goroth's Seat", "카즈고로스의 왕좌" } },
       },
       start = { page = "1", pos = { 671, 486 } },
       links = {

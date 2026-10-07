@@ -164,14 +164,59 @@ local function StepClick(d, i, button)
 end
 
 -- current map page of the viewed dungeon
+local function PageHasArea(p, area)
+  if not area or not p.areas then return false end
+  if not p.areaSet then
+    p.areaSet = {}
+    for _, a in ipairs(p.areas) do
+      local n = ns.Normalize(a)
+      if n then p.areaSet[n] = true end
+    end
+  end
+  return p.areaSet[area] == true
+end
+
+local function PageByKey(g, key)
+  if not key then return nil end
+  for _, p in ipairs(g.pages) do if p.key == key then return p end end
+end
+
 local function CurrentPage(d)
   if not HasMap(d) then return nil end
   local g = Geo(d)
   if state.pageDungeon ~= d or state.pageGeo ~= g then
     state.pageDungeon, state.pageGeo, state.page, state.pageManual = d, g, nil, false
   end
+  local here = (d == state.current) and #g.pages > 1
+  -- walked into another known area: drop a floor picked by hand
+  if here and state.areaChanged then
+    state.areaChanged = nil
+    for _, p in ipairs(g.pages) do
+      if PageHasArea(p, state.area) then state.pageManual = false; break end
+    end
+  end
   if state.pageManual and state.page then
-    for _, p in ipairs(g.pages) do if p.key == state.page then return p end end
+    local p = PageByKey(g, state.page)
+    if p then return p end
+  end
+  if here then
+    -- the boss / NPC in your target is on its floor
+    local p = state.targetStep and PageByKey(g, (StepGeo(d, state.targetStep)))
+    if p then return p end
+    -- the floor whose areas include the sub-zone you stand in; when several
+    -- floors share the name, the one with the next objective, else the one
+    -- already on screen
+    local fits = {}
+    for _, q in ipairs(g.pages) do
+      if PageHasArea(q, state.area) then fits[#fits + 1] = q end
+    end
+    if #fits > 0 then
+      local ni = ns.NextStep(d)
+      local want = ni and StepGeo(d, ni)
+      for _, q in ipairs(fits) do if q.key == want then return q end end
+      for _, q in ipairs(fits) do if q.key == state.shownPage then return q end end
+      return fits[1]
+    end
   end
   local i = ns.NextStep(d)
   local want = i and StepGeo(d, i)
@@ -1269,6 +1314,7 @@ function ns.RefreshMap()
     page = CurrentPage(d)
   end
   view = ViewOf(page)
+  state.shownPage = page and page.key
   local sig = tostring(d) .. tostring(view) .. tostring(ns.db.mapSize) .. tostring(ns.db.showList)
   if frame.layoutSig ~= sig then frame.layoutSig = sig; Layout() end
   local sc = Scale()

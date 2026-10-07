@@ -193,6 +193,21 @@ frows[2]._scripts.OnClick(frows[2]); Check(ns.state.page == "2" and not fl:IsSho
 fn._scripts.OnClick(fn); Check(ns.state.page == "1" and not fn:IsShown(), "jump to next objective area")
 ns.ShowMap(ns.DungeonByKey.rfc); ns.RefreshMap()
 Check(not fb:IsShown(), "single-map dungeon: no dropdown")
+-- floor follows the sub-zone you stand in
+INSTANCE = { "놈리건", "party", 1, "", 5, 0, false, 90 }
+SUBZONE = "톱니바퀴의 전당"
+Fire("PLAYER_ENTERING_WORLD")
+Check(ns.state.current == gn and ns.state.shownPage == "1", "Gnomeregan: Hall of Gears -> area 1")
+SUBZONE = "땜장이 왕실"; Fire("ZONE_CHANGED_INDOORS")
+Check(ns.state.shownPage == "4", "Tinkers' Court -> area 4")
+ns.state.page, ns.state.pageManual = "2", true; ns.RefreshMap()
+Check(ns.state.shownPage == "2", "picked by hand stays")
+SUBZONE = "출격실"; Fire("ZONE_CHANGED_INDOORS")
+Check(ns.state.shownPage == "2" or ns.state.shownPage == "3", "Launch Bay (areas 2/3) -> one of them")
+SUBZONE = "Echomok"; Fire("ZONE_CHANGED_INDOORS")
+INSTANCE = { nil, "none", nil, nil, nil, nil, nil, 0 }; SUBZONE = ""
+Fire("ZONE_CHANGED_NEW_AREA")
+DungeonRouteGuideFrame:Hide()
 -- client without the art: falls back to Atlas
 local smgy = ns.DungeonByKey.smgy
 for _, set in ipairs(smgy.bliz.pages[1].tiles) do MISSING[set[1]] = true end
