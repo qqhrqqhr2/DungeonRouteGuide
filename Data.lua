@@ -95,7 +95,7 @@ ns.Dungeons = {
     },
     trash = { 10413 },
     trashGroups = {
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 10413 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 10413 }, from = { [10413] = { { n = { ko = "송곳니의 드루이드", en = "Druid of the Fang" }, r = 2.34 } } } },
     },
     notes = { { ko = "송곳니의 드루이드는 치유의 손길을 씁니다. 차단을 나눠 맡으세요.", en = "Fanglords heal: assign interrupts." }, { ko = "층이 겹친 동굴입니다. 함부로 뛰어내리면 돌아오기 어렵습니다.", en = "Layered caves: jumping down can split the group." }, { ko = "랩터는 체력이 줄면 주변을 부릅니다. 주변을 비우고 잡으세요.", en = "Raptors call help at low health; clear around first." } },
   },
@@ -154,7 +154,7 @@ ns.Dungeons = {
     },
     trash = { 1934, 10402, 1943, 1951, 10400, 10401, 1929, 1930, 1936, 1944, 1945, 1925 },
     trashGroups = {
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 1934, 10402, 1943, 1951, 10400, 10401, 1929, 1930, 1936, 1944, 1945, 1925 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 1934, 10402, 1943, 1951, 10400, 10401, 1929, 1930, 1936, 1944, 1945, 1925 }, from = { [1934] = { { n = { ko = "데피아즈단 검은자객", en = "Defias Blackguard" }, r = 6 } }, [10402] = { { n = { ko = "데피아즈단 갱부", en = "Defias Strip Miner" }, r = 3 } }, [1943] = { { n = { ko = "고블린 조선공", en = "Goblin Shipbuilder" }, r = 6 } }, [1951] = { { n = { ko = "데피아즈단 얼음마법사", en = "Defias Squallshaper" }, r = 6 }, { n = { ko = "데피아즈단 해적", en = "Defias Pirate" }, r = 6 } }, [10400] = { { n = { ko = "데피아즈단 작업반장", en = "Defias Taskmaster" }, r = 3 }, { n = { ko = "데피아즈단 감독관", en = "Defias Overseer" }, r = 3 } }, [10401] = { { n = { ko = "데피아즈단 작업반장", en = "Defias Taskmaster" }, r = 3 }, { n = { ko = "데피아즈단 감독관", en = "Defias Overseer" }, r = 3 } }, [1929] = { { n = { ko = "데피아즈단 마술사", en = "Defias Wizard" }, r = 6 }, { n = { ko = "데피아즈단 기원사", en = "Defias Evoker" }, r = 6 } }, [1930] = { { n = { ko = "데피아즈단 광부", en = "Defias Miner" }, r = 3 } }, [1936] = { { n = { ko = "고블린 기술자", en = "Goblin Engineer" }, r = 6 } }, [1944] = { { n = { ko = "고블린 땜장이", en = "Goblin Craftsman" }, r = 5 } }, [1945] = { { n = { ko = "고블린 목공", en = "Goblin Woodcarver" }, r = 7 } }, [1925] = { { n = { ko = "데피아즈단 보초", en = "Defias Watchman" }, r = 7 } } } },
     },
     notes = { { ko = "달빛시내 마을 가는 길에 데피아즈단 정예가 돌아다닙니다. 입구 앞에서 모이세요.", en = "Defias elites roam Moonbrook; meet at the entrance." }, { ko = "밴클리프가 떨구는 '부치지 않은 편지'를 챙기세요.", en = "Loot The Unsent Letter from VanCleef." } },
   },
@@ -278,7 +278,7 @@ ns.Dungeons = {
     trashGroups = {
       { name = { ko = "죽음의 경비대장", en = "Deathsworn Captain" }, loot = { 6642, 6641 } },
       { name = { ko = "아루갈의 보이드워커", en = "Arugal's Voidwalker" }, loot = { 5943 } },
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 2292, 1974, 2807, 1935, 1483, 1318, 3194, 1484, 1489, 1482, 2205 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 2292, 1974, 2807, 1935, 1483, 1318, 3194, 1484, 1489, 1482, 2205 }, from = { [2292] = "world", [1974] = "world", [2807] = "world", [1935] = "world", [1483] = "world", [1318] = "world", [3194] = "world", [1484] = "world", [1489] = "world", [1482] = "world", [2205] = "world" } },
     },
     notes = { { ko = "레실고어 다음 감옥에서 진영 NPC를 풀어야 안뜰 문이 열립니다.", en = "Free your faction's prisoner after Rethilgore to open the courtyard." }, { ko = "지도는 여러 층을 한 장에 겹쳐 그린 것입니다.", en = "The map flattens several floors into one." } },
   },
@@ -350,7 +350,7 @@ ns.Dungeons = {
     },
     trash = { 2567, 3413, 1486, 3416, 1491, 3414, 1454, 1481, 3417, 3415, 2271 },
     trashGroups = {
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 2567, 3413, 1486, 3416, 1491, 3414, 1454, 1481, 3417, 3415, 2271 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 2567, 3413, 1486, 3416, 1491, 3414, 1454, 1481, 3417, 3415, 2271 }, from = { [2567] = "world", [3413] = "world", [1486] = "world", [3416] = "world", [1491] = "world", [3414] = "world", [1454] = "world", [1481] = "world", [3417] = "world", [3415] = "world", [2271] = "world" } },
     },
     notes = { { ko = "수중 구간이 있습니다. 수중 호흡 수단을 챙기세요.", en = "Underwater sections: bring water breathing." }, { ko = "지도는 세 장입니다. 창 아래 페이지 버튼으로 넘겨 보세요.", en = "Three map pages; switch with the page buttons." } },
   },
@@ -393,7 +393,7 @@ ns.Dungeons = {
     },
     trash = { 1076 },
     trashGroups = {
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 1076 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 1076 }, from = { [1076] = { { n = { ko = "데피아즈단 반역자", en = "Defias Insurgent" }, r = 1 } } } },
     },
     notes = { { ko = "죄수가 감방마다 뭉쳐 있습니다. 문 앞에서 끌어내 복도에서 잡으세요.", en = "Prisoners clump in cells; pull them into the corridor." }, { ko = "얼라이언스는 스톰윈드 안이라 오가기 쉽습니다.", en = "Easy access for the Alliance inside Stormwind." } },
   },
@@ -522,7 +522,7 @@ ns.Dungeons = {
     trash = { 9491, 9510, 9488, 9486, 11827, 9444, 9508, 9509, 9487, 9485, 9490, 9489, 11826, 9327, 7191, 9308, 9326, 9279, 9280, 9282, 9281, 9316, 6672, 7192, 7560 },
     trashGroups = {
       { name = { ko = "첨단로봇", en = "Techbot" }, loot = { 9444 } },
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 9491, 9510, 9488, 9486, 11827, 9508, 9509, 9487, 9485, 9490, 9489, 11826, 9327, 7191, 9308, 9326, 9279, 9280, 9282, 9281, 9316, 6672, 7192, 7560 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 11827, 9327, 7191, 9326, 9491, 9510, 9488, 9486, 9508, 9509, 9487, 9485, 9490, 9489, 9308, 11826, 9279, 9280, 9282, 9281, 9316, 6672, 7192, 7560 }, from = { [11827] = { { n = { ko = "고철 압축기 9-60", en = "Crowd Pummeler 9-60" }, r = 2 } }, [9327] = { { n = { ko = "평화감시단 방사능처리반", en = "Peacekeeper Security Suit" }, r = 2.94 }, { n = { ko = "기계화 보초병", en = "Mechanized Sentry" }, r = 2.62 }, { n = { ko = "기계보행전차", en = "Mechano-Tank" }, r = 2.32 }, { n = { ko = "기계박사 텔마플러그", en = "Mekgineer Thermaplugg" }, r = 1 }, { n = { ko = "기계화 문지기 6000", en = "Electrocutioner 6000" }, r = 1 }, { n = { ko = "고철 압축기 9-60", en = "Crowd Pummeler 9-60" }, r = 1 } }, [7191] = { { n = { ko = "평화감시단 방사능처리반", en = "Peacekeeper Security Suit" }, r = 2.64 } }, [9326] = { { n = { ko = "검은무쇠단 첩보원", en = "Dark Iron Agent" }, r = 10 } }, [9491] = "world", [9510] = "world", [9488] = "world", [9486] = "world", [9508] = "world", [9509] = "world", [9487] = "world", [9485] = "world", [9490] = "world", [9489] = "world", [9308] = "world" } },
     },
     notes = { { ko = "천공 카드 퀘스트: 흰 카드를 3005 기계에 차례로 넣습니다. A는 밖, B·C·D는 안.", en = "Punch card quest: feed the card into the 3005 machines (A outside, B/C/D inside)." }, { ko = "기계화 문지기 6000의 작업장 열쇠로 다음부터 뒷문으로 들어올 수 있습니다.", en = "Electrocutioner's Workshop Key opens the back entrance next time." } },
   },
@@ -577,7 +577,7 @@ ns.Dungeons = {
     },
     trash = { 2264, 4438, 1978, 2039, 1976, 2549, 1488, 1727, 776, 1975 },
     trashGroups = {
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 2264, 4438, 1978, 2039, 1976, 2549, 1488, 1727, 776, 1975 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 2264, 4438, 1978, 2039, 1976, 2549, 1488, 1727, 776, 1975 }, from = { [2264] = "world", [4438] = "world", [1978] = "world", [2039] = "world", [1976] = "world", [2549] = "world", [1488] = "world", [1727] = "world", [776] = "world", [1975] = "world" } },
     },
     notes = { { ko = "아겜과 차를가는 스스로 치유합니다. 차단을 준비하세요.", en = "Aggem and Charlga heal themselves; have interrupts." }, { ko = "청엽수 줄기 퀘스트는 들어오기 전에 톱니항에서 상자·지휘봉·설명서를 챙기세요.", en = "Blueleaf Tubers: grab crate, stick and manual in Ratchet first." } },
   },
@@ -613,7 +613,7 @@ ns.Dungeons = {
     },
     trash = { 7754, 10332, 7752, 7786, 7730, 5819, 7727, 7728, 2262, 7787, 7729, 7761, 8226, 7753 },
     trashGroups = {
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 7754, 10332, 7752, 7786, 7730, 5819, 7727, 7728, 2262, 7787, 7729, 7761, 8226, 7753 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 7754, 10332, 7752, 7786, 7730, 5819, 7727, 7728, 2262, 7787, 7729, 7761, 8226, 7753 }, from = { [7754] = "world", [10332] = "world", [7752] = "world", [7786] = "world", [7730] = "world", [5819] = "world", [7727] = "world", [7728] = "world", [2262] = "world", [7787] = "world", [7729] = "world", [7761] = "world", [8226] = "world", [7753] = "world" } },
     },
     notes = { { ko = "수도원 날개 넷은 입구와 인스턴스가 따로입니다. 보통 묘지→도서관→무기고→대성당 순.", en = "Four wings, separate entrances. Usual order: GY, Library, Armory, Cathedral." } },
   },
@@ -658,7 +658,7 @@ ns.Dungeons = {
     },
     trash = { 7754, 10332, 7752, 7786, 7730, 7757, 5819, 7755, 7727, 7728, 7759, 7760, 1992, 2262, 7787, 7729, 7761, 8226, 5756, 7736, 8225, 7753, 7758 },
     trashGroups = {
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 7754, 10332, 7752, 7786, 7730, 7757, 5819, 7755, 7727, 7728, 7759, 7760, 1992, 2262, 7787, 7729, 7761, 8226, 5756, 7736, 8225, 7753, 7758 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 7754, 10332, 7752, 7786, 7730, 7757, 5819, 7755, 7727, 7728, 7759, 7760, 1992, 2262, 7787, 7729, 7761, 8226, 5756, 7736, 8225, 7753, 7758 }, from = { [7754] = "world", [10332] = "world", [7752] = "world", [7786] = "world", [7730] = "world", [7757] = "world", [5819] = "world", [7755] = "world", [7727] = "world", [7728] = "world", [7759] = "world", [7760] = "world", [1992] = "world", [2262] = "world", [7787] = "world", [7729] = "world", [7761] = "world", [8226] = "world", [5756] = "world", [7736] = "world", [8225] = "world", [7753] = "world", [7758] = "world" } },
     },
     notes = { { ko = "서고에서 줍는 책: 티탄 신화(얼), 타락의 개요(호), 언데드 위협의 기원(호), 마력의 의식(마법사).", en = "Books here: Titans (A), Compendium (H), Undead Threat (H), Rituals (mage)." } },
   },
@@ -689,7 +689,7 @@ ns.Dungeons = {
     },
     trash = { 7754, 10332, 7752, 7786, 7730, 7757, 10333, 10329, 5819, 7755, 7727, 7728, 7759, 1992, 2262, 7787, 7729, 7761, 8226, 5756, 7736, 8225, 7753 },
     trashGroups = {
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 7754, 10332, 7752, 7786, 7730, 7757, 10333, 10329, 5819, 7755, 7727, 7728, 7759, 1992, 2262, 7787, 7729, 7761, 8226, 5756, 7736, 8225, 7753 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 10333, 10329, 7754, 10332, 7752, 7786, 7730, 7757, 5819, 7755, 7727, 7728, 7759, 1992, 2262, 7787, 7729, 7761, 8226, 5756, 7736, 8225, 7753 }, from = { [10333] = { { n = { ko = "붉은십자군 수호병", en = "Scarlet Protector" }, r = 2 }, { n = { ko = "붉은십자군 보초", en = "Scarlet Guardsman" }, r = 2 } }, [10329] = { { n = { ko = "붉은십자군 호위병", en = "Scarlet Defender" }, r = 2 }, { n = { ko = "붉은십자군 정예병", en = "Scarlet Myrmidon" }, r = 2 } }, [7754] = "world", [10332] = "world", [7752] = "world", [7786] = "world", [7730] = "world", [7757] = "world", [5819] = "world", [7755] = "world", [7727] = "world", [7728] = "world", [7759] = "world", [1992] = "world", [2262] = "world", [7787] = "world", [7729] = "world", [7761] = "world", [8226] = "world", [5756] = "world", [7736] = "world", [8225] = "world", [7753] = "world" } },
     },
     notes = { { ko = "헤로드가 소용돌이를 돌 때 원거리와 힐러는 떨어져 서세요.", en = "Ranged and healers stay away during Herod's Whirlwind." } },
   },
@@ -723,7 +723,7 @@ ns.Dungeons = {
     },
     trash = { 10574, 10581, 10583, 10584, 10578, 10582, 10572, 10567, 10571, 10570, 10573 },
     trashGroups = {
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 10574, 10581, 10583, 10584, 10578, 10582, 10572, 10567, 10571, 10570, 10573 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 10574, 10581, 10583, 10584, 10578, 10582, 10572, 10567, 10571, 10570, 10573 }, from = { [10574] = "world", [10581] = "world", [10583] = "world", [10584] = "world", [10578] = "world", [10582] = "world", [10572] = "world", [10567] = "world", [10571] = "world", [10570] = "world", [10573] = "world" } },
     },
     notes = { { ko = "25레벨부터 입장할 수 있습니다.", en = "Entry from level 25." } },
   },
@@ -758,7 +758,7 @@ ns.Dungeons = {
     },
     trash = { 7754, 10332, 7752, 7786, 7730, 7757, 10328, 10331, 10329, 5819, 7755, 7727, 7728, 7759, 7760, 1992, 2262, 7787, 7729, 7761, 8226, 5756, 7736, 8225, 7753, 7758 },
     trashGroups = {
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 7754, 10332, 7752, 7786, 7730, 7757, 10328, 10331, 10329, 5819, 7755, 7727, 7728, 7759, 7760, 1992, 2262, 7787, 7729, 7761, 8226, 5756, 7736, 8225, 7753, 7758 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 10328, 10331, 10329, 7754, 10332, 7752, 7786, 7730, 7757, 5819, 7755, 7727, 7728, 7759, 7760, 1992, 2262, 7787, 7729, 7761, 8226, 5756, 7736, 8225, 7753, 7758 }, from = { [10328] = { { n = { ko = "붉은십자군 용사", en = "Scarlet Champion" }, r = 0.5 } }, [10331] = { { n = { ko = "붉은십자군 백인대장", en = "Scarlet Centurion" }, r = 2 } }, [10329] = { { n = { ko = "붉은십자군 호위병", en = "Scarlet Defender" }, r = 2 }, { n = { ko = "붉은십자군 정예병", en = "Scarlet Myrmidon" }, r = 2 } }, [7754] = "world", [10332] = "world", [7752] = "world", [7786] = "world", [7730] = "world", [7757] = "world", [5819] = "world", [7755] = "world", [7727] = "world", [7728] = "world", [7759] = "world", [7760] = "world", [1992] = "world", [2262] = "world", [7787] = "world", [7729] = "world", [7761] = "world", [8226] = "world", [5756] = "world", [7736] = "world", [8225] = "world", [7753] = "world", [7758] = "world" } },
     },
     notes = { { ko = "대성당 들어가기 전, 정원 무리를 문 앞으로 끌어 따로 잡으세요. 예배당 몹을 같이 끌면 모그레인이 합세합니다.", en = "Pull courtyard packs to the door; pulling chapel mobs brings Mograine." } },
   },
@@ -805,7 +805,7 @@ ns.Dungeons = {
     },
     trash = { 9431, 9429, 9420, 9430, 9397, 9406, 9428, 9432, 9396, 9393, 9381, 9426, 9422, 9465, 9384, 9386, 9427, 9392, 9424, 9383, 9425, 9423, 9391 },
     trashGroups = {
-      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 9431, 9429, 9420, 9430, 9397, 9406, 9428, 9432, 9396, 9393, 9381, 9426, 9422, 9465, 9384, 9386, 9427, 9392, 9424, 9383, 9425, 9423, 9391 } },
+      { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 9431, 9429, 9420, 9430, 9397, 9406, 9428, 9432, 9396, 9393, 9381, 9426, 9422, 9465, 9384, 9386, 9427, 9392, 9424, 9383, 9425, 9423, 9391 }, from = { [9431] = "world", [9429] = "world", [9420] = "world", [9430] = "world", [9397] = "world", [9406] = "world", [9428] = "world", [9432] = "world", [9396] = "world", [9393] = "world", [9381] = "world", [9426] = "world", [9422] = "world", [9465] = "world", [9384] = "world", [9386] = "world", [9427] = "world", [9392] = "world", [9424] = "world", [9383] = "world", [9425] = "world", [9423] = "world", [9391] = "world" } },
     },
     notes = { { ko = "30레벨부터 입장할 수 있습니다.", en = "Entry from level 30." } },
   },

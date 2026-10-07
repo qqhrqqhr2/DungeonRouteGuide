@@ -172,6 +172,9 @@ local sfkd = ns.DungeonByKey.sfk
 Check(#sfkd.trashGroups == 3 and sfkd.trashGroups[3].trash, "SFK drops grouped: 2 named mobs + trash")
 ns.ShowMap(sfkd); ns.db.listTab = "notes"; ns.state.cardTrash = 3; ns.RefreshMap()
 Check(ns.state.cardTrash == 3, "trash card renders")
+local dmg = ns.DungeonByKey.dm.trashGroups[#ns.DungeonByKey.dm.trashGroups]
+Check(dmg.from and dmg.from[1934] and dmg.from[1934][1].r == 6, "Deadmines trash item knows its mob and chance")
+ns.ShowMap(ns.DungeonByKey.dm); ns.state.cardTrash = #ns.DungeonByKey.dm.trashGroups; ns.RefreshMap()
 ns.state.cardTrash = nil
 ns.ShowMap(wcd); ns.db.listTab = "route"; ns.RefreshMap()
 ns.state.selected = nil

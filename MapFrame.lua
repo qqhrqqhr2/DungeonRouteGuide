@@ -844,8 +844,25 @@ local function LootOnEnter(self)
   if not pcall(GameTooltip.SetItemByID, GameTooltip, self.id) then
     GameTooltip:SetHyperlink("item:" .. self.id)
   end
+  if self.from == "world" then
+    GameTooltip:AddLine(L.SRC_WORLD, 0.75, 0.75, 0.75, true)
+  elseif type(self.from) == "table" then
+    GameTooltip:AddLine(L.SRC_FROM, 1, 0.82, 0)
+    for _, s in ipairs(self.from) do
+      GameTooltip:AddDoubleLine(T(s.n), ("%.1f%%"):format(s.r), 1, 1, 1, 0.75, 0.75, 0.75)
+    end
+  end
   GameTooltip:AddLine(L.LOOT_HINT, 0.5, 0.8, 1)
   GameTooltip:Show()
+end
+
+-- one line naming where a trash item comes from
+local function SourceText(from)
+  if from == "world" then return L.SRC_WORLD end
+  if type(from) ~= "table" or not from[1] then return nil end
+  local s = ("%s %.1f%%"):format(T(from[1].n), from[1].r)
+  if #from > 1 then s = s .. " " .. L.SRC_MORE:format(#from - 1) end
+  return s
 end
 
 local function LootOnClick(self)
@@ -876,6 +893,10 @@ local function CardRow(k)
   r.name:SetPoint("LEFT", r.icon, "RIGHT", 5, 0); r.name:SetPoint("RIGHT", -2, 0)
   r.name:SetJustifyH("LEFT")
   if r.name.SetWordWrap then r.name:SetWordWrap(false) end
+  r.src = r:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+  r.src:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 0, -1); r.src:SetPoint("RIGHT", -2, 0)
+  r.src:SetJustifyH("LEFT")
+  if r.src.SetWordWrap then r.src:SetWordWrap(false) end
   local hl = r:CreateTexture(nil, "HIGHLIGHT"); hl:SetAllPoints(); hl:SetColorTexture(1, 1, 1, 0.08)
   r:RegisterForClicks("LeftButtonUp")
   r:SetScript("OnEnter", LootOnEnter)
@@ -1013,25 +1034,35 @@ function DrawCard(d)
     card.lootLabel:SetText(L.LOOT)
     ids, top = step.loot or {}, 44 + MODEL_H
   end
+  local from = group and group.from
+  local rowH = from and 30 or 21
   local avail = card:GetHeight() - (top + 28) - 22
-  local maxRows = math.max(1, math.floor(avail / 21))
+  local maxRows = math.max(1, math.floor(avail / rowH))
   local shown = 0
   for k, id in ipairs(ids) do
     if k > maxRows then break end
     local r = CardRow(k)
     r.id = id
+    r.from = from and from[id]
+    local st = SourceText(r.from)
+    r:SetHeight(rowH)
+    r.name:ClearAllPoints()
+    r.name:SetPoint(st and "TOPLEFT" or "LEFT", r.icon, st and "TOPRIGHT" or "RIGHT", 5, st and 2 or 0)
+    r.name:SetPoint("RIGHT", -2, 0)
+    r.src:SetText(st or "")
+    r.src:SetShown(st ~= nil)
     local name, _, q, icon = ns.ItemInfo(id)
     r.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
     QualityBorder(r.border, q)
     r.name:SetText(name and (ns.QualityHex(q) .. name .. "|r") or ("|cff888888#" .. id .. " " .. L.LOADING .. "|r"))
     r:ClearAllPoints()
-    r:SetPoint("TOPLEFT", card.lootLabel, "BOTTOMLEFT", -2, -4 - (k - 1) * 21)
+    r:SetPoint("TOPLEFT", card.lootLabel, "BOTTOMLEFT", -2, -4 - (k - 1) * rowH)
     r:Show()
     shown = k
   end
   for j = shown + 1, #cardRows do cardRows[j]:Hide() end
   card.more:ClearAllPoints()
-  card.more:SetPoint("TOPLEFT", card.lootLabel, "BOTTOMLEFT", 0, -6 - shown * 21)
+  card.more:SetPoint("TOPLEFT", card.lootLabel, "BOTTOMLEFT", 0, -6 - shown * rowH)
   if #ids == 0 then card.more:SetText(L.NO_LOOT)
   elseif #ids > shown then card.more:SetText(("+%d"):format(#ids - shown))
   else card.more:SetText("") end

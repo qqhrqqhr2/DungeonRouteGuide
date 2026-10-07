@@ -5,6 +5,7 @@ from routes import ROUTES, FROM
 from blizmaps import TILES
 from floorareas import AREAS
 from npcnames import NAMES
+from trashsrc import TRASH_SRC
 import place as _place
 
 W = json.load(open("wowf.json", encoding="utf-8"))
@@ -426,9 +427,22 @@ def build():
         if trash:
             lines.append("    trash = { %s }," % ", ".join(map(str, trash)))
             lines.append("    trashGroups = {")
+            ts = TRASH_SRC.get(slug, {})
             for src, ids in tgroups:
                 nm = L(src, TRASH_NAMED_EN.get(src, src)) if src else L("일반 몹", "Trash mobs")
-                lines.append("      { name = %s%s, loot = { %s } }," % (nm, "" if src else ", trash = true", ", ".join(map(str, ids))))
+                if src:
+                    lines.append("      { name = %s, loot = { %s } }," % (nm, ", ".join(map(str, ids))))
+                    continue
+                # mob-specific drops first, then drops any mob can give
+                rank = lambda i: 0 if isinstance(ts.get(i), list) else (1 if ts.get(i) == "world" else 2)
+                ids = sorted(ids, key=lambda i: (rank(i), ids.index(i)))
+                fr = []
+                for i in ids:
+                    v = ts.get(i)
+                    if v == "world": fr.append('[%d] = "world"' % i)
+                    elif v: fr.append("[%d] = { %s }" % (i, ", ".join("{ n = %s, r = %s }" % (L(a, b), ("%g" % r)) for a, b, r in v)))
+                lines.append("      { name = %s, trash = true, loot = { %s }%s }," % (nm, ", ".join(map(str, ids)),
+                             (", from = { %s }" % ", ".join(fr)) if fr else ""))
             lines.append("    },")
         notes = NOTES.get(slug, [])
         if notes:

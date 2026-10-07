@@ -16,6 +16,8 @@ Blizzard dungeon map art (default map style)
   addon. File IDs were looked up in the community listfile (wowdev/wow-listfile).
   3D boss previews use the client's creature models; display IDs from the
   CMaNGOS classic database (github.com/cmangos/classic-db).
+  Which trash mob drops an item (and how often): CMaNGOS classic loot tables
+  and spawns; Korean mob names from AzerothCore (github.com/azerothcore).
 
 Maps/Thanes.tga, Maps/Excavation.tga, Maps/RuinsLordaeron.tga: hand-drawn sketch maps
 made for this addon (layout referenced from the WOWF.IO guides; no pixels copied).
