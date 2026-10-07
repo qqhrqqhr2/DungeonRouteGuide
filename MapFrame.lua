@@ -995,6 +995,18 @@ function CreateCard()
   card.content = CreateFrame("Frame", nil, card.scroll)
   card.content:SetSize(CARD_W - 40, 10)
   card.scroll:SetScrollChild(card.content)
+  -- loading bar for item data still on its way from the server
+  local lb = CreateFrame("StatusBar", nil, card)
+  lb:SetPoint("BOTTOMLEFT", 8, 7); lb:SetPoint("BOTTOMRIGHT", -8, 7)
+  lb:SetHeight(12)
+  lb:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+  lb:SetStatusBarColor(0.25, 0.6, 1)
+  lb:SetMinMaxValues(0, 1)
+  local lbg = lb:CreateTexture(nil, "BACKGROUND"); lbg:SetAllPoints(); lbg:SetColorTexture(0, 0, 0, 0.6)
+  lb.text = lb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  lb.text:SetPoint("CENTER")
+  lb:Hide()
+  card.loadBar = lb
   card.more = card.content:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
   card.more:SetJustifyH("LEFT")
   card:SetScript("OnShow", function() card.modelFor = nil end)
@@ -1067,9 +1079,24 @@ function DrawCard(d)
   end
   local from = group and group.from
   local rowH = from and 30 or 21
+  local settled, total, missing = ns.ItemProgress(ids)
+  local loading = settled < total
+  if loading then
+    card.loadBar:SetMinMaxValues(0, total)
+    card.loadBar:SetValue(settled)
+    card.loadBar.text:SetText(L.ITEMS_LOADING:format(settled, total))
+    card.loadBar:Show()
+    -- keep ticking: items that never answer turn "missing" after a while
+    if not card.ticking and C_Timer and C_Timer.After then
+      card.ticking = true
+      C_Timer.After(1, function() card.ticking = false; if card:IsShown() then ns.RefreshMap() end end)
+    end
+  else
+    card.loadBar:Hide()
+  end
   card.scroll:ClearAllPoints()
   card.scroll:SetPoint("TOPLEFT", card.lootLabel, "BOTTOMLEFT", -2, -4)
-  card.scroll:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", -28, 8)
+  card.scroll:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", -28, loading and 24 or 8)
   -- a different list starts at the top again
   local listKey = group and ("g" .. tostring(group)) or ("s" .. tostring(step))
   if card.listKey ~= listKey then
@@ -1091,7 +1118,9 @@ function DrawCard(d)
     local name, _, q, icon = ns.ItemInfo(id)
     r.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
     QualityBorder(r.border, q)
-    r.name:SetText(name and (ns.QualityHex(q) .. name .. "|r") or ("|cff888888#" .. id .. " " .. L.LOADING .. "|r"))
+    local missingItem = not name and ns.ItemState(id) == "missing"
+    r.name:SetText(name and (ns.QualityHex(q) .. name .. "|r")
+      or ("|cff888888#" .. id .. " " .. (missingItem and L.ITEM_MISSING or L.LOADING) .. "|r"))
     r:ClearAllPoints()
     r:SetPoint("TOPLEFT", card.content, "TOPLEFT", 0, -(k - 1) * rowH)
     r:Show()
@@ -1100,8 +1129,8 @@ function DrawCard(d)
   for j = shown + 1, #cardRows do cardRows[j]:Hide() end
   card.more:ClearAllPoints()
   card.more:SetPoint("TOPLEFT", card.content, "TOPLEFT", 2, -2 - shown * rowH)
-  card.more:SetText(#ids == 0 and L.NO_LOOT or "")
-  card.content:SetHeight(math.max(10, shown * rowH + 4))
+  card.more:SetText(#ids == 0 and L.NO_LOOT or (missing > 0 and L.ITEMS_MISSING:format(missing) or ""))
+  card.content:SetHeight(math.max(10, shown * rowH + (missing > 0 and 18 or 4)))
 end
 
 ---------------------------------------------------------------------------
@@ -1302,6 +1331,8 @@ local function DrawLoot(ids, label, from)
   if maxOffset > 0 then
     label = ("%s |cff999999(%d · %s %d/%d)|r"):format(label, #ids, L.WHEEL, lootBar.offset + 1, maxOffset + 1)
   end
+  local settled, total = ns.ItemProgress(ids)
+  if settled < total then label = label .. (" |cff66b3ff%s|r"):format(L.ITEMS_LOADING:format(settled, total)) end
   lootLabel:SetText(label)
   for k = 1, maxBtn do
     local id = ids[first + k]

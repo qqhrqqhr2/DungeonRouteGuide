@@ -82,6 +82,33 @@ end
 -- Item data comes from the game client (names, icons, quality follow the
 -- game language). Returns name, link, quality, icon; name is nil until the
 -- client has the item cached (GET_ITEM_INFO_RECEIVED refreshes the UI).
+-- Item data comes from the server on demand. Items the server says do not
+-- exist, or that never answer, count as missing (not shown as loading).
+ns.itemMissing, ns.itemAsked = {}, {}
+local ITEM_WAIT = 12   -- seconds before an unanswered item counts as missing
+
+function ns.ItemState(id)
+  local name = ns.ItemInfo(id)
+  if name then ns.itemMissing[id] = nil; return "ok" end   -- late answers still count
+  if ns.itemMissing[id] then return "missing" end
+  local now = ns.Num(ns.Safe(GetTime)) or 0
+  local asked = ns.itemAsked[id]
+  if not asked then ns.itemAsked[id] = now
+  elseif now - asked > ITEM_WAIT then ns.itemMissing[id] = true; return "missing" end
+  return "loading"
+end
+
+-- loaded / total for a list of item IDs (missing ones count as settled)
+function ns.ItemProgress(ids)
+  local settled, missing = 0, 0
+  for _, id in ipairs(ids or {}) do
+    local st = ns.ItemState(id)
+    if st ~= "loading" then settled = settled + 1 end
+    if st == "missing" then missing = missing + 1 end
+  end
+  return settled, #(ids or {}), missing
+end
+
 function ns.ItemInfo(id)
   local getInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
   local name, link, quality, _, _, _, _, _, _, icon = ns.Safe(getInfo, id)

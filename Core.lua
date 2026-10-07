@@ -725,7 +725,9 @@ handlers.UNIT_HEALTH = function(unit) if state.current and Watched(unit) then Ch
 handlers.NAME_PLATE_UNIT_ADDED = function(unit) NoteInstance(unit); RareAlert(unit); CheckUnitDeath(unit) end
 handlers.LOOT_OPENED = CheckLoot
 local itemRefreshQueued = false
-handlers.GET_ITEM_INFO_RECEIVED = function()
+handlers.GET_ITEM_INFO_RECEIVED = function(itemID, success)
+  local id = ns.Num(itemID)
+  if id and success == false then ns.itemMissing[id] = true end
   if itemRefreshQueued or not (C_Timer and C_Timer.After) then return end
   itemRefreshQueued = true
   C_Timer.After(0.3, function() itemRefreshQueued = false; if ns.RefreshMap then ns.RefreshMap() end end)

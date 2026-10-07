@@ -67,6 +67,8 @@ RESETMSG = (LOCALE == "enUS") and "Ragefire Chasm has been reset." or "성난불
 RESETFAIL = (LOCALE == "enUS") and "Cannot reset Wailing Caverns. There are players still inside the instance." or "통곡의 동굴을 초기화할 수 없습니다. 인스턴스 안에 플레이어가 있습니다."
 GetLocale = function() return LOCALE or "koKR" end
 time = os.time
+NOW = 100
+GetTime = function() return NOW end
 C_Timer = { NewTicker = function() end, After = function(_, f) f() end }
 GetCursorPosition = function() return 300, 400 end
 IsShiftKeyDown = function() return SHIFT end
@@ -184,6 +186,13 @@ ns.ShowMap(ulda); ns.state.cardTrash = #ulda.trashGroups; ns.RefreshMap()
 local bar
 for _, f in ipairs(frames) do if rawget(f, "maxOffset") and f:IsShown() then bar = f end end
 Check(bar and bar.maxOffset > 0, "long icon list can scroll")
+local _, tot0 = ns.ItemProgress(ulda.trashGroups[#ulda.trashGroups].loot)
+local set1 = ns.ItemProgress(ulda.trashGroups[#ulda.trashGroups].loot)
+Check(set1 < tot0, "odd item IDs are loading (stub)")
+NOW = NOW + 30
+local set2, tot2, miss2 = ns.ItemProgress(ulda.trashGroups[#ulda.trashGroups].loot)
+Check(set2 == tot2 and miss2 > 0, "items that never answer count as missing")
+Fire("GET_ITEM_INFO_RECEIVED", 999999, false); Check(ns.itemMissing[999999], "server says no such item")
 bar._scripts.OnMouseWheel(bar, -1); Check(bar.offset == 1, "mouse wheel scrolls the icons")
 ns.ShowMap(ns.DungeonByKey.dm)
 ns.state.cardTrash = nil
