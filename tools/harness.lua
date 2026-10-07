@@ -174,7 +174,12 @@ ns.ShowMap(sfkd); ns.db.listTab = "notes"; ns.state.cardTrash = 3; ns.RefreshMap
 Check(ns.state.cardTrash == 3, "trash card renders")
 local dmg = ns.DungeonByKey.dm.trashGroups[#ns.DungeonByKey.dm.trashGroups]
 Check(dmg.from and dmg.from[1934] and dmg.from[1934][1].r == 6, "Deadmines trash item knows its mob and chance")
-ns.ShowMap(ns.DungeonByKey.dm); ns.state.cardTrash = #ns.DungeonByKey.dm.trashGroups; ns.RefreshMap()
+ns.ShowMap(ns.DungeonByKey.dm); ns.db.listTab = "route"; ns.state.cardTrash = nil; ns.RefreshMap()
+local trow
+for _, f in ipairs(frames) do if rawget(f, "group") == 1 and f:IsShown() then trow = f end end
+Check(trow ~= nil, "route list ends with a trash row")
+trow._scripts.OnClick(trow, "LeftButton"); Check(ns.state.cardTrash == 1, "clicking the trash row shows its drops")
+ns.state.cardTrash = nil
 ns.state.cardTrash = nil
 ns.ShowMap(wcd); ns.db.listTab = "route"; ns.RefreshMap()
 ns.state.selected = nil

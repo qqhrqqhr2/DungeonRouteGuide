@@ -34,6 +34,7 @@ local card, PlaceCard, CreateCard, DrawCard, CreateFloorPicker
 local CARD_W = 232
 local lootBar, lootLabel, lootBtns = nil, nil, {}
 local trashBtns = {}
+local TRASH_ICON = "Interface\\Icons\\INV_Misc_Bag_10"
 local entranceMark, tabRoute, tabQuest, tabNotes, progressText, tipText, questNote
 
 ---------------------------------------------------------------------------
@@ -462,9 +463,28 @@ local function GetRow(k)
   r.name:SetJustifyH("LEFT")
   if r.name.SetWordWrap then r.name:SetWordWrap(false) end
   r:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-  r:SetScript("OnEnter", function(self) StepTooltip(self, state.viewed, self.index) end)
+  r:SetScript("OnEnter", function(self)
+    if self.group then
+      local g = state.viewed.trashGroups[self.group]
+      GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+      GameTooltip:SetText(T(g.name), 1, 0.82, 0)
+      GameTooltip:AddLine(L.TRASH_ROW_TIP, 1, 1, 1, true)
+      GameTooltip:Show()
+    else
+      StepTooltip(self, state.viewed, self.index)
+    end
+  end)
   r:SetScript("OnLeave", GameTooltip_Hide)
-  r:SetScript("OnClick", function(self, button) StepClick(state.viewed, self.index, button) end)
+  r:SetScript("OnClick", function(self, button)
+    if self.group then
+      -- trash / off-route mob drops: list under the tip and in the card
+      state.selected = nil
+      state.cardTrash = (state.cardTrash == self.group) and nil or self.group
+      ns.RefreshMap()
+    else
+      StepClick(state.viewed, self.index, button)
+    end
+  end)
   rows[k] = r
   return r
 end
@@ -1250,7 +1270,9 @@ local function GetLootBtn(k)
 end
 
 -- Show item icons for ids (nil hides the bar). Returns the bar height used.
-local function DrawLoot(ids, label)
+local lootFrom   -- sources of the items in the bar (trash groups)
+local function DrawLoot(ids, label, from)
+  lootFrom = from
   if not ids or #ids == 0 then lootBar:Hide(); return 0 end
   lootBar:Show()
   lootLabel:SetText(label)
@@ -1260,6 +1282,7 @@ local function DrawLoot(ids, label)
     if k > maxBtn then break end
     local b = GetLootBtn(k)
     b.id = id
+    b.from = lootFrom and lootFrom[id]
     local _, _, q, icon = ns.ItemInfo(id)
     b.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
     QualityBorder(b.border, q)
@@ -1279,7 +1302,8 @@ local function HideTrashBtns() for _, b in ipairs(trashBtns) do b:Hide() end end
 local function DrawRouteList(d, nextIndex)
   HideTrashBtns()
   local avail = list:GetHeight() - 26 - 70
-  local count = 0
+  local groups = d.trashGroups or {}
+  local count = #groups
   for _, step in ipairs(d.steps) do if ns.StepVisible(step) then count = count + 1 end end
   local rowH = math.max(13, math.min(17, math.floor(avail / math.max(1, count))))
   local y, k = -26, 0
@@ -1306,12 +1330,44 @@ local function DrawRouteList(d, nextIndex)
       elseif step.kind == "fork" then r.name:SetTextColor(0.7, 0.7, 0.7)
       elseif step.optional then r.name:SetTextColor(0.82, 0.7, 1)
       else r.name:SetTextColor(1, 1, 1) end
+      r.group = nil
       r.tag:SetText(RowTag(step, d, i))
       r.bg:SetShown(state.selected == i)
       r:Show()
     end
   end
+  -- trash mobs (and named mobs off the route) at the end of the route
+  for gk, g in ipairs(groups) do
+    k = k + 1
+    local r = GetRow(k)
+    r.index, r.group = nil, gk
+    r:SetHeight(rowH)
+    r:ClearAllPoints()
+    r:SetPoint("TOPLEFT", 0, y)
+    y = y - rowH
+    r.check:Hide()
+    r.dot:SetVertexColor(0.6, 0.6, 0.6, 1); r.dot:Show()
+    r.num:SetText("")
+    r.kicon:SetTexture(TRASH_ICON); r.kicon:Show()
+    r.name:SetText(T(g.name))
+    r.name:SetTextColor(0.8, 0.8, 0.8)
+    r.tag:SetText(L.LOOT .. " " .. #g.loot)
+    r.bg:SetShown(state.cardTrash == gk)
+    r:Show()
+  end
   for j = k + 1, #rows do rows[j]:Hide() end
+  local tg = state.cardTrash and groups[state.cardTrash]
+  if tg then
+    local used = DrawLoot(tg.loot, L.LOOT .. " · " .. T(tg.name), tg.from)
+    tipText:ClearAllPoints()
+    tipText:SetPoint("TOPLEFT", 4, y - 6)
+    tipText:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", -4, used)
+    tipText:SetText("|cffffd100" .. T(tg.name) .. "|r\n" .. L.TRASH_TIP:format(#tg.loot))
+    tipText:Show()
+    for j = 1, #qrows do qrows[j]:Hide() end
+    questNote:Hide()
+    return
+  end
   local i = state.selected or nextIndex
   local step = i and d.steps[i]
   local used = DrawLoot(step and step.loot, L.LOOT .. (step and (" · " .. T(step.name)) or ""))
