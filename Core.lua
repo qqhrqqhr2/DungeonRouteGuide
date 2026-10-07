@@ -22,7 +22,7 @@ local DEFAULTS = {
   mapSize = 380, showList = true, listTab = "route",
   locked = false, autoOpen = true, hud = true, rareAlert = true, showIcon = true, lang = "auto",
   mapStyle = "blizzard",
-  routes = {}, entrances = {}, frames = {},
+  routes = {}, entrances = {}, frames = {}, names = {},
 }
 
 local function ApplyDefaults(db, defaults)
@@ -35,6 +35,48 @@ local function ApplyDefaults(db, defaults)
   end
 end
 
+---------------------------------------------------------------------------
+-- Creature names as this client shows them. The guide data can lag behind
+-- the client's translation, so names seen on targets / mouse-over replace
+-- the guide name of single-creature steps (saved, applied at login).
+---------------------------------------------------------------------------
+local function ClientLang()
+  local l = ns.Str(ns.Safe(GetLocale))
+  if l == "koKR" then return "ko" end
+  if l and l:find("^en") then return "en" end
+end
+
+local function ApplyName(npc, lang, name)
+  for _, d in ipairs(ns.Dungeons) do
+    for _, s in ipairs(d.steps) do
+      if s.npc and s.npc[1] == npc and not s.group then s.name[lang] = name end
+    end
+  end
+end
+
+function ns.LearnName(unit)
+  local npc = ns.UnitNpcID(unit)
+  local name = ns.Str(ns.Safe(UnitName, unit))
+  local lang = ClientLang()
+  if not npc or not name or name == "" or not lang then return end
+  local key = lang .. ":" .. npc
+  if ns.db.names[key] == name then return end
+  local known = false
+  for _, d in ipairs(ns.Dungeons) do
+    for _, s in ipairs(d.steps) do if s.npc and s.npc[1] == npc and not s.group then known = true end end
+  end
+  if not known then return end
+  ns.db.names[key] = name
+  ApplyName(npc, lang, name)
+end
+
+local function ApplyLearnedNames()
+  for key, name in pairs(ns.db.names) do
+    local lang, npc = key:match("^(%a+):(%d+)$")
+    if lang and type(name) == "string" then ApplyName(tonumber(npc), lang, name) end
+  end
+end
+
 function ns.InitDB()
   DungeonRouteGuideDB = DungeonRouteGuideDB or {}
   ApplyDefaults(DungeonRouteGuideDB, DEFAULTS)
@@ -43,6 +85,7 @@ function ns.InitDB()
   ns.db = DungeonRouteGuideDB
   ns.char = DungeonRouteGuideCharDB
   ns.SetLanguage(ns.db.lang)
+  ApplyLearnedNames()
 end
 
 ---------------------------------------------------------------------------
@@ -593,6 +636,7 @@ end
 
 local function UpdateTarget()
   NoteInstance("target")
+  ns.LearnName("target")
   local i = state.current and StepByNpc(state.current, ns.UnitNpcID("target"))
   if not i and state.current then i = StepByName(state.current, ns.Str(ns.Safe(UnitName, "target"))) end
   local changed = state.targetStep ~= i
@@ -687,7 +731,7 @@ handlers.GET_ITEM_INFO_RECEIVED = function()
   C_Timer.After(0.3, function() itemRefreshQueued = false; if ns.RefreshMap then ns.RefreshMap() end end)
 end
 handlers.CHAT_MSG_SYSTEM = OnSystemMessage
-handlers.UPDATE_MOUSEOVER_UNIT = function() NoteInstance("mouseover"); CheckUnitDeath("mouseover") end
+handlers.UPDATE_MOUSEOVER_UNIT = function() NoteInstance("mouseover"); ns.LearnName("mouseover"); CheckUnitDeath("mouseover") end
 handlers.UNIT_TARGET = function(unit)
   unit = ns.Str(unit)
   if state.current and unit and unit:find("^party%d$") then CheckUnitDeath(unit .. "target") end

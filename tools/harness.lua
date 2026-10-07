@@ -288,6 +288,11 @@ Slash("undo"); UNITS.party2target = nil
 UNITS.mouseover = { guid = "Creature-0-1-2-3-11519-00042", dead = true }
 Fire("UPDATE_MOUSEOVER_UNIT")
 Check(ns.IsDone(d, BAZ), "Bazzalan caught by mouseover corpse")
+UNITS.mouseover = { guid = "Creature-0-1-2-3-11519-00042", name = "바잘란 (포에버)" }
+Fire("UPDATE_MOUSEOVER_UNIT")
+local learnedLang = (GetLocale() == "koKR") and "ko" or "en"
+Check(d.steps[BAZ].name[learnedLang] == "바잘란 (포에버)" and ns.db.names[learnedLang .. ":11519"] ~= nil, "name seen in game replaces the guide name")
+d.steps[BAZ].name[learnedLang] = (learnedLang == "ko") and "바잘란" or "Bazzalan"; ns.db.names[learnedLang .. ":11519"] = nil
 Slash("undo"); UNITS.mouseover = nil
 Slash("size 460"); Slash("alpha 50"); Check(ns.db.alpha == 0.5, "alpha 50 -> 0.5")
 Slash("edit")

@@ -1,5 +1,10 @@
 # Dungeon Route Guide
 
+## Unreleased
+
+- Full monster names as wowf.io lists them (e.g. 잠들지 않는 아즈쉬르, 돌연변이 요정용 instead of shortened names)
+- When you target or mouse over a boss, the name your game client shows is remembered and used in the guide from then on
+
 ## v1.0.4
 
 - Ways to another map area are now a clear arrow button with the area name under it; click it to open that area's map

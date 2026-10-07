@@ -134,8 +134,8 @@ TIPS = {
 "scarlet-monastery-graveyard": {
  1: ("어둠의 권능: 고통과 제물. 해제 가능하면 해제하세요.", "Shadow Word: Pain and Immolate; dispel if you can."),
  2: ("비샤스 방에 갇혀 있습니다. 호드 '보렐의 복수'(결혼반지를 타렌 밀농장으로).", "Held in Vishas' room. Horde quest Vorrel's Revenge (ring to Tarren Mill)."),
- 3: ("아즈쉬르·타락한 용사·무쇠해골 중 하나가 여러 자리 중 한 곳에 나옵니다(옅은 원이 후보).",
-     "One of Azshir, the Fallen Champion or Ironspine spawns at one of several spots (faint circles)."),
+ 3: ("잠들지 않는 아즈쉬르·타락한 용사·무쇠해골 중 하나가 여러 자리 중 한 곳에 나옵니다(옅은 원이 후보).",
+     "One of Azshir the Sleepless, Fallen Champion or Ironspine spawns at one of several spots (faint circles)."),
  4: ("불의 쐐기·불꽃 회오리·화염 충격·어둠의 화살. 근접은 체력을 넉넉히. 묘지 끝 지하에 있습니다.",
      "Flame Spike, Fire Nova, Flame Shock, Shadow Bolt. Melee keep health up. In the crypt at the end."),
 },

@@ -4,6 +4,7 @@ from texts import TIPS, NOTES
 from routes import ROUTES, FROM
 from blizmaps import TILES
 from floorareas import AREAS
+from npcnames import NAMES
 import place as _place
 
 W = json.load(open("wowf.json", encoding="utf-8"))
@@ -172,6 +173,27 @@ IDS = {
  "scarlet-monastery-cathedral": {1: [4542], 2: [3976], 3: [3977]},
  "uldaman": {1: [6910], 2: [6906, 6907, 6908], 3: [7228], 4: [7023], 5: [7206], 6: [7291], 7: [4854], 8: [2748]},
 }
+# steps standing for several creatures: list them all, in full
+# (Korean names as wowf writes them on its loot lists)
+NAME_OVERRIDE = {
+ ("scarlet-monastery-graveyard", 3): ("잠들지 않는 아즈쉬르 · 타락한 용사 · 무쇠해골",
+                                      "Azshir the Sleepless · Fallen Champion · Ironspine"),
+}
+
+def full_names(slug, n, name_ko, name_en):
+    """wowf route stops sometimes shorten a name ("변이 요정용"); its loot
+    lists carry the full one ("돌연변이 요정용"). English: the creature's name."""
+    if (slug, n) in NAME_OVERRIDE: return NAME_OVERRIDE[(slug, n)]
+    labels = {b for it in LOOT.get(slug, []) for b in (it["bosses"] or []) if b}
+    if name_ko not in labels:   # already a full name when wowf lists it as is
+        longer = [b for b in labels if name_ko and name_ko in b]
+        if len(longer) == 1: name_ko = longer[0]
+    ids = IDS.get(slug, {}).get(n) or []
+    if ids and ids[0] in NAMES:
+        oe = NAMES[ids[0]]
+        if name_en != oe and name_en in oe: name_en = oe
+    return name_ko, name_en
+
 # extra placement fixes
 FIXED = {("scarlet-monastery-cathedral", 3): ("main", 282, 44)}
 
@@ -347,6 +369,7 @@ def build():
             page, pos, alts = pos_of(n)
             name_ko = s["name"] or ("갈림길" if kind == "fork" else "?")
             name_en = e["name"] or ("Junction" if kind == "fork" else "?")
+            name_ko, name_en = full_names(slug, n, name_ko, name_en)
             tip = TIPS.get(slug, {}).get(n)
             if not tip: tip = (s["desc"][:120], e["desc"][:120])
             optional = s["skip"] or kind in ("rare",)
@@ -358,6 +381,7 @@ def build():
             ids = IDS.get(slug, {}).get(n)
             if ids:
                 fields.append("npc = { %s }" % ", ".join(map(str, ids)))
+                if (slug, n) in NAME_OVERRIDE: fields.append("group = true")
                 dm = DISP.get(str(ids[0]))
                 if dm and dm["models"]: fields.append("model = %d" % dm["models"][0])
             fields.append("name = %s" % L(name_ko, name_en))
