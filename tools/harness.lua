@@ -179,6 +179,13 @@ local trow
 for _, f in ipairs(frames) do if rawget(f, "group") == 1 and f:IsShown() then trow = f end end
 Check(trow ~= nil, "route list ends with a trash row")
 trow._scripts.OnClick(trow, "LeftButton"); Check(ns.state.cardTrash == 1, "clicking the trash row shows its drops")
+local ulda = ns.DungeonByKey.ulda
+ns.ShowMap(ulda); ns.state.cardTrash = #ulda.trashGroups; ns.RefreshMap()
+local bar
+for _, f in ipairs(frames) do if rawget(f, "maxOffset") and f:IsShown() then bar = f end end
+Check(bar and bar.maxOffset > 0, "long icon list can scroll")
+bar._scripts.OnMouseWheel(bar, -1); Check(bar.offset == 1, "mouse wheel scrolls the icons")
+ns.ShowMap(ns.DungeonByKey.dm)
 ns.state.cardTrash = nil
 ns.state.cardTrash = nil
 ns.ShowMap(wcd); ns.db.listTab = "route"; ns.RefreshMap()

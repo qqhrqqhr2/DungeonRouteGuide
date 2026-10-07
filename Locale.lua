@@ -53,6 +53,7 @@ local S = {
   TRASH_NAMED     = { "경로 밖 네임드 몹", "Named mob off the route" },
   TRASH_ROW_TIP   = { "클릭: 이 몹들이 떨구는 아이템 보기", "Click: show what these mobs drop" },
   TRASH_TIP       = { "아이템 %d개. 아래 아이콘이나 옆 카드에서 아이템마다 떨구는 몹과 확률을 볼 수 있어요.", "%d items. Hover the icons below or see the card for the mob and chance of each." },
+  WHEEL           = { "휠", "wheel" },
   SRC_WORLD       = { "던전의 모든 몹 · 낮은 확률", "Any mob in the dungeon · low chance" },
   SRC_FROM        = { "떨구는 몹", "Dropped by" },
   SRC_MORE        = { "외 %d", "+%d more" },

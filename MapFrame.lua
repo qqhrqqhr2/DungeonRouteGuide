@@ -839,6 +839,12 @@ local function Create()
   lootBar:SetSize(LISTW - PAD, 62)
   lootLabel = lootBar:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
   lootLabel:SetPoint("TOPLEFT", 4, 0)
+  if lootBar.EnableMouseWheel then lootBar:EnableMouseWheel(true) end
+  lootBar:SetScript("OnMouseWheel", function(self, delta)
+    if (self.maxOffset or 0) == 0 then return end
+    self.offset = math.max(0, math.min(self.maxOffset, (self.offset or 0) - delta))
+    ns.RefreshMap()
+  end)
   questNote = list:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
   questNote:SetJustifyH("LEFT"); questNote:SetJustifyV("TOP")
   questNote:SetWidth(LISTW - 16)
@@ -902,8 +908,8 @@ local MODEL_H = 170
 local function CardRow(k)
   local r = cardRows[k]
   if r then return r end
-  r = CreateFrame("Button", nil, card)
-  r:SetSize(CARD_W - 16, 20)
+  r = CreateFrame("Button", nil, card.content)
+  r:SetSize(CARD_W - 40, 20)
   r.icon = r:CreateTexture(nil, "ARTWORK")
   r.icon:SetSize(18, 18); r.icon:SetPoint("LEFT", 1, 0)
   r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
@@ -984,7 +990,12 @@ function CreateCard()
   ns.Loc(card.noModel, "NO_MODEL")
   card.lootLabel = card:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
   card.lootLabel:SetPoint("TOPLEFT", mbg, "BOTTOMLEFT", 2, -8)
-  card.more = card:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+  -- item list scrolls (mouse wheel / scroll bar) when it is longer than the card
+  card.scroll = CreateFrame("ScrollFrame", nil, card, "UIPanelScrollFrameTemplate")
+  card.content = CreateFrame("Frame", nil, card.scroll)
+  card.content:SetSize(CARD_W - 40, 10)
+  card.scroll:SetScrollChild(card.content)
+  card.more = card.content:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
   card.more:SetJustifyH("LEFT")
   card:SetScript("OnShow", function() card.modelFor = nil end)
   card:Hide()
@@ -1051,16 +1062,22 @@ function DrawCard(d)
     card.mbg:Show()
     SetCardModel(step)
     card.lootLabel:ClearAllPoints(); card.lootLabel:SetPoint("TOPLEFT", card.mbg, "BOTTOMLEFT", 2, -8)
-    card.lootLabel:SetText(L.LOOT)
+    card.lootLabel:SetText(L.LOOT .. ((step.loot and #step.loot > 0) and (" (%d)"):format(#step.loot) or ""))
     ids, top = step.loot or {}, 44 + MODEL_H
   end
   local from = group and group.from
   local rowH = from and 30 or 21
-  local avail = card:GetHeight() - (top + 28) - 22
-  local maxRows = math.max(1, math.floor(avail / rowH))
+  card.scroll:ClearAllPoints()
+  card.scroll:SetPoint("TOPLEFT", card.lootLabel, "BOTTOMLEFT", -2, -4)
+  card.scroll:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", -28, 8)
+  -- a different list starts at the top again
+  local listKey = group and ("g" .. tostring(group)) or ("s" .. tostring(step))
+  if card.listKey ~= listKey then
+    card.listKey = listKey
+    if card.scroll.SetVerticalScroll then card.scroll:SetVerticalScroll(0) end
+  end
   local shown = 0
   for k, id in ipairs(ids) do
-    if k > maxRows then break end
     local r = CardRow(k)
     r.id = id
     r.from = from and from[id]
@@ -1076,16 +1093,15 @@ function DrawCard(d)
     QualityBorder(r.border, q)
     r.name:SetText(name and (ns.QualityHex(q) .. name .. "|r") or ("|cff888888#" .. id .. " " .. L.LOADING .. "|r"))
     r:ClearAllPoints()
-    r:SetPoint("TOPLEFT", card.lootLabel, "BOTTOMLEFT", -2, -4 - (k - 1) * rowH)
+    r:SetPoint("TOPLEFT", card.content, "TOPLEFT", 0, -(k - 1) * rowH)
     r:Show()
     shown = k
   end
   for j = shown + 1, #cardRows do cardRows[j]:Hide() end
   card.more:ClearAllPoints()
-  card.more:SetPoint("TOPLEFT", card.lootLabel, "BOTTOMLEFT", 0, -6 - shown * rowH)
-  if #ids == 0 then card.more:SetText(L.NO_LOOT)
-  elseif #ids > shown then card.more:SetText(("+%d"):format(#ids - shown))
-  else card.more:SetText("") end
+  card.more:SetPoint("TOPLEFT", card.content, "TOPLEFT", 2, -2 - shown * rowH)
+  card.more:SetText(#ids == 0 and L.NO_LOOT or "")
+  card.content:SetHeight(math.max(10, shown * rowH + 4))
 end
 
 ---------------------------------------------------------------------------
@@ -1271,15 +1287,25 @@ end
 
 -- Show item icons for ids (nil hides the bar). Returns the bar height used.
 local lootFrom   -- sources of the items in the bar (trash groups)
+-- Two rows of icons; longer lists scroll a row per mouse-wheel step.
 local function DrawLoot(ids, label, from)
   lootFrom = from
   if not ids or #ids == 0 then lootBar:Hide(); return 0 end
   lootBar:Show()
-  lootLabel:SetText(label)
   local perRow = math.floor((LISTW - PAD) / 24)
   local maxBtn = perRow * 2
-  for k, id in ipairs(ids) do
-    if k > maxBtn then break end
+  if lootBar.ids ~= ids then lootBar.ids, lootBar.offset = ids, 0 end
+  local maxOffset = math.max(0, math.ceil(#ids / perRow) - 2)
+  lootBar.offset = math.max(0, math.min(lootBar.offset or 0, maxOffset))
+  lootBar.maxOffset = maxOffset
+  local first = lootBar.offset * perRow
+  if maxOffset > 0 then
+    label = ("%s |cff999999(%d · %s %d/%d)|r"):format(label, #ids, L.WHEEL, lootBar.offset + 1, maxOffset + 1)
+  end
+  lootLabel:SetText(label)
+  for k = 1, maxBtn do
+    local id = ids[first + k]
+    if not id then break end
     local b = GetLootBtn(k)
     b.id = id
     b.from = lootFrom and lootFrom[id]
@@ -1291,7 +1317,7 @@ local function DrawLoot(ids, label, from)
     b:SetPoint("TOPLEFT", lootBar, "TOPLEFT", 2 + col * 24, -14 - row * 24)
     b:Show()
   end
-  for j = math.min(#ids, maxBtn) + 1, #lootBtns do lootBtns[j]:Hide() end
+  for j = math.min(#ids - first, maxBtn) + 1, #lootBtns do lootBtns[j]:Hide() end
   local rows_ = math.min(2, math.ceil(#ids / perRow))
   lootBar:SetHeight(14 + rows_ * 24)
   return 14 + rows_ * 24 + 4

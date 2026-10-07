@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Long loot lists scroll: the card next to the window has a scroll bar, and the icon rows under the tip scroll with the mouse wheel
 - Loot refreshed for all dungeons from the current wowf.io lists
 - Prep tab: drops of trash mobs and of named mobs off the route (e.g. Deathsworn Captain, Techbot) are grouped by source; click one to see the full item list with names
 - The Route list ends with a "Trash mobs" row (and rows for named mobs off the route); click it to see their drops under the tip and in the card
