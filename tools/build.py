@@ -184,6 +184,20 @@ def L(ko, en):
 def pt(p):
     return "{ %d, %d }" % (int(p[0]), int(p[1]))
 
+def link_dest(text):
+    """Area a floor link leads to: 'Out → X 4' / 'In ← X 4' / '⇅ X' -> 'X'."""
+    for arrow in ("→", "←", "⇅"):
+        if arrow in text:
+            rest = text.split(arrow, 1)[1]
+            rest = re.split(r"\s+\d+", rest, maxsplit=1)[0]
+            return rest.strip()
+    return text.strip()
+
+def caption_floor(slug, name_ko):
+    for f in W[slug]["ko"]["floors"]:
+        if f.get("caption") == name_ko: return f["id"]
+    return None
+
 def entrance_info(slug):
     ko = W[slug]["ko"]["entrance"]; en = W[slug]["en"]["entrance"]
     if not ko: return None
@@ -287,7 +301,12 @@ def build():
                 enl = None
                 for (fl, pos, kl) in ko_floor_labels:
                     if kl == lab["label"] and fl == lab["floor"]: enl = en_labels.get((fl, pos))
-                labs.append("{ page = %s, pos = %s, text = %s }" % (lua_str(lab["page"]), pt(lab["pos"]), L(lab["label"], enl or lab["label"])))
+                to_ko, to_en = link_dest(lab["label"]), link_dest(enl or lab["label"])
+                fl = caption_floor(slug, to_ko)
+                to_pg = cfg["floors"].get(fl) if (fl and cfg) else None
+                extra = ", to = %s" % L(to_ko, to_en)
+                if to_pg and to_pg != lab["page"]: extra += ", toPage = %s" % lua_str(to_pg)
+                labs.append("{ page = %s, pos = %s, text = %s%s }" % (lua_str(lab["page"]), pt(lab["pos"]), L(lab["label"], enl or lab["label"]), extra))
             if labs:
                 lines.append("    links = {"); lines += ["      " + l + "," for l in labs]; lines.append("    },")
         bz = bliz_block(slug, ko, en)
@@ -305,7 +324,11 @@ def build():
             if blinks:
                 lines.append("      links = {")
                 for (pg, xy, a, b) in blinks:
-                    lines.append("        { page = %s, pos = %s, text = %s }," % (lua_str(pg), pt(xy), L(a, b)))
+                    to_ko, to_en = link_dest(a), link_dest(b)
+                    fl = caption_floor(slug, to_ko)
+                    extra = ", to = %s" % L(to_ko, to_en)
+                    if fl and str(fl) != pg: extra += ", toPage = %s" % lua_str(str(fl))
+                    lines.append("        { page = %s, pos = %s, text = %s%s }," % (lua_str(pg), pt(xy), L(a, b), extra))
                 lines.append("      },")
             lines.append("      steps = {")
             for n in sorted(bstops):

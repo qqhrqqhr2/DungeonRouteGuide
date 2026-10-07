@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Ways to another map area are now a clear arrow button with the area name under it; click it to open that area's map
 - Multi-floor dungeons switch the map floor by themselves: by the sub-zone you stand in (Deadmines, Gnomeregan, Blackfathom Deeps, Uldaman) and by the boss or NPC you target. Picking a floor by hand holds until you walk into another area
 
 ## v1.0.3

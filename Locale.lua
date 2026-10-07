@@ -69,6 +69,7 @@ local S = {
   NEXT_AREA       = { "다음 목표 → %s", "Next objective → %s" },
   AREA_NEXT       = { "다음", "next" },
   AREA_LEFT       = { "남은 %d", "%d left" },
+  LINK_CLICK      = { "클릭: 이 지역 지도 보기", "Click: show this area's map" },
   OPTIONAL        = { "선택", "Optional" },
   SKIPPED         = { "건너뜀", "Skipped" },
   Q_DONE          = { "완료", "Done" },

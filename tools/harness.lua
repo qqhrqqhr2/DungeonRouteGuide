@@ -191,6 +191,12 @@ Check(fn:IsShown() and fn.key == "1", "next-objective link points to area 1")
 fb._scripts.OnClick(fb); Check(fl:IsShown(), "area list opens")
 frows[2]._scripts.OnClick(frows[2]); Check(ns.state.page == "2" and not fl:IsShown(), "pick area 2")
 fn._scripts.OnClick(fn); Check(ns.state.page == "1" and not fn:IsShown(), "jump to next objective area")
+-- floor link: area name under the arrow, click opens that area
+ns.state.page, ns.state.pageManual = "1", true; ns.RefreshMap()
+local lk
+for _, f in ipairs(frames) do if rawget(f, "toPage") == "2" and f:IsShown() then lk = f end end
+Check(lk and lk.name._text == (ns.locale == "ko" and "거주 지구" or "The Dormitory"), "link shows where it leads")
+lk._scripts.OnClick(lk); Check(ns.state.page == "2", "clicking a link opens that area")
 ns.ShowMap(ns.DungeonByKey.rfc); ns.RefreshMap()
 Check(not fb:IsShown(), "single-map dungeon: no dropdown")
 -- floor follows the sub-zone you stand in

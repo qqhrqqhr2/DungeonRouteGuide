@@ -397,20 +397,39 @@ local function GetAlt(k)
   return a
 end
 
+-- Way to another map area (floor): arrow button with the area name under it;
+-- clicking shows that area's map.
+local LINK_ICON = "Interface\\Buttons\\UI-SpellbookIcon-NextPage-Up"
 local function GetLink(k)
   local l = links[k]
   if l then return l end
   l = CreateFrame("Button", nil, overlay)
-  l:SetSize(12, 12)
-  l:SetFrameLevel(overlay:GetFrameLevel() + 1)
+  l:SetSize(18, 18)
+  l:SetFrameLevel(overlay:GetFrameLevel() + 3)
+  l.bg = Circle(l, "BACKGROUND", 18)
+  l.bg:SetVertexColor(0.05, 0.05, 0.08, 0.75)
   l.tex = l:CreateTexture(nil, "ARTWORK")
-  l.tex:SetAllPoints()
-  l.tex:SetColorTexture(CAT.link[1], CAT.link[2], CAT.link[3], 0.85)
-  l.tex:SetRotation(math.pi / 4)
+  l.tex:SetSize(22, 22); l.tex:SetPoint("CENTER")
+  l.tex:SetTexture(LINK_ICON)
+  l.name = l:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  l.name:SetPoint("TOP", l, "BOTTOM", 0, -1)
+  l.name:SetTextColor(0.55, 0.85, 1)
+  l.nameBg = l:CreateTexture(nil, "BORDER")
+  l.nameBg:SetColorTexture(0, 0, 0, 0.6)
+  l.nameBg:SetPoint("TOPLEFT", l.name, "TOPLEFT", -3, 1)
+  l.nameBg:SetPoint("BOTTOMRIGHT", l.name, "BOTTOMRIGHT", 3, -1)
   l:SetScript("OnEnter", function(self)
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT"); GameTooltip:SetText(self.label or "", 1, 1, 1, 1, true); GameTooltip:Show()
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetText(self.label or "", 1, 1, 1, 1, true)
+    if self.toPage then GameTooltip:AddLine(L.LINK_CLICK, 0.5, 0.8, 1) end
+    GameTooltip:Show()
   end)
   l:SetScript("OnLeave", GameTooltip_Hide)
+  l:SetScript("OnClick", function(self)
+    if not self.toPage then return end
+    state.page, state.pageManual = self.toPage, true
+    GameTooltip_Hide(); ns.RefreshMap()
+  end)
   links[k] = l
   return l
 end
@@ -1068,6 +1087,8 @@ local function DrawMarkers(d, page, nextIndex, sc)
       kl = kl + 1
       local l = GetLink(kl)
       l.label = T(ln.text)
+      l.toPage = ln.toPage
+      l.name:SetText(ln.to and T(ln.to) or "")
       Place(l, sc, ln.pos)
       l:Show()
     end
