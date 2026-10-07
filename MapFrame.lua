@@ -33,6 +33,7 @@ local dropdown, currentBtn
 local card, PlaceCard, CreateCard, DrawCard, CreateFloorPicker
 local CARD_W = 232
 local lootBar, lootLabel, lootBtns = nil, nil, {}
+local trashBtns = {}
 local entranceMark, tabRoute, tabQuest, tabNotes, progressText, tipText, questNote
 
 ---------------------------------------------------------------------------
@@ -157,6 +158,7 @@ local function StepClick(d, i, button)
     ns.SetDone(d, i, not ns.IsDone(d, i))
   else
     state.selected = (state.selected == i) and nil or i
+    state.cardTrash = nil
     local pg = StepGeo(d, i)
     if pg then state.page, state.pageManual = pg, true end
     ns.RefreshMap()
@@ -315,7 +317,7 @@ local function CreatePicker()
     b.lv = b:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     b.lv:SetPoint("RIGHT", -4, 0)
     b:SetScript("OnClick", function()
-      state.viewed = d; state.selected = nil
+      state.viewed = d; state.selected, state.cardTrash = nil, nil
       picker:Hide(); if floorList then floorList:Hide() end; ns.RefreshMap()
     end)
     picker.buttons[k] = b
@@ -900,7 +902,7 @@ function CreateCard()
   Backdrop(card, 0.92)
   card:SetWidth(CARD_W)
   card:EnableMouse(true)
-  local close = Btn(card, "X", 22, nil, function() state.selected = nil; ns.RefreshMap() end)
+  local close = Btn(card, "X", 22, nil, function() state.selected, state.cardTrash = nil, nil; ns.RefreshMap() end)
   close:SetPoint("TOPRIGHT", -4, -4)
   card.title = card:CreateFontString(nil, "ARTWORK", "GameFontNormal")
   card.title:SetPoint("TOPLEFT", 8, -8); card.title:SetPoint("RIGHT", close, "LEFT", -4, 0)
@@ -911,6 +913,7 @@ function CreateCard()
   local mbg = card:CreateTexture(nil, "BACKGROUND", nil, 1)
   mbg:SetPoint("TOPLEFT", 6, -44); mbg:SetPoint("TOPRIGHT", -6, -44); mbg:SetHeight(MODEL_H)
   mbg:SetColorTexture(0, 0, 0, 0.45)
+  card.mbg = mbg
   local m = CreateFrame("PlayerModel", nil, card)
   m:SetAllPoints(mbg)
   m:EnableMouse(true)
@@ -940,7 +943,6 @@ function CreateCard()
   ns.Loc(card.noModel, "NO_MODEL")
   card.lootLabel = card:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
   card.lootLabel:SetPoint("TOPLEFT", mbg, "BOTTOMLEFT", 2, -8)
-  ns.Loc(card.lootLabel, "LOOT")
   card.more = card:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
   card.more:SetJustifyH("LEFT")
   card:SetScript("OnShow", function() card.modelFor = nil end)
@@ -979,22 +981,39 @@ local function SetCardModel(step)
   card.noModel:SetShown(not ok)
 end
 
+-- Item rows of the card: the selected step's drops, or a trash group's
+-- (Prep tab) without the model.
 function DrawCard(d)
   local i = state.selected
   local step = i and d.steps[i]
-  if not step or not (step.model or step.npc or (step.loot and #step.loot > 0)) then
+  local group = state.cardTrash and d.trashGroups and d.trashGroups[state.cardTrash]
+  if state.cardTrash and not group then state.cardTrash = nil end
+  if not group and (not step or not (step.model or step.npc or (step.loot and #step.loot > 0))) then
     card:Hide(); card.modelFor = nil
     return
   end
   card:Show()
   PlaceCard()
-  card.title:SetText(ns.StepTitle(d, i))
-  local kind = L["KIND_" .. step.kind] or step.kind
-  if step.optional then kind = kind .. " · " .. L.OPTIONAL end
-  card.kind:SetText(kind)
-  SetCardModel(step)
-  local ids = step.loot or {}
-  local avail = card:GetHeight() - (44 + MODEL_H + 28) - 22
+  local ids, top
+  if group then
+    card.title:SetText(T(group.name))
+    card.kind:SetText(group.trash and L.TRASH_ALL or L.TRASH_NAMED)
+    card.mbg:Hide(); card.model:Hide(); card.noModel:Hide(); card.modelFor = nil
+    card.lootLabel:ClearAllPoints(); card.lootLabel:SetPoint("TOPLEFT", 10, -44)
+    card.lootLabel:SetText(L.LOOT .. (" (%d)"):format(#group.loot))
+    ids, top = group.loot, 44
+  else
+    card.title:SetText(ns.StepTitle(d, i))
+    local kind = L["KIND_" .. step.kind] or step.kind
+    if step.optional then kind = kind .. " · " .. L.OPTIONAL end
+    card.kind:SetText(kind)
+    card.mbg:Show()
+    SetCardModel(step)
+    card.lootLabel:ClearAllPoints(); card.lootLabel:SetPoint("TOPLEFT", card.mbg, "BOTTOMLEFT", 2, -8)
+    card.lootLabel:SetText(L.LOOT)
+    ids, top = step.loot or {}, 44 + MODEL_H
+  end
+  local avail = card:GetHeight() - (top + 28) - 22
   local maxRows = math.max(1, math.floor(avail / 21))
   local shown = 0
   for k, id in ipairs(ids) do
@@ -1224,7 +1243,10 @@ local function DrawLoot(ids, label)
   return 14 + rows_ * 24 + 4
 end
 
+local function HideTrashBtns() for _, b in ipairs(trashBtns) do b:Hide() end end
+
 local function DrawRouteList(d, nextIndex)
+  HideTrashBtns()
   local avail = list:GetHeight() - 26 - 70
   local count = 0
   for _, step in ipairs(d.steps) do if ns.StepVisible(step) then count = count + 1 end end
@@ -1277,6 +1299,7 @@ local function DrawRouteList(d, nextIndex)
 end
 
 local function DrawQuestList(d)
+  HideTrashBtns()
   for j = 1, #rows do rows[j]:Hide() end
   tipText:Hide()
   DrawLoot(nil)
@@ -1315,7 +1338,32 @@ local function DrawNotes(d)
   if d.entrance then
     parts[#parts + 1] = ("|cff4fd96f%s|r %s (%.1f, %.1f)"):format(L.LEG_ENTRANCE, T(d.entrance.zone), d.entrance.x, d.entrance.y)
   end
-  local used = DrawLoot(d.trash, L.TRASH_LOOT)
+  DrawLoot(nil)
+  -- drops of mobs that are not route steps, one button per source; the
+  -- list opens in the card next to the window
+  local groups = d.trashGroups or {}
+  local used = 0
+  for k = #groups, 1, -1 do
+    local g = groups[k]
+    local b = trashBtns[k]
+    if not b then
+      b = Btn(list, "", LISTW - PAD - 4, nil, function(self)
+        state.selected = nil
+        state.cardTrash = (state.cardTrash == self.index) and nil or self.index
+        ns.RefreshMap()
+      end)
+      trashBtns[k] = b
+    end
+    b.index = k
+    b:SetText(("%s · %s %d"):format(T(g.name), L.LOOT, #g.loot))
+    b:ClearAllPoints()
+    b:SetPoint("BOTTOMLEFT", list, "BOTTOMLEFT", 0, used)
+    b:SetAlpha(state.cardTrash == k and 1 or 0.85)
+    b:Show()
+    used = used + 22
+  end
+  for j = #groups + 1, #trashBtns do trashBtns[j]:Hide() end
+  if #groups > 0 then used = used + 4 end
   tipText:ClearAllPoints()
   tipText:SetPoint("TOPLEFT", 4, -30)
   tipText:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", -4, used)

@@ -168,6 +168,12 @@ Check((REQUESTED or 0) > 0, "uncached items requested from the client")
 Fire("GET_ITEM_INFO_RECEIVED", 6460, true)
 ns.db.listTab = "notes"; ns.RefreshMap()
 Check(wcd.trash and #wcd.trash > 0, "trash loot listed")
+local sfkd = ns.DungeonByKey.sfk
+Check(#sfkd.trashGroups == 3 and sfkd.trashGroups[3].trash, "SFK drops grouped: 2 named mobs + trash")
+ns.ShowMap(sfkd); ns.db.listTab = "notes"; ns.state.cardTrash = 3; ns.RefreshMap()
+Check(ns.state.cardTrash == 3, "trash card renders")
+ns.state.cardTrash = nil
+ns.ShowMap(wcd); ns.db.listTab = "route"; ns.RefreshMap()
 ns.state.selected = nil
 -- boss card: 3D model of the selected boss
 local model

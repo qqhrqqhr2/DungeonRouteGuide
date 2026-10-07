@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Loot refreshed for all dungeons from the current wowf.io lists
+- Prep tab: drops of trash mobs and of named mobs off the route (e.g. Deathsworn Captain, Techbot) are grouped by source; click one to see the full item list with names
 - Full monster names as wowf.io lists them (e.g. 잠들지 않는 아즈쉬르, 돌연변이 요정용 instead of shortened names)
 - When you target or mouse over a boss, the name your game client shows is remembered and used in the guide from then on
 

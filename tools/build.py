@@ -19,8 +19,14 @@ LOOT_ALIAS = {
 }
 TRASH = ("일반 몹", "—", "")
 
+# drops of named mobs that are not route steps (English names from wowf /en)
+TRASH_NAMED_EN = {"첨단로봇": "Techbot", "죽음의 경비대장": "Deathsworn Captain",
+                  "아루갈의 보이드워커": "Arugal's Voidwalker"}
+
 def loot_for(slug, stops):
-    by_step, trash = {}, []
+    """Items per route step, plus the rest grouped by source: named mobs
+    first, then plain trash ("일반 몹")."""
+    by_step, trash, groups = {}, [], {}
     for it in LOOT.get(slug, []):
         hit = False
         for b in it["bosses"] or [""]:
@@ -36,8 +42,12 @@ def loot_for(slug, stops):
                 hit = True
             elif b in TRASH or True:
                 pass
-        if not hit and it["id"] not in trash: trash.append(it["id"])
-    return by_step, trash
+        if not hit and it["id"] not in trash:
+            trash.append(it["id"])
+            src = next((b for b in (it["bosses"] or []) if b and b not in TRASH), "")
+            groups.setdefault(src, []).append(it["id"])
+    order = [k for k in groups if k] + ([""] if "" in groups else [])
+    return by_step, trash, [(k, groups[k]) for k in order]
 P = json.load(open("placed.json", encoding="utf-8"))
 # creature display IDs (classic DB) for the 3D boss preview
 DISP = json.load(open("displays.json", encoding="utf-8")) if os.path.exists("displays.json") else {}
@@ -360,7 +370,7 @@ def build():
                 lines.append("        s%d = { page = %s, pos = %s%s }," % (n, lua_str(e["page"]), pt(e["pos"]), al))
             lines.append("      },")
             lines.append("    },")
-        loot, trash = loot_for(slug, ko["stops"])
+        loot, trash, tgroups = loot_for(slug, ko["stops"])
         # steps
         lines.append("    steps = {")
         prev_page = start[0] if start else None
@@ -415,6 +425,11 @@ def build():
             lines.append("    },")
         if trash:
             lines.append("    trash = { %s }," % ", ".join(map(str, trash)))
+            lines.append("    trashGroups = {")
+            for src, ids in tgroups:
+                nm = L(src, TRASH_NAMED_EN.get(src, src)) if src else L("일반 몹", "Trash mobs")
+                lines.append("      { name = %s%s, loot = { %s } }," % (nm, "" if src else ", trash = true", ", ".join(map(str, ids))))
+            lines.append("    },")
         notes = NOTES.get(slug, [])
         if notes:
             lines.append("    notes = { %s }," % ", ".join(L(a, b) for a, b in notes))

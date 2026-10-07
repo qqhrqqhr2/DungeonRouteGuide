@@ -24,7 +24,7 @@ Dungeon facts / 던전 정보 참고
   Step order, boss / NPC / rare / quest-spot positions, alternate spawn spots,
   quest lists, boss loot (item IDs) and entrance coordinates for WoW Forever
   were referenced from
-  WOWF.IO dungeon guides (https://wowf.io/ko/dungeons, accessed 2026-10-06).
+  WOWF.IO dungeon guides (https://wowf.io/ko/dungeons, accessed 2026-10-07).
   Positions are used as they are on the Blizzard maps and were converted onto
   the Atlas maps; descriptions were rewritten
   for this addon (quest objective lines are the game's quest text).
