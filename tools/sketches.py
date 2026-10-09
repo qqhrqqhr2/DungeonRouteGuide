@@ -13,18 +13,18 @@ from PIL import Image, ImageDraw, ImageFilter, ImageChops
 N = 2048
 OUT = 1024
 
-INK = (96, 66, 34)
+INK = (86, 58, 28)
 # muted tones of the game's dungeon maps
 PAL = {
-    "floor":  (224, 208, 164),
-    "floor2": (214, 196, 150),
-    "road":   (220, 204, 160),
-    "grass":  (178, 182, 118),
-    "fel":    (162, 186, 112),
-    "arcane": (196, 180, 206),
-    "snow":   (228, 226, 214),
-    "water":  (150, 170, 172),
-    "rubble": (204, 186, 140),
+    "floor":  (222, 198, 136),
+    "floor2": (210, 184, 120),
+    "road":   (216, 190, 128),
+    "grass":  (164, 176, 92),
+    "fel":    (150, 180, 88),
+    "arcane": (184, 162, 186),
+    "snow":   (226, 220, 198),
+    "water":  (120, 148, 150),
+    "rubble": (200, 172, 112),
 }
 def noise(scale, amount, seed):
     random.seed(seed)
@@ -33,18 +33,23 @@ def noise(scale, amount, seed):
 
 
 def parchment(seed):
-    base = Image.new("RGB", (N, N), (198, 162, 100))
-    big = noise(48, 46, seed).point(lambda v: max(0, min(255, (v - 96) * 3)))
-    base = Image.composite(Image.new("RGB", (N, N), (176, 138, 78)), base, big)
+    # golden sheet with large olive-brown stains and lighter patches
+    base = Image.new("RGB", (N, N), (186, 148, 64))
+    stain = noise(40, 60, seed).filter(ImageFilter.GaussianBlur(18)).point(lambda v: max(0, min(255, (v - 110) * 4)))
+    base = Image.composite(Image.new("RGB", (N, N), (132, 104, 44)), base, stain.point(lambda v: int(v * 0.75)))
+    stain2 = noise(14, 50, seed + 7).filter(ImageFilter.GaussianBlur(50)).point(lambda v: max(0, min(255, (v - 120) * 5)))
+    base = Image.composite(Image.new("RGB", (N, N), (120, 96, 46)), base, stain2.point(lambda v: int(v * 0.55)))
     light = noise(24, 40, seed + 5).point(lambda v: max(0, min(255, (v - 150) * 4)))
-    base = Image.composite(Image.new("RGB", (N, N), (212, 178, 114)), base, light.filter(ImageFilter.GaussianBlur(30)))
-    grain = noise(2, 22, seed + 1)
-    base = ImageChops.multiply(base, Image.merge("RGB", [grain.point(lambda v: 214 + v // 6)] * 3))
+    base = Image.composite(Image.new("RGB", (N, N), (206, 170, 92)), base, light.filter(ImageFilter.GaussianBlur(30)))
+    grain = noise(2, 40, seed + 1)
+    base = ImageChops.multiply(base, Image.merge("RGB", [grain.point(lambda v: 188 + v // 4)] * 3))
+    fib = noise(1, 24, seed + 2).filter(ImageFilter.BoxBlur(1))
+    base = ImageChops.multiply(base, Image.merge("RGB", [fib.point(lambda v: 222 + v // 8)] * 3))
     # burnt, darker rim like an old map sheet
     vig = Image.new("L", (N, N), 0)
-    ImageDraw.Draw(vig).rounded_rectangle([90, 90, N - 90, N - 90], radius=140, fill=255)
-    vig = vig.filter(ImageFilter.GaussianBlur(120))
-    return Image.composite(base, Image.new("RGB", (N, N), (104, 72, 36)), vig)
+    ImageDraw.Draw(vig).rounded_rectangle([70, 70, N - 70, N - 70], radius=160, fill=255)
+    vig = vig.filter(ImageFilter.GaussianBlur(150))
+    return Image.composite(base, Image.new("RGB", (N, N), (92, 62, 28)), vig)
 
 
 def grow(mask, px):
@@ -159,15 +164,19 @@ class Sketch:
         for px in (52, 92):
             ring = ImageChops.subtract(grow(u, px + 6), grow(u, px)).filter(ImageFilter.GaussianBlur(3)).point(lambda v: int(v * 0.5))
             img = Image.composite(Image.new("RGB", (N, N), (112, 78, 40)), img, ring)
-        grain = noise(3, 20, self.seed + 9)
+        # soft cast shadow: the rooms look raised above the sheet
+        sh = grow(u, 26).filter(ImageFilter.GaussianBlur(22)).point(lambda v: int(v * 0.65))
+        sh = ImageChops.offset(sh, 10, 14)
+        img = Image.composite(Image.new("RGB", (N, N), (70, 46, 20)), img, sh)
+        grain = noise(3, 26, self.seed + 9)
         blot = noise(30, 26, self.seed + 10)
         for key, m in self.layers:
             col = PAL[key]
             # soft dark outline
-            rim = grow(m, 9).filter(ImageFilter.GaussianBlur(2))
+            rim = grow(m, 11).filter(ImageFilter.GaussianBlur(3))
             img = Image.composite(Image.new("RGB", (N, N), INK), img, rim)
             fill = Image.new("RGB", (N, N), col)
-            tex = ImageChops.add(grain.point(lambda v: v // 8), blot.point(lambda v: v // 7), 1, -28)
+            tex = ImageChops.add(grain.point(lambda v: v // 6), blot.point(lambda v: v // 5), 1, -40)
             fill = ImageChops.subtract(fill, Image.merge("RGB", [tex] * 3))
             if key == "water":
                 d = ImageDraw.Draw(fill)
@@ -176,11 +185,15 @@ class Sketch:
                     x, y = random.uniform(0, N), random.uniform(0, N)
                     l = random.uniform(14, 40)
                     d.arc([x - l, y - 5, x + l, y + 5], 200, 340, fill=(176, 194, 194), width=3)
-            img = Image.composite(fill, img, m.filter(ImageFilter.GaussianBlur(1)))
+            # 80 % paint: the paper grain still shows through, as on the game's maps
+            img = Image.composite(fill, img, m.filter(ImageFilter.GaussianBlur(1)).point(lambda v: int(v * 0.86)))
             # inner shading: darker along the walls, lighter in the middle
-            edge = ImageChops.subtract(m, shrink(m, 40)).filter(ImageFilter.GaussianBlur(16))
-            edge = ImageChops.multiply(edge, m).point(lambda v: int(v * 0.42))
-            img = Image.composite(Image.new("RGB", (N, N), tuple(int(v * 0.80) for v in col)), img, edge)
+            edge = ImageChops.subtract(m, shrink(m, 48)).filter(ImageFilter.GaussianBlur(18))
+            edge = ImageChops.multiply(edge, m).point(lambda v: int(v * 0.55))
+            img = Image.composite(Image.new("RGB", (N, N), tuple(int(v * 0.74) for v in col)), img, edge)
+            # light catches the top-left lip of each floor
+            lip = ImageChops.subtract(m, ImageChops.offset(m, 8, 8)).filter(ImageFilter.GaussianBlur(3)).point(lambda v: int(v * 0.35))
+            img = Image.composite(Image.new("RGB", (N, N), tuple(min(255, v + 34) for v in col)), img, lip)
         img.paste(self.ink, (0, 0), self.ink)
         img = img.filter(ImageFilter.GaussianBlur(1.1))
         return img.resize((OUT, OUT), Image.LANCZOS)

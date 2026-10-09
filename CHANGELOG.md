@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Redrawn sketch maps for Hall of Thanes, Excavation Site, Ruins of Lordaeron and City of Dalaran: twice the resolution and painted like the game's own dungeon maps (warm parchment, soft brown walls, contour bands around the halls, muted water and grass)
+- Redrawn sketch maps for Hall of Thanes, Excavation Site, Ruins of Lordaeron and City of Dalaran: twice the resolution and painted like the game's own dungeon maps (stained golden parchment, raised halls with soft shadows and dark walls, contour bands, muted water and grass)
 - wowf.io updates: City of Dalaran boss tactics (no longer the BlizzCon-demo notes), attunement quests for both factions in the Prep tab, how to summon Lyn the Ignored, and 10 more boss drops
 - New dungeon quests: Dalaran (Starving Arcane, Heart of Disruption for each faction) and Scarlet Monastery Library (Past Due)
 - Ruins of Lordaeron: the unconfirmed rare Lordaeron Captain is no longer listed
