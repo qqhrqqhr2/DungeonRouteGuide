@@ -5,6 +5,7 @@
 - wowf.io updates: City of Dalaran boss tactics (no longer the BlizzCon-demo notes), attunement quests for both factions in the Prep tab, how to summon Lyn the Ignored, and 10 more boss drops
 - New dungeon quests: Dalaran (Starving Arcane, Heart of Disruption for each faction) and Scarlet Monastery Library (Past Due)
 - Ruins of Lordaeron: the unconfirmed rare Lordaeron Captain is no longer listed
+- Dungeons without a map (City of Dalaran) show the route as a numbered flow chart with names in the map area
 
 ## v1.0.5
 

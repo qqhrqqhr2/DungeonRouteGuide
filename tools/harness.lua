@@ -261,7 +261,8 @@ ns.ShowMap(smgy); ns.RefreshMap()
 Check(ns.state.pageGeo == smgy.bliz and smgy.bliz.pages[1].set == smgy.bliz.pages[1].tiles[2], "second tile set used when the first is missing")
 MISSING = {}
 ns.ShowMap(ns.DungeonByKey.dala); ns.RefreshMap()
-Check(#ns.DungeonByKey.dala.pages == 0, "Dalaran list-only")
+Check(#ns.DungeonByKey.dala.pages == 0, "Dalaran has no map pages")
+Check(ns.state.shownPage == "flow" and ns.DungeonByKey.dala.flowGeo.steps.s9 ~= nil, "Dalaran shows a route flow chart")
 DungeonRouteGuideFrame:Hide()
 ns.state.viewed = nil
 

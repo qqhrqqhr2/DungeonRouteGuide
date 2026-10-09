@@ -46,6 +46,7 @@ local S = {
   BLANK_MAP       = { "지형 그림 없음 · 상대 위치만 표시", "No terrain art · relative positions only" },
   BTN_CURRENT     = { "현재 던전", "Current" },
   TIP_CURRENT     = { "지금 있는 던전 지도로 돌아갑니다", "Back to the map of the dungeon you are in" },
+  FLOW_ONLY       = { "지도 자료가 없어 진행 순서만 표시", "No map data yet: route order only" },
   SCHEMATIC       = { "약도라서 위치는 참고용", "Sketch map, positions approximate" },
   LOOT            = { "전리품", "Loot" },
   TRASH_LOOT      = { "일반 몹 드랍", "Trash drops" },

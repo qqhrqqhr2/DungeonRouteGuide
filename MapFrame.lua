@@ -104,8 +104,30 @@ local blizFailed = {}
 local function UseBliz(d)
   return (d and d.bliz and ns.db.mapStyle ~= "atlas" and not blizFailed[d.key]) and true or false
 end
+-- Dungeons without any map: the steps as a flow chart in route order
+-- (snake layout on the 512 x 512 canvas), so the map area still guides.
+local function FlowGeo(d)
+  if d.flowGeo then return d.flowGeo end
+  local order = {}
+  for i, s in ipairs(d.steps) do
+    if s.kind ~= "fork" then order[#order + 1] = i end
+  end
+  local n = #order
+  local cols = (n <= 3) and math.max(1, n) or 3
+  local rows = math.max(1, math.ceil(n / cols))
+  local steps = {}
+  for k, i in ipairs(order) do
+    local r, c = math.floor((k - 1) / cols), (k - 1) % cols
+    if r % 2 == 1 then c = cols - 1 - c end            -- snake: every other row runs back
+    steps[d.steps[i].id] = { page = "flow", pos = { math.floor(512 * (c + 1) / (cols + 1)), math.floor(60 + 400 * (r + 0.5) / rows) } }
+  end
+  d.flowGeo = { pages = { { key = "flow", flow = true, colW = 512 / (cols + 1) } }, steps = steps, order = order }
+  return d.flowGeo
+end
+
 local function Geo(d)
   if UseBliz(d) then return d.bliz end
+  if not (d.pages and #d.pages > 0) then return FlowGeo(d) end
   return d
 end
 local function HasMap(d) local g = Geo(d); return g.pages and #g.pages > 0 end
@@ -115,10 +137,11 @@ local function ViewOf(page) return (page and page.tiles) and BVIEW or AVIEW end
 local function StepGeo(d, i)
   local step = d.steps[i]
   local e = ns.Edits(d, step)
-  if UseBliz(d) then
-    local g = d.bliz.steps and d.bliz.steps[step.id]
+  local g0 = Geo(d)
+  if g0 ~= d then
+    local g = g0.steps and g0.steps[step.id]
     if not g then return nil end
-    return g.page, (e and e.bpos) or g.pos, g.alt
+    return g.page, (g0 == d.bliz and e and e.bpos) or g.pos, g.alt
   end
   if not step.pos then return nil end
   return step.page, (e and e.pos) or step.pos, step.alt
@@ -359,6 +382,9 @@ local function GetMarker(k)
   m.text:SetPoint("CENTER", 0, 0)
   m.icon = m:CreateTexture(nil, "OVERLAY")
   m.icon:SetSize(11, 11); m.icon:SetPoint("CENTER", 0, 0)
+  m.label = m:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  m.label:SetPoint("TOP", m, "BOTTOM", 0, -3)
+  m.label:Hide()
   m.badge = Circle(m, "OVERLAY", 8, 1)
   m.badge:ClearAllPoints(); m.badge:SetPoint("TOPRIGHT", 3, 3)
   m.badge:SetVertexColor(1, 0.82, 0, 1)
@@ -1166,6 +1192,14 @@ local function DrawMarkers(d, page, nextIndex, sc)
       local m = GetMarker(k)
       m.index = i
       Place(m, sc, spos)
+      if page.flow then
+        -- names wrap within their column so neighbours do not overlap
+        m.label:SetWidth(math.max(40, page.colW * sc - 8))
+        if m.label.SetWordWrap then m.label:SetWordWrap(true) end
+        m.label:SetText(T(step.name)); m.label:Show()
+      else
+        m.label:Hide()
+      end
       -- see-through so the map under the marker stays readable
       m.circle:SetVertexColor(c[1], c[2], c[3], step.optional and 0.45 or 0.6)
       if state.selected == i then m.ring:SetVertexColor(1, 1, 1, 0.9) else m.ring:SetVertexColor(0, 0, 0, 0.5) end
@@ -1275,6 +1309,32 @@ local function DrawTiles(page, sc)
     end
   end
   return set ~= nil
+end
+
+local flowLines = {}
+local function DrawFlowLines(d, page, sc)
+  local k = 0
+  if page and page.flow then
+    local g = Geo(d)
+    local prev
+    for _, i in ipairs(g.order or {}) do
+      local s = g.steps[d.steps[i].id]
+      if s and ns.StepVisible(d.steps[i]) then
+        if prev then
+          k = k + 1
+          local ln = flowLines[k]
+          if not ln then ln = overlay:CreateLine(nil, "BACKGROUND"); flowLines[k] = ln end
+          ln:SetThickness(2)
+          ln:SetColorTexture(0.7, 0.7, 0.7, 0.45)
+          ln:SetStartPoint("TOPLEFT", canvas, prev[1] * sc, -prev[2] * sc)
+          ln:SetEndPoint("TOPLEFT", canvas, s.pos[1] * sc, -s.pos[2] * sc)
+          ln:Show()
+        end
+        prev = s.pos
+      end
+    end
+  end
+  for j = k + 1, #flowLines do flowLines[j]:Hide() end
 end
 
 local function HideMapLayer()
@@ -1536,7 +1596,10 @@ function ns.RefreshMap()
   currentBtn:SetEnabled(away)
   currentBtn:SetAlpha(away and 1 or 0.45)
   if page then
-    if page.tiles then
+    if page.flow then
+      mapTex:Hide()
+      DrawTiles(nil)
+    elseif page.tiles then
       mapTex:Hide()
       DrawTiles(page, sc)
     else
@@ -1547,11 +1610,13 @@ function ns.RefreshMap()
     noMapText:SetShown(false)
     DrawMasks(page, sc)
     DrawMarkers(d, page, nextIndex, sc)
+    DrawFlowLines(d, page, sc)
   else
     mapTex:Hide()
     DrawTiles(nil)
     noMapText:Show()
     HideMapLayer()
+    DrawFlowLines(d, nil, sc)
   end
   DrawFloors(d, page)
   if ns.db.showList then
@@ -1568,6 +1633,7 @@ function ns.RefreshMap()
   if state.edit then parts[#parts + 1] = "|cffff5555EDIT|r" end
   if state.current ~= d then parts[#parts + 1] = L.BROWSE_ONLY end
   if page and page.schematic then parts[#parts + 1] = L.SCHEMATIC end
+  if page and page.flow then parts[#parts + 1] = L.FLOW_ONLY end
   footer:SetText(table.concat(parts, " · "))
   DrawCard(d)
   RefreshMenu()
@@ -1644,6 +1710,7 @@ function ns.EditClick(button)
   local sc = Scale()
   local x = math.floor((cx / s - canvas:GetLeft()) / sc + view[1] + 0.5)
   local y = math.floor((canvas:GetTop() - cy / s) / sc + view[2] + 0.5)
+  if not (d.pages and #d.pages > 0) and not UseBliz(d) then return end   -- flow chart
   local field = UseBliz(d) and "bpos" or "pos"
   if button == "RightButton" then
     local e = ns.Edits(d, step)
