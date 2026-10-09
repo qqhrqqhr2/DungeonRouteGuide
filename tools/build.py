@@ -135,7 +135,7 @@ META = {
  "hall-of-thanes": dict(key="thanes", ids=[3065], match=["영주의 전당", "Hall of Thanes"], map=1455, blank=True, sketch="Thanes"),
  "excavation-site": dict(key="excav", ids=[2998], match=["발굴 현장", "Excavation Site"], map=1437, blank=True, sketch="Excavation"),
  "ruins-of-lordaeron": dict(key="rol", ids=[2999], match=["로데론의 폐허", "Ruins of Lordaeron"], map=None, blank=True, sketch="RuinsLordaeron"),
- "dalaran": dict(key="dala", ids=[], match=["달라란", "Dalaran"], map=None, nomap=True),
+ "dalaran": dict(key="dala", ids=[], match=["달라란", "Dalaran"], map=None, blank=True, sketch="Dalaran"),
 }
 SM_RESET = ["붉은십자군 수도원", "Scarlet Monastery"]
 
@@ -204,6 +204,12 @@ def full_names(slug, n, name_ko, name_en):
         oe = NAMES[ids[0]]
         if name_en != oe and name_en in oe: name_en = oe
     return name_ko, name_en
+
+# Sketch maps drawn from the guide text alone (no positions on wowf yet):
+# 512 px positions of the steps and the entrance on the sketch.
+SKETCH_POS = {
+ "dalaran": {"start": (30, 453), 1: (330, 453), 2: (386, 262), 3: (385, 172), 4: (134, 250), 7: (150, 453), 9: (256, 112)},
+}
 
 # extra placement fixes
 FIXED = {("scarlet-monastery-cathedral", 3): ("main", 282, 44)}
@@ -298,6 +304,8 @@ def build():
                 if e and e["pos"]: return e["page"], tuple(e["pos"]), [tuple(a) for a in e["alt"]]
                 return None, None, []
             if meta.get("blank"):
+                sp = SKETCH_POS.get(slug, {}).get(n)
+                if sp: return "main", sp, []
                 for f in ko["floors"]:
                     for p in f["pins"]:
                         if p.get("stop") == n and not p.get("alt"):
@@ -314,6 +322,7 @@ def build():
             for lab in pl["labels"]:
                 if lab["label"] == "입구": start = (lab["page"], lab["pos"])
         elif meta.get("blank"):
+            if "start" in SKETCH_POS.get(slug, {}): start = ("main", SKETCH_POS[slug]["start"])
             for f in ko["floors"]:
                 for p in f["pins"]:
                     if p.get("label") == "입구": start = ("main", (round(p["pos"][0] * 5.12), round(p["pos"][1] * 5.12)))
@@ -386,7 +395,8 @@ def build():
             optional = s["skip"] or kind in ("rare",)
             fields = ['id = "s%d"' % n, 'n = "%d"' % n, 'kind = "%s"' % kind]
             if optional: fields.append("optional = true")
-            if s.get("unconfirmed"): fields.append("unconfirmed = true")
+            if s.get("unconfirmed") or (meta.get("blank") and kind != "fork" and not pos_of(n)[1]):
+                fields.append("unconfirmed = true")
             if s.get("where"):
                 fields.append("outside = %s" % L(s["where"], e.get("where") or s["where"]))
             ids = IDS.get(slug, {}).get(n)

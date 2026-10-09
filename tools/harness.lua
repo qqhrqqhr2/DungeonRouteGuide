@@ -112,7 +112,11 @@ C_Map = {
   GetWorldPosFromMapPos = function(map, v) return 1, CreateVector2D(v.x * 1000, v.y * 1000) end,
   GetMapPosFromWorldPos = function(cont, wp, map) return map, CreateVector2D(wp.x / 1000, wp.y / 1000) end,
   GetMapWorldSize = function() return 1000, 700 end,
-  GetMapInfo = function(id) return { name = "Map" .. id } end,
+  GetMapInfo = function(id)
+    if id == 2959 then return { name = "로데론의 폐허", mapType = 4 } end
+    return { name = "Map" .. id }
+  end,
+  GetMapArtLayerTextures = function(id, layer) if id == 2959 then return { 1,2,3,4,5,6,7,8,9,10,11,12 } end return {} end,
 }
 GetPlayerFacing = function() return FACING end
 C_Item = {
@@ -261,8 +265,12 @@ ns.ShowMap(smgy); ns.RefreshMap()
 Check(ns.state.pageGeo == smgy.bliz and smgy.bliz.pages[1].set == smgy.bliz.pages[1].tiles[2], "second tile set used when the first is missing")
 MISSING = {}
 ns.ShowMap(ns.DungeonByKey.dala); ns.RefreshMap()
-Check(#ns.DungeonByKey.dala.pages == 0, "Dalaran has no map pages")
-Check(ns.state.shownPage == "flow" and ns.DungeonByKey.dala.flowGeo.steps.s9 ~= nil, "Dalaran shows a route flow chart")
+Check(ns.DungeonByKey.dala.pages[1].schematic and ns.state.shownPage == "main", "Dalaran shows its sketch map")
+-- a dungeon without any map gets the route as a flow chart
+local dalaPages = ns.DungeonByKey.dala.pages
+ns.DungeonByKey.dala.pages = {}; ns.RefreshMap()
+Check(ns.state.shownPage == "flow" and ns.DungeonByKey.dala.flowGeo.steps.s9 ~= nil, "no map -> route flow chart")
+ns.DungeonByKey.dala.pages = dalaPages; ns.RefreshMap()
 DungeonRouteGuideFrame:Hide()
 ns.state.viewed = nil
 
@@ -351,6 +359,10 @@ ns.db.listTab = "route"
 ns.CycleViewed(1); Check(ns.state.viewed.key == "thanes", "cycle to next dungeon")
 ns.CycleViewed(-1)
 Slash("reset")
+Slash("mapscan")
+Check(ns.db.mapscan and ns.db.mapscan[1] and ns.db.mapscan[1].dungeon == "rol", "map scan finds Ruins of Lordaeron")
+Check(ns.DungeonByKey.rol.bliz and ns.DungeonByKey.rol.bliz.preview, "found map becomes a preview")
+ns.DungeonByKey.rol.bliz = nil; ns.db.mapscan = nil
 Slash("debug")
 Slash("donate"); Check(DungeonRouteGuideDonate:IsShown() and DungeonRouteGuideDonate.box._text == ns.DONATE_URL, "/drg donate shows the link")
 DungeonRouteGuideDonate:Hide()

@@ -86,6 +86,7 @@ function ns.InitDB()
   ns.char = DungeonRouteGuideCharDB
   ns.SetLanguage(ns.db.lang)
   ApplyLearnedNames()
+  for _, rec in ipairs(ns.db.mapscan or {}) do UsePreview(rec) end
 end
 
 ---------------------------------------------------------------------------
@@ -379,6 +380,53 @@ local function NameMatches(d, name)
     if name:find(frag, 1, true) then return true end
   end
   return false
+end
+
+---------------------------------------------------------------------------
+-- Official map scan (outside instances only: C_Map is not readable inside).
+-- Finds the game's own dungeon maps for our dungeons and their art tiles;
+-- dungeons that have no Blizzard map in the data get a preview from them.
+---------------------------------------------------------------------------
+local function UsePreview(rec)
+  local d = ns.DungeonByKey[rec.dungeon]
+  if not d or (d.bliz and not d.bliz.preview) or type(rec.tiles) ~= "table" or #rec.tiles ~= 12 then return end
+  if rec.kind ~= 4 then return end                      -- dungeon maps only, not zones / cities
+  local sketchOnly = true                                -- only dungeons drawn as sketches or without a map
+  for _, p in ipairs(d.pages or {}) do if not p.schematic then sketchOnly = false end end
+  if not sketchOnly then return end
+  d.bliz = d.bliz or { preview = true, pages = {}, steps = {} }
+  for _, p in ipairs(d.bliz.pages) do if p.key == tostring(rec.map) then return end end
+  d.bliz.pages[#d.bliz.pages + 1] = { key = tostring(rec.map), tiles = { rec.tiles }, name = { ko = rec.name, en = rec.name } }
+end
+
+function ns.MapScan()
+  local getInfo = C_Map and C_Map.GetMapInfo
+  local getTex = C_Map and C_Map.GetMapArtLayerTextures
+  if not getInfo or not getTex then ns.Print(L.SCAN_NONE); return end
+  local found = {}
+  for id = 1, 5000 do
+    local info = ns.Safe(getInfo, id)
+    local name = type(info) == "table" and ns.Str(info.name)
+    if name then
+      for _, d in ipairs(ns.Dungeons) do
+        if NameMatches(d, name) then
+          local tex = ns.Safe(getTex, id, 1)
+          local tiles = {}
+          if type(tex) == "table" then
+            for _, f in ipairs(tex) do local n = ns.Num(f); if n then tiles[#tiles + 1] = n end end
+          end
+          local rec = { map = id, name = name, kind = ns.Num(info.mapType), dungeon = d.key, tiles = tiles }
+          found[#found + 1] = rec
+          ns.Print(L.SCAN_HIT:format(id, name, rec.kind or -1, #tiles))
+          break
+        end
+      end
+    end
+  end
+  ns.db.mapscan = found
+  for _, rec in ipairs(found) do UsePreview(rec) end
+  ns.Print(L.SCAN_DONE:format(#found))
+  if ns.RebuildMap then ns.RebuildMap() end
 end
 
 function ns.InstanceInfo()
@@ -812,6 +860,7 @@ SlashCmdList.DUNGEONROUTEGUIDE = function(msg)
   elseif cmd == "edit" then ns.SetEditMode(not state.edit)
   elseif cmd == "export" then ns.ShowExport()
   elseif cmd == "donate" or cmd == "support" or cmd == "후원" then ns.ShowDonate()
+  elseif cmd == "mapscan" then ns.MapScan()
   elseif cmd == "item" then
     -- what the client knows about an item (for loot that stays "loading")
     local id = tonumber(rest)

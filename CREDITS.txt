@@ -19,8 +19,9 @@ Blizzard dungeon map art (default map style)
   Which trash mob drops an item (and how often): CMaNGOS classic loot tables
   and spawns; Korean mob names from AzerothCore (github.com/azerothcore).
 
-Maps/Thanes.tga, Maps/Excavation.tga, Maps/RuinsLordaeron.tga: hand-drawn sketch maps
-made for this addon (layout referenced from the WOWF.IO guides; no pixels copied).
+Maps/Thanes.tga, Maps/Excavation.tga, Maps/RuinsLordaeron.tga, Maps/Dalaran.tga: hand-drawn
+sketch maps made for this addon (layout referenced from the WOWF.IO guides; no pixels copied;
+Dalaran drawn from the guide text only).
 
 Dungeon facts / 던전 정보 참고
   Step order, boss / NPC / rare / quest-spot positions, alternate spawn spots,

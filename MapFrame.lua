@@ -1634,6 +1634,7 @@ function ns.RefreshMap()
   if state.current ~= d then parts[#parts + 1] = L.BROWSE_ONLY end
   if page and page.schematic then parts[#parts + 1] = L.SCHEMATIC end
   if page and page.flow then parts[#parts + 1] = L.FLOW_ONLY end
+  if page and page.tiles and d.bliz and d.bliz.preview then parts[#parts + 1] = L.PREVIEW_MAP end
   footer:SetText(table.concat(parts, " · "))
   DrawCard(d)
   RefreshMenu()

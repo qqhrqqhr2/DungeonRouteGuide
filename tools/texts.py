@@ -263,5 +263,6 @@ NOTES = {
              "Horde attunement: finish Magus Wordeen Voidglare's other quests in Tarren Mill, then Blood in the Streets (from 30) → Heart of Disruption → Shrewd Negotiations (Archmage Celindra)."),
             ("희귀 외면받는 린: 그림자송곳니 성채 아루갈 뒤의 Black Tome을 은빛소나무 숲 앰버밀(63.4, 64.3)의 수정에 쓰면 달라란의 책이 됩니다.",
              "Rare Lyn the Ignored: use the Black Tome (behind Arugal, Shadowfang Keep) on the crystal at Ambermill, Silverpine (63.4, 64.3) to make the Tome of Dalaran."),
-            ("지도 자료가 없어 목록만 제공합니다.", "No map data yet; list only.")],
+            ("지도는 공략 글의 구역 순서로 그린 약도입니다(아직 실제 지형 자료가 없음). 위치 미확인 우두머리는 목록에만 있습니다.",
+             "The map is a sketch drawn from the guide's area order (no terrain data yet). Bosses with unknown spots are in the list only.")],
 }

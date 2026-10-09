@@ -5,7 +5,9 @@
 - wowf.io updates: City of Dalaran boss tactics (no longer the BlizzCon-demo notes), attunement quests for both factions in the Prep tab, how to summon Lyn the Ignored, and 10 more boss drops
 - New dungeon quests: Dalaran (Starving Arcane, Heart of Disruption for each faction) and Scarlet Monastery Library (Past Due)
 - Ruins of Lordaeron: the unconfirmed rare Lordaeron Captain is no longer listed
-- Dungeons without a map (City of Dalaran) show the route as a numbered flow chart with names in the map area
+- City of Dalaran gets a sketch map like the other new Forever dungeons (drawn from the guide's area order: sewers, Round Terrace, Fel Grove, Magus Commerce Exchange, Violet Citadel); bosses with unknown spots stay in the list
+- /drg mapscan (outside dungeons) looks for the game's own maps of the dungeons; the new Forever dungeons can preview a found map with Options > Map art: Blizzard
+- A dungeon without any map shows the route as a numbered flow chart instead of an empty area
 
 ## v1.0.5
 
