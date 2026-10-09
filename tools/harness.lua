@@ -264,13 +264,31 @@ Slash("map blizzard")
 ns.ShowMap(smgy); ns.RefreshMap()
 Check(ns.state.pageGeo == smgy.bliz and smgy.bliz.pages[1].set == smgy.bliz.pages[1].tiles[2], "second tile set used when the first is missing")
 MISSING = {}
-ns.ShowMap(ns.DungeonByKey.dala); ns.RefreshMap()
-Check(ns.DungeonByKey.dala.pages[1].schematic and ns.state.shownPage == "main", "Dalaran shows its sketch map")
+-- new Forever dungeons: the game's minimap tiles, sketch when they are missing
+local dala = ns.DungeonByKey.dala
+TEXSET = {}
+ns.ShowMap(dala); ns.RefreshMap()
+local mm = dala.bliz.pages[1]
+Check(ns.state.pageGeo == dala.bliz and mm.grid and TEXSET[mm.grid.tiles[1][1]] and TEXSET[mm.grid.tiles[#mm.grid.tiles][1]], "Dalaran shows the minimap tiles")
+for _, k in ipairs({ "thanes", "excav", "rol" }) do
+  local g = ns.DungeonByKey[k].bliz
+  local v = g.pages[1].view
+  local ok = g.pages[1].grid and g.start ~= nil
+  for _, s in pairs(g.steps) do
+    if s.pos[1] < v[1] or s.pos[1] > v[1] + v[3] or s.pos[2] < v[2] or s.pos[2] > v[2] + v[4] then ok = false end
+  end
+  Check(ok, k .. " minimap spots inside the view")
+end
+MISSING[mm.grid.tiles[1][1]] = true; mm.set = nil
+ns.ShowMap(dala); ns.RefreshMap()
+Check(ns.state.pageGeo == dala and dala.pages[1].schematic and ns.state.shownPage == "main", "minimap missing -> Dalaran sketch map")
+MISSING = {}; mm.set = nil
+Slash("map blizzard")
 -- a dungeon without any map gets the route as a flow chart
-local dalaPages = ns.DungeonByKey.dala.pages
-ns.DungeonByKey.dala.pages = {}; ns.RefreshMap()
-Check(ns.state.shownPage == "flow" and ns.DungeonByKey.dala.flowGeo.steps.s9 ~= nil, "no map -> route flow chart")
-ns.DungeonByKey.dala.pages = dalaPages; ns.RefreshMap()
+local dalaPages, dalaBliz = dala.pages, dala.bliz
+dala.pages = {}; dala.bliz = nil; ns.RefreshMap()
+Check(ns.state.shownPage == "flow" and dala.flowGeo.steps.s9 ~= nil, "no map -> route flow chart")
+dala.pages = dalaPages; dala.bliz = dalaBliz; ns.RefreshMap()
 DungeonRouteGuideFrame:Hide()
 ns.state.viewed = nil
 
@@ -359,10 +377,12 @@ ns.db.listTab = "route"
 ns.CycleViewed(1); Check(ns.state.viewed.key == "thanes", "cycle to next dungeon")
 ns.CycleViewed(-1)
 Slash("reset")
+local rolBliz = ns.DungeonByKey.rol.bliz
+ns.DungeonByKey.rol.bliz = nil
 Slash("mapscan")
 Check(ns.db.mapscan and ns.db.mapscan[1] and ns.db.mapscan[1].dungeon == "rol", "map scan finds Ruins of Lordaeron")
 Check(ns.DungeonByKey.rol.bliz and ns.DungeonByKey.rol.bliz.preview, "found map becomes a preview")
-ns.DungeonByKey.rol.bliz = nil; ns.db.mapscan = nil
+ns.DungeonByKey.rol.bliz = rolBliz; ns.db.mapscan = nil
 Slash("debug")
 Slash("donate"); Check(DungeonRouteGuideDonate:IsShown() and DungeonRouteGuideDonate.box._text == ns.DONATE_URL, "/drg donate shows the link")
 DungeonRouteGuideDonate:Hide()

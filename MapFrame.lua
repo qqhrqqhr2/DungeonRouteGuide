@@ -131,7 +131,10 @@ local function Geo(d)
   return d
 end
 local function HasMap(d) local g = Geo(d); return g.pages and #g.pages > 0 end
-local function ViewOf(page) return (page and page.tiles) and BVIEW or AVIEW end
+local function ViewOf(page)
+  if page and page.view then return page.view end
+  return (page and page.tiles) and BVIEW or AVIEW
+end
 
 -- page, position and alternate spots of a step in the shown map style
 local function StepGeo(d, i)
@@ -1279,9 +1282,16 @@ end
 
 -- Blizzard map: pick the first tile set the client has (some maps moved to
 -- other file IDs between client versions). nil = none of them loads.
+-- Minimap pages (page.grid): 512 px tiles at absolute minimap positions.
 local function TileSet(page)
   if page.set ~= nil then return page.set or nil end
   page.set = false
+  if page.grid then
+    local first = page.grid.tiles[1]
+    local ok, loaded = pcall(tiles[1].SetTexture, tiles[1], first and first[1])
+    if first and ok and loaded ~= false then page.set = page.grid end
+    return page.set or nil
+  end
   for _, set in ipairs(page.tiles) do
     local ok, loaded = pcall(tiles[1].SetTexture, tiles[1], set[1])
     if ok and loaded ~= false then page.set = set; break end
@@ -1290,24 +1300,29 @@ local function TileSet(page)
 end
 
 local function DrawTiles(page, sc)
-  local set = page and page.tiles and TileSet(page)
-  for k = 1, 12 do
-    local t = tiles[k]
-    local col, row = (k - 1) % 4, math.floor((k - 1) / 4)
-    local tx, ty = col * 256, row * 256
-    local x0, x1 = math.max(tx, view[1]), math.min(tx + 256, view[1] + view[3])
-    local y0, y1 = math.max(ty, view[2]), math.min(ty + 256, view[2] + view[4])
-    if set and x1 > x0 and y1 > y0 then
-      t:SetTexture(set[k])
-      t:SetTexCoord((x0 - tx) / 256, (x1 - tx) / 256, (y0 - ty) / 256, (y1 - ty) / 256)
-      t:ClearAllPoints()
-      t:SetPoint("TOPLEFT", canvas, "TOPLEFT", (x0 - view[1]) * sc, -(y0 - view[2]) * sc)
-      t:SetSize((x1 - x0) * sc, (y1 - y0) * sc)
-      t:Show()
-    else
-      t:Hide()
-    end
+  local set = page and (page.tiles or page.grid) and TileSet(page)
+  local n = 0
+  local function put(file, tx, ty, size)
+    local x0, x1 = math.max(tx, view[1]), math.min(tx + size, view[1] + view[3])
+    local y0, y1 = math.max(ty, view[2]), math.min(ty + size, view[2] + view[4])
+    if x1 <= x0 or y1 <= y0 then return end
+    n = n + 1
+    local t = tiles[n]
+    if not t then t = canvas:CreateTexture(nil, "BACKGROUND"); tiles[n] = t end
+    t:SetTexture(file)
+    t:SetTexCoord((x0 - tx) / size, (x1 - tx) / size, (y0 - ty) / size, (y1 - ty) / size)
+    t:ClearAllPoints()
+    t:SetPoint("TOPLEFT", canvas, "TOPLEFT", (x0 - view[1]) * sc, -(y0 - view[2]) * sc)
+    t:SetSize((x1 - x0) * sc, (y1 - y0) * sc)
+    t:Show()
   end
+  if set and page.grid then
+    local size = page.grid.size or 512
+    for _, g in ipairs(page.grid.tiles) do put(g[1], g[2] * size, g[3] * size, size) end
+  elseif set then
+    for k = 1, 12 do put(set[k], ((k - 1) % 4) * 256, math.floor((k - 1) / 4) * 256, 256) end
+  end
+  for k = n + 1, #tiles do tiles[k]:Hide() end
   return set ~= nil
 end
 
@@ -1582,7 +1597,7 @@ function ns.RefreshMap()
   local nextIndex = ns.NextStep(d)
   local page = CurrentPage(d)
   -- Blizzard art missing from this client: fall back to Atlas for the dungeon
-  if page and page.tiles and not TileSet(page) then
+  if page and (page.tiles or page.grid) and not TileSet(page) then
     blizFailed[d.key] = true
     page = CurrentPage(d)
   end
@@ -1599,7 +1614,7 @@ function ns.RefreshMap()
     if page.flow then
       mapTex:Hide()
       DrawTiles(nil)
-    elseif page.tiles then
+    elseif page.tiles or page.grid then
       mapTex:Hide()
       DrawTiles(page, sc)
     else
@@ -1634,6 +1649,7 @@ function ns.RefreshMap()
   if state.current ~= d then parts[#parts + 1] = L.BROWSE_ONLY end
   if page and page.schematic then parts[#parts + 1] = L.SCHEMATIC end
   if page and page.flow then parts[#parts + 1] = L.FLOW_ONLY end
+  if page and page.approx then parts[#parts + 1] = L.APPROX end
   if page and page.tiles and d.bliz and d.bliz.preview then parts[#parts + 1] = L.PREVIEW_MAP end
   footer:SetText(table.concat(parts, " · "))
   DrawCard(d)

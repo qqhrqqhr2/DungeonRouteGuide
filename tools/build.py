@@ -3,6 +3,7 @@ from anchors import CFG
 from texts import TIPS, NOTES
 from routes import ROUTES, FROM
 from blizmaps import TILES
+import minimaps as MM
 from floorareas import AREAS
 from npcnames import NAMES
 from trashsrc import TRASH_SRC
@@ -108,6 +109,30 @@ def bliz_block(slug, ko, en):
         placed.append((e["page"], x, y))
     return pages, stops, links, start
 
+# New Forever dungeons: the game's minimap tiles of the dungeon map (absolute
+# minimap px, see minimaps.py); wowf % positions fitted onto them.
+def minimap_block(slug, ko):
+    if slug not in MM.TILES: return None
+    vx, vy, vw, vh = MM.VIEW[slug]
+    tiles = [t for t in MM.TILES[slug]["tiles"] if t[1] * 512 < vx + vw and t[1] * 512 + 512 > vx and t[2] * 512 < vy + vh and t[2] * 512 + 512 > vy]
+    page = {"key": "main", "grid": tiles, "view": MM.VIEW[slug], "approx": slug == "dalaran"}
+    stops, start = {}, None
+    def r(p): return (int(round(p[0])), int(round(p[1])))
+    if slug in MM.FIT:
+        for p in ko["floors"][0]["pins"]:
+            xy = r(MM.to_px(slug, p["pos"]))
+            if "stop" in p:
+                e = stops.setdefault(p["stop"], {"page": "main", "pos": None, "alt": []})
+                if p.get("alt"): e["alt"].append(xy)
+                else: e["pos"] = xy
+            elif p["label"] == "입구" and start is None:
+                start = ("main", xy)
+    else:
+        for n, xy in MM.DALARAN.items():
+            if n == "start": start = ("main", xy)
+            else: stops[n] = {"page": "main", "pos": xy, "alt": []}
+    return [page], stops, [], start
+
 ORDER = ["ragefire-chasm", "hall-of-thanes", "wailing-caverns", "deadmines", "ruins-of-lordaeron", "shadowfang-keep",
          "blackfathom-deeps", "stockade", "excavation-site", "dalaran", "gnomeregan", "razorfen-kraul",
          "scarlet-monastery-graveyard", "scarlet-monastery-library", "scarlet-monastery-armory",
@@ -135,7 +160,7 @@ META = {
  "hall-of-thanes": dict(key="thanes", ids=[3065], match=["영주의 전당", "Hall of Thanes"], map=1455, blank=True, sketch="Thanes"),
  "excavation-site": dict(key="excav", ids=[2998], match=["발굴 현장", "Excavation Site"], map=1437, blank=True, sketch="Excavation"),
  "ruins-of-lordaeron": dict(key="rol", ids=[2999], match=["로데론의 폐허", "Ruins of Lordaeron"], map=None, blank=True, sketch="RuinsLordaeron"),
- "dalaran": dict(key="dala", ids=[], match=["달라란", "Dalaran"], map=None, blank=True, sketch="Dalaran"),
+ "dalaran": dict(key="dala", ids=[2959], match=["달라란", "Dalaran"], map=None, blank=True, sketch="Dalaran"),
 }
 SM_RESET = ["붉은십자군 수도원", "Scarlet Monastery"]
 
@@ -351,12 +376,17 @@ def build():
                 labs.append("{ page = %s, pos = %s, text = %s%s }" % (lua_str(lab["page"]), pt(lab["pos"]), L(lab["label"], enl or lab["label"]), extra))
             if labs:
                 lines.append("    links = {"); lines += ["      " + l + "," for l in labs]; lines.append("    },")
-        bz = bliz_block(slug, ko, en)
+        bz = bliz_block(slug, ko, en) or minimap_block(slug, ko)
         if bz:
             bpages, bstops, blinks, bstart = bz
             lines.append("    bliz = {")
             lines.append("      pages = {")
             for pg in bpages:
+                if pg.get("grid"):
+                    tl = ", ".join("{ %d, %d, %d }" % t for t in pg["grid"])
+                    lines.append("        { key = %s, grid = { size = 512, tiles = { %s } }, view = { %s }%s }," % (lua_str(pg["key"]), tl,
+                                 ", ".join(map(str, pg["view"])), ", approx = true" if pg.get("approx") else ""))
+                    continue
                 tl = ", ".join("{ %s }" % ", ".join(map(str, t)) for t in pg["tiles"])
                 nm = (", name = " + L(*pg["name"])) if pg.get("name") else ""
                 if pg.get("areas"): nm += ", areas = { %s }" % ", ".join(lua_str(a) for a in pg["areas"])

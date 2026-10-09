@@ -49,6 +49,18 @@ ns.Dungeons = {
     entrance = { map = 1455, x = 43.6, y = 51.7, zone = { ko = "아이언포지 왕좌의 방(마그니 왕)에서 왼쪽 길로 내려가 옛 아이언포지로", en = "Take the left path from King Magni's throne room down into Old Ironforge" } },
     pages = { { key = "main", map = "Thanes", schematic = true } },
     start = { page = "main", pos = { 251, 493 } },
+    bliz = {
+      pages = {
+        { key = "main", grid = { size = 512, tiles = { { 7726086, 31, 30 }, { 7726092, 32, 30 }, { 7726140, 31, 31 }, { 7726146, 32, 31 }, { 7726194, 31, 32 }, { 7726200, 32, 32 } } }, view = { 16125, 15772, 535, 739 } },
+      },
+      start = { page = "main", pos = { 16385, 16481 } },
+      steps = {
+        s1 = { page = "main", pos = { 16389, 16332 } },
+        s2 = { page = "main", pos = { 16554, 16239 } },
+        s3 = { page = "main", pos = { 16385, 16246 } },
+        s4 = { page = "main", pos = { 16384, 16044 } },
+      },
+    },
     steps = {
       { id = "s1", n = "1", kind = "boss", name = { ko = "팔드림 앤빌마", en = "Faldrim Anvilmar" }, page = "main", pos = { 255, 341 }, loot = { 270227, 271096, 271097 }, tip = { ko = "입구 다음 큰 방(앤빌마의 휴식처). 망령이 가득하니 앞만 비우든 방을 다 치우든 편한 대로. 정신 분열은 차단, 탱커 공속을 늦추는 저주를 겁니다.", en = "Big hall past the entrance, full of ghosts; clear in front or the whole room. Interrupt Mind Blast; curse slows the tank's attacks." } },
       { id = "s2", n = "2", kind = "boss", name = { ko = "마그마투스", en = "Magmatus" }, page = "main", pos = { 440, 246 }, loot = { 270230, 270231, 271095 }, tip = { ko = "휴식처에서 동쪽 깊은 곳. 소환사와 함께 오니 소환사부터. 연소(차단 불가, 12초 화염)와 즉시 화염 폭발. 비근접은 떨어져 서세요.", en = "Deep to the east. Comes with a Summoner: kill it first. Combust (12s, can't kick) and instant Fire Nova; non-melee stand back." } },
@@ -164,6 +176,21 @@ ns.Dungeons = {
     instanceIDs = { 2999 }, nameMatch = { "로데론의 폐허", "Ruins of Lordaeron" },
     pages = { { key = "main", map = "RuinsLordaeron", schematic = true } },
     start = { page = "main", pos = { 323, 112 } },
+    bliz = {
+      pages = {
+        { key = "main", grid = { size = 512, tiles = { { 7255730, 30, 28 }, { 7255736, 31, 28 }, { 7255742, 32, 28 }, { 7255748, 30, 29 }, { 7255754, 31, 29 }, { 7255760, 32, 29 } } }, view = { 15860, 14494, 600, 670 } },
+      },
+      start = { page = "main", pos = { 16231, 14652 } },
+      steps = {
+        s1 = { page = "main", pos = { 16256, 14626 } },
+        s2 = { page = "main", pos = { 16318, 14787 } },
+        s3 = { page = "main", pos = { 16246, 14938 } },
+        s4 = { page = "main", pos = { 16045, 14816 } },
+        s5 = { page = "main", pos = { 16041, 14711 } },
+        s6 = { page = "main", pos = { 16106, 14913 } },
+        s7 = { page = "main", pos = { 16023, 14921 } },
+      },
+    },
     steps = {
       { id = "s1", n = "1", kind = "npc", optional = true, name = { ko = "트루먼 대위", en = "Captain Truman" }, page = "main", pos = { 347, 91 }, quest = true, quests = { 95250 }, tip = { ko = "입구를 나와 바로 왼쪽(북쪽) 벽돌 길의 NPC. 얼라이언스 '흉측한 괴물들'을 주고받습니다(남작의 머리).", en = "Just left (north) of the entrance on the brick path. Alliance quest Abominable Creatures (the Baron's head)." } },
       { id = "s2", n = "2", kind = "boss", name = { ko = "쇠퇴송곳니", en = "Witherfang" }, page = "main", pos = { 404, 221 }, quest = true, loot = { 271203, 271201, 271202 }, quests = { 95216 }, tip = { ko = "동쪽 거미 구역 넓은 방. 쫄 셋을 달고 긴 복도를 순찰하니, 자리를 비운 사이 남은 무리를 치우세요. 탱커에게 흡혈 독. 호드 '새로운 역병'의 균주.", en = "Big room in the east spider area. Patrols the hallway with three adds; clear while she's away. Leech Poison on the tank. Horde quest item." } },
@@ -403,6 +430,18 @@ ns.Dungeons = {
     entrance = { map = 1437, x = 47.8, y = 56.3, zone = { ko = "저습지 웰가르의 발굴현장 남동쪽 언덕 위의 포털", en = "Portal on the hill southeast of Whelgar's Excavation Site, Wetlands" } },
     pages = { { key = "main", map = "Excavation", schematic = true } },
     start = { page = "main", pos = { 343, 242 } },
+    bliz = {
+      pages = {
+        { key = "main", grid = { size = 512, tiles = { { 7287260, 34, 38 }, { 7287262, 35, 38 }, { 7287264, 36, 38 }, { 7287266, 34, 39 }, { 7287268, 35, 39 }, { 7287270, 36, 39 } } }, view = { 17836, 19782, 1000, 620 } },
+      },
+      start = { page = "main", pos = { 18760, 20002 } },
+      steps = {
+        s1 = { page = "main", pos = { 18413, 20029 } },
+        s2 = { page = "main", pos = { 18139, 20092 } },
+        s3 = { page = "main", pos = { 17955, 20024 } },
+        s4 = { page = "main", pos = { 18230, 20219 } },
+      },
+    },
     steps = {
       { id = "s1", n = "1", kind = "boss", name = { ko = "소금가시", en = "Saltspine" }, page = "main", pos = { 239, 251 }, loot = { 273022, 273023, 273024 }, tip = { ko = "잃어버린 늪의 악어 우두머리(정예 야수). 기술 정보는 아직 없습니다.", en = "Crocolisk boss of the Lost Marsh (elite beast). Abilities not known yet." } },
       { id = "s2", n = "2", kind = "boss", name = { ko = "그늘이빨", en = "Shadetooth" }, page = "main", pos = { 157, 271 }, loot = { 273025, 273027, 273106, 273026 }, tip = { ko = "추적자의 숲 랩터 우두머리. 이 숲 랩터들이 '덤불 랩터 가죽'을 떨굽니다.", en = "Raptor boss of Stalker's Thicket; raptors here drop Thicket Raptor Hides." } },
@@ -424,9 +463,23 @@ ns.Dungeons = {
   {
     key = "dala", slug = "dalaran", levels = "28-33",
     name = { ko = "달라란", en = "City of Dalaran" },
-    instanceIDs = {  }, nameMatch = { "달라란", "Dalaran" },
+    instanceIDs = { 2959 }, nameMatch = { "달라란", "Dalaran" },
     pages = { { key = "main", map = "Dalaran", schematic = true } },
     start = { page = "main", pos = { 30, 453 } },
+    bliz = {
+      pages = {
+        { key = "main", grid = { size = 512, tiles = { { 6982326, 30, 30 }, { 6982322, 31, 30 }, { 6982391, 32, 30 }, { 6982332, 30, 31 }, { 6982328, 31, 31 }, { 6982395, 32, 31 }, { 6982439, 30, 32 }, { 6982441, 31, 32 }, { 6982489, 32, 32 } } }, view = { 15808, 15858, 580, 670 }, approx = true },
+      },
+      start = { page = "main", pos = { 16253, 16454 } },
+      steps = {
+        s1 = { page = "main", pos = { 16200, 16493 } },
+        s2 = { page = "main", pos = { 16178, 16308 } },
+        s3 = { page = "main", pos = { 16253, 16148 } },
+        s4 = { page = "main", pos = { 16058, 16148 } },
+        s7 = { page = "main", pos = { 16303, 16496 } },
+        s9 = { page = "main", pos = { 15998, 15948 } },
+      },
+    },
     steps = {
       { id = "s1", n = "1", kind = "boss", name = { ko = "무덤 기사 아트렉시스", en = "Atrexis the Grave Knight" }, page = "main", pos = { 330, 453 }, quest = true, loot = { 273036 }, quests = { 96986 }, tip = { ko = "하수도 지나 지하 의식의 원, 키린 토 강령술사들과 함께. 해골이 계속 일어나지만 약하니 나오는 대로 잡고, 탱커 무장 해제에 대비. 호드 퀘스트 'The Grave Knight' 대상.", en = "Ritual Circle in the Underbelly with Kirin Tor Necromancers. Weak skeletons keep rising: kill them as they come. Disarms the tank. Horde quest The Grave Knight." } },
       { id = "s2", n = "2", kind = "boss", name = { ko = "비전 변형물", en = "Arcane Anomaly" }, page = "main", pos = { 386, 262 }, tip = { ko = "둥근 테라스의 거품에서 끌려 나옵니다. 3초 시전 뒤 정면으로 6초 광선(Focal Blast): 시전이 보이면 바로 앞에서 비키세요. 사이사이 탱커에게 비전 화살.", en = "Pulled from a bubble on the Round Terrace. After a 3s cast, Focal Blast beams straight ahead for 6s: get out of its front. Arcane Bolt on the tank in between." } },

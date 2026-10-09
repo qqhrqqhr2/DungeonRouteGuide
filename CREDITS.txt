@@ -14,13 +14,15 @@ Blizzard dungeon map art (default map style)
   The game's own world-map tiles (interface/worldmap/...) are loaded from the
   WoW client at run time by file ID. No Blizzard image is included in this
   addon. File IDs were looked up in the community listfile (wowdev/wow-listfile).
+  The new Forever dungeons use the game's minimap tiles of their maps, also
+  loaded from the client by file ID (IDs read from each map's WDT file).
   3D boss previews use the client's creature models; display IDs from the
   CMaNGOS classic database (github.com/cmangos/classic-db).
   Which trash mob drops an item (and how often): CMaNGOS classic loot tables
   and spawns; Korean mob names from AzerothCore (github.com/azerothcore).
 
 Maps/Thanes.tga, Maps/Excavation.tga, Maps/RuinsLordaeron.tga, Maps/Dalaran.tga: hand-drawn
-sketch maps made for this addon (layout referenced from the WOWF.IO guides; no pixels copied;
+sketch maps made for this addon, used when the client has no minimap tiles for them (layout referenced from the WOWF.IO guides; no pixels copied;
 Dalaran drawn from the guide text only).
 
 Dungeon facts / 던전 정보 참고
@@ -31,8 +33,9 @@ Dungeon facts / 던전 정보 참고
   Positions are used as they are on the Blizzard maps and were converted onto
   the Atlas maps; descriptions were rewritten
   for this addon (quest objective lines are the game's quest text).
-  New Forever dungeons (Hall of Thanes, Excavation Site, Ruins of Lordaeron)
-  use the hand-drawn sketches above; City of Dalaran is list-only.
+  New Forever dungeons: the wowf positions were fitted onto the minimap tiles;
+  City of Dalaran has no positions on WOWF.IO, its boss spots are estimated
+  from the guide's area names.
 
 This addon is distributed under the GNU General Public License v2 (LICENSE.txt).
 World of Warcraft is a trademark of Blizzard Entertainment, Inc.

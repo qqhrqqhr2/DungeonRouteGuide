@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Hall of Thanes, Excavation Site, Ruins of Lordaeron and City of Dalaran now show the game's own minimap of the dungeon (loaded from the client, wowf positions fitted onto it); the sketch maps stay as a fallback and for Options > Map art: Atlas
+- City of Dalaran is recognised when you enter it (instance 2959), so progress and auto-checks work there too
 - Redrawn sketch maps for Hall of Thanes, Excavation Site, Ruins of Lordaeron and City of Dalaran: twice the resolution and painted like the game's own dungeon maps (stained golden parchment, raised halls with soft shadows and dark walls, contour bands, muted water and grass)
 - wowf.io updates: City of Dalaran boss tactics (no longer the BlizzCon-demo notes), attunement quests for both factions in the Prep tab, how to summon Lyn the Ignored, and 10 more boss drops
 - New dungeon quests: Dalaran (Starving Arcane, Heart of Disruption for each faction) and Scarlet Monastery Library (Past Due)

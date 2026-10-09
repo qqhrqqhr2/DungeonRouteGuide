@@ -48,6 +48,7 @@ local S = {
   TIP_CURRENT     = { "지금 있는 던전 지도로 돌아갑니다", "Back to the map of the dungeon you are in" },
   FLOW_ONLY       = { "지도 자료가 없어 진행 순서만 표시", "No map data yet: route order only" },
   SCHEMATIC       = { "약도라서 위치는 참고용", "Sketch map, positions approximate" },
+  APPROX          = { "보스 위치는 지역 이름으로 추정", "Boss spots estimated from area names" },
   LOOT            = { "전리품", "Loot" },
   TRASH_LOOT      = { "일반 몹 드랍", "Trash drops" },
   TRASH_ALL       = { "던전 일반 몹이 떨구는 아이템", "Dropped by the dungeon's trash mobs" },
