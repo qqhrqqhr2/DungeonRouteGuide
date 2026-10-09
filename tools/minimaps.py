@@ -27,12 +27,24 @@ VIEW = {
  'dalaran':            (15808, 15858, 580, 670),
 }
 
-# Dalaran has no wowf map: spots placed by the guide's area names
-# (sewers under the south-east pit, Round Terrace, Fel Grove, Magus Commerce
-# Exchange, Violet Citadel in the north). Absolute px.
+# Dalaran has no wowf map. Two floors in absolute minimap px: the sewers
+# (drawn from the city WMO by dalaran_sewers.py, same coordinates) and the
+# city on the minimap tiles. Spots: Mana Devourer and Arcanic Enigma from
+# in-game screenshots; the others placed by the guide's area names.
 _D = 29 * 512
-DALARAN = {"start": (_D + 1405, _D + 1606), 1: (_D + 1352, _D + 1645), 7: (_D + 1455, _D + 1648),
-           2: (_D + 1330, _D + 1460), 3: (_D + 1405, _D + 1300), 4: (_D + 1210, _D + 1300), 9: (_D + 1150, _D + 1100)}
+SEWERS = ("DalaranSewers", 15788, 15983, 540)     # image, x, y, size
+SEWER_VIEW = (15808, 16003, 500, 500)
+DALARAN = {
+    "start": ("sewers", (_D + 1024, _D + 1170)),     # west end of the long pipe
+    1: ("sewers", (_D + 1169, _D + 1583)),           # Ritual Circle, the deep round hall
+    7: ("sewers", (_D + 1370, _D + 1321)),           # small round room
+    2: ("main", (_D + 1330, _D + 1460)),             # Round Terrace
+    3: ("main", (_D + 1405, _D + 1300)),             # Fel Grove
+    4: ("main", (_D + 1210, _D + 1300)),             # Magus Commerce Exchange
+    5: ("main", (_D + 1167, _D + 1402)),             # north end of the south garden (screenshot)
+    6: ("main", (_D + 1358, _D + 1226)),             # east (screenshot)
+    9: ("main", (_D + 1150, _D + 1100)),             # Violet Citadel
+}
 
 
 def to_px(slug, pos):

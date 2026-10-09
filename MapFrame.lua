@@ -1286,6 +1286,7 @@ end
 local function TileSet(page)
   if page.set ~= nil then return page.set or nil end
   page.set = false
+  if page.img then page.set = page.img; return page.set end      -- bundled image
   if page.grid then
     local first = page.grid.tiles[1]
     local ok, loaded = pcall(tiles[1].SetTexture, tiles[1], first and first[1])
@@ -1300,7 +1301,7 @@ local function TileSet(page)
 end
 
 local function DrawTiles(page, sc)
-  local set = page and (page.tiles or page.grid) and TileSet(page)
+  local set = page and (page.tiles or page.grid or page.img) and TileSet(page)
   local n = 0
   local function put(file, tx, ty, size)
     local x0, x1 = math.max(tx, view[1]), math.min(tx + size, view[1] + view[3])
@@ -1316,7 +1317,9 @@ local function DrawTiles(page, sc)
     t:SetSize((x1 - x0) * sc, (y1 - y0) * sc)
     t:Show()
   end
-  if set and page.grid then
+  if set and page.img then
+    put(MAP_PATH .. page.img[1], page.img[2], page.img[3], page.img[4])
+  elseif set and page.grid then
     local size = page.grid.size or 512
     for _, g in ipairs(page.grid.tiles) do put(g[1], g[2] * size, g[3] * size, size) end
   elseif set then
@@ -1614,7 +1617,7 @@ function ns.RefreshMap()
     if page.flow then
       mapTex:Hide()
       DrawTiles(nil)
-    elseif page.tiles or page.grid then
+    elseif page.tiles or page.grid or page.img then
       mapTex:Hide()
       DrawTiles(page, sc)
     else

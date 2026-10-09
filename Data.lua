@@ -74,7 +74,7 @@ ns.Dungeons = {
       { id = 96403, level = 15, name = { ko = "중요한 가보", en = "Important Heirlooms" }, giver = { ko = "영주의 전당에서 드워프 가보 8개를 입수해야 합니다.", en = "Collect 8 Dwarven Heirlooms from the Hall of Thanes." } },
       { id = 96395, level = 15, name = { ko = "해묵은 원한", en = "An Ancient Grudge" }, giver = { ko = "영주의 전당에서 팔드림 앤빌마의 영혼에게 안식을 선사해야 합니다.", en = "Put the spirit of Faldrim Anvilmar to rest in the Hall of Thanes." } },
     },
-    notes = { { ko = "내려가는 길 아래가 용암입니다. 길에서 벗어나지 마세요.", en = "Lava below the descending path; stay on it." }, { ko = "마그마투스 구간은 화염 저항 물약이 도움이 됩니다.", en = "Fire resistance potions help for Magmatus." }, { ko = "지도는 직접 그린 약도라 실제 지형과 조금 다를 수 있습니다.", en = "The map is a hand-drawn sketch and may differ slightly from the real layout." } },
+    notes = { { ko = "내려가는 길 아래가 용암입니다. 길에서 벗어나지 마세요.", en = "Lava below the descending path; stay on it." }, { ko = "마그마투스 구간은 화염 저항 물약이 도움이 됩니다.", en = "Fire resistance potions help for Magmatus." } },
   },
   {
     key = "wc", slug = "wailing-caverns", levels = "15-24",
@@ -212,7 +212,7 @@ ns.Dungeons = {
       { id = 92421, faction = "Horde", level = 22, name = { ko = "빛의 정의", en = "Light's Justice" }, giver = { ko = "언더시티에 있는 모빈 라이트베인을 위해 로데론의 폐허에서 온전한 사지 25개를 수집해야 합니다.", en = "Collect 25 Intact Limbs within The Ruins of Lordaeron for Morbin Lightbane in the Undercity." } },
       { id = 95216, faction = "Horde", level = 22, name = { ko = "새로운 역병", en = "The New Plague" }, giver = { ko = "로데론의 폐허에 있는 쇠퇴송곳니에게서 맹독성 균주를 얻어 언더시티에 있는 시어도어 그리프스에게 가져가야 합니다.", en = "Collect the Highly Toxic Strain from Witherfang in Ruins of Lordaeron for Theodore Griffs in Undercity." } },
     },
-    notes = { { ko = "쇠퇴송곳니가 쫄을 데리고 순찰합니다. 경로를 보고 시작하세요.", en = "Witherfang patrols with adds; watch her path." }, { ko = "'로데론의 문장'은 자리가 고정되지 않습니다. 건물 바닥을 살펴보세요.", en = "The Crest of Lordaeron has no fixed spot; check building floors." }, { ko = "지도는 직접 그린 약도라 실제 지형과 조금 다를 수 있습니다.", en = "The map is a hand-drawn sketch and may differ slightly from the real layout." } },
+    notes = { { ko = "쇠퇴송곳니가 쫄을 데리고 순찰합니다. 경로를 보고 시작하세요.", en = "Witherfang patrols with adds; watch her path." }, { ko = "'로데론의 문장'은 자리가 고정되지 않습니다. 건물 바닥을 살펴보세요.", en = "The Crest of Lordaeron has no fixed spot; check building floors." } },
   },
   {
     key = "sfk", slug = "shadowfang-keep", levels = "20-30",
@@ -458,7 +458,7 @@ ns.Dungeons = {
       { id = 95664, faction = "Horde", level = 31, name = { ko = "장로의 지식", en = "Elder Knowledge" }, giver = { ko = "티탄의 유물을 썬더 블러프의 장로의 봉우리로 가져가 그에 대해 알려 줄 사람을 찾아야 합니다.", en = "Take the Titan Relic to the Elder Rise in Thunder Bluff and look for someone who can tell you more about it." } },
       { id = 95682, level = 31, name = { ko = "용아귀 열기", en = "Open the Maw" }, giver = { ko = "발굴 현장에서 용아귀 파괴공작원 2명과 용아귀 감시병 4명을 처치하고 용아귀 급보를 가져와야 합니다.", en = "Kill 2 Dragonmaw Saboteurs and 4 Dragonmaw Warders in the Excavation Site and bring back the Dragonmaw Dispatch." } },
     },
-    notes = { { ko = "만남의 돌은 저습지 53.4, 65.3입니다.", en = "Meeting stone: Wetlands 53.4, 65.3." }, { ko = "추적자의 숲에 정예 랩터가 많습니다.", en = "Many elite raptors in Stalker's Thicket." }, { ko = "지도는 직접 그린 약도라 실제 지형과 조금 다를 수 있습니다.", en = "The map is a hand-drawn sketch and may differ slightly from the real layout." } },
+    notes = { { ko = "만남의 돌은 저습지 53.4, 65.3입니다.", en = "Meeting stone: Wetlands 53.4, 65.3." }, { ko = "추적자의 숲에 정예 랩터가 많습니다.", en = "Many elite raptors in Stalker's Thicket." } },
   },
   {
     key = "dala", slug = "dalaran", levels = "28-33",
@@ -468,15 +468,18 @@ ns.Dungeons = {
     start = { page = "main", pos = { 30, 453 } },
     bliz = {
       pages = {
-        { key = "main", grid = { size = 512, tiles = { { 6982326, 30, 30 }, { 6982322, 31, 30 }, { 6982391, 32, 30 }, { 6982332, 30, 31 }, { 6982328, 31, 31 }, { 6982395, 32, 31 }, { 6982439, 30, 32 }, { 6982441, 31, 32 }, { 6982489, 32, 32 } } }, view = { 15808, 15858, 580, 670 }, approx = true },
+        { key = "sewers", img = { "DalaranSewers", 15788, 15983, 540 }, view = { 15808, 16003, 500, 500 }, approx = true, name = { ko = "하수도", en = "Sewers" } },
+        { key = "main", grid = { size = 512, tiles = { { 6982326, 30, 30 }, { 6982322, 31, 30 }, { 6982391, 32, 30 }, { 6982332, 30, 31 }, { 6982328, 31, 31 }, { 6982395, 32, 31 }, { 6982439, 30, 32 }, { 6982441, 31, 32 }, { 6982489, 32, 32 } } }, view = { 15808, 15858, 580, 670 }, approx = true, name = { ko = "도시", en = "City" } },
       },
-      start = { page = "main", pos = { 16253, 16454 } },
+      start = { page = "sewers", pos = { 15872, 16018 } },
       steps = {
-        s1 = { page = "main", pos = { 16200, 16493 } },
+        s1 = { page = "sewers", pos = { 16017, 16431 } },
         s2 = { page = "main", pos = { 16178, 16308 } },
         s3 = { page = "main", pos = { 16253, 16148 } },
         s4 = { page = "main", pos = { 16058, 16148 } },
-        s7 = { page = "main", pos = { 16303, 16496 } },
+        s5 = { page = "main", pos = { 16015, 16250 } },
+        s6 = { page = "main", pos = { 16206, 16074 } },
+        s7 = { page = "sewers", pos = { 16218, 16169 } },
         s9 = { page = "main", pos = { 15998, 15948 } },
       },
     },
@@ -485,10 +488,9 @@ ns.Dungeons = {
       { id = "s2", n = "2", kind = "boss", name = { ko = "비전 변형물", en = "Arcane Anomaly" }, page = "main", pos = { 386, 262 }, tip = { ko = "둥근 테라스의 거품에서 끌려 나옵니다. 3초 시전 뒤 정면으로 6초 광선(Focal Blast): 시전이 보이면 바로 앞에서 비키세요. 사이사이 탱커에게 비전 화살.", en = "Pulled from a bubble on the Round Terrace. After a 3s cast, Focal Blast beams straight ahead for 6s: get out of its front. Arcane Bolt on the tank in between." } },
       { id = "s3", n = "3", kind = "boss", name = { ko = "지옥의 고대정령", en = "Fel Ancient" }, page = "main", pos = { 385, 172 }, loot = { 273038, 273039 }, tip = { ko = "지옥 기운 스민 나무정령들 사이. 덩굴(Fel Timbers)이 한 명에게 뻗어 주변 5미터를 치고 독 연기를 남기니 연기 밖으로 나가세요.", en = "Among Suffused Treants. Fel Timbers hits everyone within 5 yd of one player and leaves poison fumes: move out." } },
       { id = "s4", n = "4", kind = "boss", name = { ko = "불안정한 파수꾼", en = "Unstable Sentinel" }, page = "main", pos = { 134, 250 }, loot = { 273046, 273047, 273099 }, tip = { ko = "마법 거래소. 가는 길에 달려드는 성난 마법서를 먼저 잡으세요. 2초 시전 뒤 6초간 25미터 광역(Malfunction): 원거리는 25미터 밖, 근접은 시전 중에 빠지기.", en = "Magus Commerce Exchange; kill the Angry Tomes on the way first. After a 2s cast Malfunction pulses within 25 yd for 6s: ranged stay out, melee step out." } },
-      { id = "s5", n = "5", kind = "boss", unconfirmed = true, name = { ko = "마나 포식자", en = "Mana Devourer" }, loot = { 273040, 273041, 273042 }, tip = { ko = "자리와 기술 정보 없음.", en = "Location and abilities unknown." } },
-      { id = "s6", n = "6", kind = "boss", unconfirmed = true, name = { ko = "마나 정령", en = "Mana Elemental" }, loot = { 273045 }, quests = { 92489 }, tip = { ko = "게임 안 이름 Arcanic Enigma. 8초 변이(마법이라 해제 가능)와 10초 침묵이 있어 치유사는 떨어져 있으세요. 작은 마나 정령을 계속 불러내니 광역으로. 얼라이언스 'Power Overwhelming' 대상.", en = "Named Arcanic Enigma. Manamorph (8s, magic: dispel) and a 10s silence: healers keep distance. Keeps calling Arcane Manalings: AoE them. Alliance quest Power Overwhelming." } },
+      { id = "s5", n = "5", kind = "boss", name = { ko = "마나 포식자", en = "Mana Devourer" }, page = "main", pos = { 256, 330 }, loot = { 273040, 273041, 273042 }, tip = { ko = "남쪽 분수 정원의 북쪽 끝(큰 주황 돔 위쪽). 기술 정보는 아직 없습니다.", en = "North end of the southern fountain garden (above the big orange dome). Abilities unknown yet." } },
+      { id = "s6", n = "6", kind = "boss", name = { ko = "마나 정령", en = "Mana Elemental" }, page = "main", pos = { 330, 190 }, quest = true, loot = { 273045 }, quests = { 92489 }, tip = { ko = "게임 안 이름 Arcanic Enigma. 8초 변이(마법이라 해제 가능)와 10초 침묵이 있어 치유사는 떨어져 있으세요. 작은 마나 정령을 계속 불러내니 광역으로. 얼라이언스 'Power Overwhelming' 대상.", en = "Named Arcanic Enigma. Manamorph (8s, magic: dispel) and a 10s silence: healers keep distance. Keeps calling Arcane Manalings: AoE them. Alliance quest Power Overwhelming." } },
       { id = "s7", n = "7", kind = "boss", optional = true, name = { ko = "외면받는 린", en = "Lyn the Ignored" }, page = "main", pos = { 150, 453 }, tip = { ko = "희귀 우두머리. 하수도 작은 원형 방의 의식진에서 달라란의 책을 쓰면 나옵니다(만드는 법은 준비 탭).", en = "Rare boss: use the Tome of Dalaran on the ritual circle in the sewers' small round room (how to make it: Prep tab)." } },
-      { id = "s8", n = "8", kind = "boss", optional = true, unconfirmed = true, name = { ko = "마나 망령", en = "Mana Wraith" }, tip = { ko = "정예 일반 몹에 가깝다는 정보도 있습니다. 자리·기술 미확인.", en = "Possibly closer to elite trash; location and abilities unknown." } },
       { id = "s9", n = "9", kind = "boss", name = { ko = "대마법사의 망령", en = "Shade of the Archmage" }, page = "main", pos = { 256, 112 }, loot = { 273051, 273052 }, tip = { ko = "마지막 우두머리, 보랏빛 성채 응접실. 마나 구슬이 한 명에게 갔다 돌아오며 길목에 비전 피해와 6초 침묵: 우두머리와 그 사람 사이에 서지 마세요. 마나가 바닥나면 파티 전체 8초 변이 뒤 6초 환기. 전투 중 누가 방을 나가면 체력이 다 찹니다.", en = "Final boss in the Purple Parlor of the Violet Citadel. Bounding Mana flies to a player and back, silencing anyone in its path: don't stand between them. Out of mana he polymorphs the group (8s), then Evocation (6s). Leaving the room resets him." } },
     },
     quests = {
@@ -505,7 +507,7 @@ ns.Dungeons = {
     trashGroups = {
       { name = { ko = "일반 몹", en = "Trash mobs" }, trash = true, loot = { 273043 } },
     },
-    notes = { { ko = "권장 28~33레벨이고 던전 퀘스트는 24레벨부터 받습니다.", en = "Levels 28-33; dungeon quests from level 24." }, { ko = "입구는 하수도를 지나 긴 관 끝의 차원문. 하수도 문은 입장 퀘스트로 받는 달라란 하수도 열쇠로 열고, 입장 퀘스트를 마친 사람이 파티에 한 명 있으면 모두 들어갑니다.", en = "Entrance: the portal at the end of a long pipe through the sewers. The sewer door needs the Dalaran Sewer Key from the attunement; one attuned member lets the whole group in." }, { ko = "얼라이언스 입장: 힐스브래드 Emissary Jacques 'An Alarming Request'(30레벨~) → 은빛소나무 숲 동쪽 끝 Image of Archmage Modera 'Heart of Disruption'(열쇠) → 보랏빛 성채 Archmage Celindra 'Friend of the Kirin Tor'.", en = "Alliance attunement: An Alarming Request (Emissary Jacques, Hillsbrad, from 30) → Heart of Disruption (Image of Archmage Modera, east Silverpine; gives the key) → Friend of the Kirin Tor (Archmage Celindra)." }, { ko = "호드 입장: 타렌 밀농장 Magus Wordeen Voidglare의 다른 퀘스트를 끝낸 뒤 'Blood in the Streets'(30레벨~) → 'Heart of Disruption' → Archmage Celindra 'Shrewd Negotiations'.", en = "Horde attunement: finish Magus Wordeen Voidglare's other quests in Tarren Mill, then Blood in the Streets (from 30) → Heart of Disruption → Shrewd Negotiations (Archmage Celindra)." }, { ko = "희귀 외면받는 린: 그림자송곳니 성채 아루갈 뒤의 Black Tome을 은빛소나무 숲 앰버밀(63.4, 64.3)의 수정에 쓰면 달라란의 책이 됩니다.", en = "Rare Lyn the Ignored: use the Black Tome (behind Arugal, Shadowfang Keep) on the crystal at Ambermill, Silverpine (63.4, 64.3) to make the Tome of Dalaran." }, { ko = "지도는 공략 글의 구역 순서로 그린 약도입니다(아직 실제 지형 자료가 없음). 위치 미확인 우두머리는 목록에만 있습니다.", en = "The map is a sketch drawn from the guide's area order (no terrain data yet). Bosses with unknown spots are in the list only." } },
+    notes = { { ko = "권장 28~33레벨이고 던전 퀘스트는 24레벨부터 받습니다.", en = "Levels 28-33; dungeon quests from level 24." }, { ko = "입구는 하수도를 지나 긴 관 끝의 차원문. 하수도 문은 입장 퀘스트로 받는 달라란 하수도 열쇠로 열고, 입장 퀘스트를 마친 사람이 파티에 한 명 있으면 모두 들어갑니다.", en = "Entrance: the portal at the end of a long pipe through the sewers. The sewer door needs the Dalaran Sewer Key from the attunement; one attuned member lets the whole group in." }, { ko = "얼라이언스 입장: 힐스브래드 Emissary Jacques 'An Alarming Request'(30레벨~) → 은빛소나무 숲 동쪽 끝 Image of Archmage Modera 'Heart of Disruption'(열쇠) → 보랏빛 성채 Archmage Celindra 'Friend of the Kirin Tor'.", en = "Alliance attunement: An Alarming Request (Emissary Jacques, Hillsbrad, from 30) → Heart of Disruption (Image of Archmage Modera, east Silverpine; gives the key) → Friend of the Kirin Tor (Archmage Celindra)." }, { ko = "호드 입장: 타렌 밀농장 Magus Wordeen Voidglare의 다른 퀘스트를 끝낸 뒤 'Blood in the Streets'(30레벨~) → 'Heart of Disruption' → Archmage Celindra 'Shrewd Negotiations'.", en = "Horde attunement: finish Magus Wordeen Voidglare's other quests in Tarren Mill, then Blood in the Streets (from 30) → Heart of Disruption → Shrewd Negotiations (Archmage Celindra)." }, { ko = "희귀 외면받는 린: 그림자송곳니 성채 아루갈 뒤의 Black Tome을 은빛소나무 숲 앰버밀(63.4, 64.3)의 수정에 쓰면 달라란의 책이 됩니다.", en = "Rare Lyn the Ignored: use the Black Tome (behind Arugal, Shadowfang Keep) on the crystal at Ambermill, Silverpine (63.4, 64.3) to make the Tome of Dalaran." }, { ko = "하수도에서 시작해 도시로 올라갑니다. 지도 위 목록에서 하수도/도시를 고를 수 있어요. 하수도는 게임 건물 자료로 그린 약도이고, 일부 우두머리 자리는 지역 이름으로 추정했습니다.", en = "The run starts in the sewers and goes up into the city; pick Sewers / City in the floor list. The sewers are drawn from the game's building data; some boss spots are estimated from area names." } },
   },
   {
     key = "gnomer", slug = "gnomeregan", levels = "29-38",

@@ -268,8 +268,14 @@ MISSING = {}
 local dala = ns.DungeonByKey.dala
 TEXSET = {}
 ns.ShowMap(dala); ns.RefreshMap()
-local mm = dala.bliz.pages[1]
-Check(ns.state.pageGeo == dala.bliz and mm.grid and TEXSET[mm.grid.tiles[1][1]] and TEXSET[mm.grid.tiles[#mm.grid.tiles][1]], "Dalaran shows the minimap tiles")
+local sew, mm = dala.bliz.pages[1], dala.bliz.pages[2]
+Check(ns.state.pageGeo == dala.bliz and ns.state.shownPage == "sewers" and TEXSET["Interface\\AddOns\\DungeonRouteGuide\\Maps\\DalaranSewers"], "Dalaran starts on the sewers page")
+ns.state.page, ns.state.pageManual = "main", true; ns.RefreshMap()
+Check(ns.state.shownPage == "main" and mm.grid and TEXSET[mm.grid.tiles[1][1]] and TEXSET[mm.grid.tiles[#mm.grid.tiles][1]], "Dalaran city on the minimap tiles")
+ns.state.pageManual = false
+local nb = 0
+for _, s in ipairs(dala.steps) do if s.kind == "boss" then nb = nb + 1 end end
+Check(nb == 8 and not dala.bliz.steps.s8, "Mana Wraith is not a boss step")
 for _, k in ipairs({ "thanes", "excav", "rol" }) do
   local g = ns.DungeonByKey[k].bliz
   local v = g.pages[1].view
@@ -280,7 +286,7 @@ for _, k in ipairs({ "thanes", "excav", "rol" }) do
   Check(ok, k .. " minimap spots inside the view")
 end
 MISSING[mm.grid.tiles[1][1]] = true; mm.set = nil
-ns.ShowMap(dala); ns.RefreshMap()
+ns.ShowMap(dala); ns.state.page, ns.state.pageManual = "main", true; ns.RefreshMap(); ns.state.pageManual = false
 Check(ns.state.pageGeo == dala and dala.pages[1].schematic and ns.state.shownPage == "main", "minimap missing -> Dalaran sketch map")
 MISSING = {}; mm.set = nil
 Slash("map blizzard")

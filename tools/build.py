@@ -10,6 +10,14 @@ from trashsrc import TRASH_SRC
 import place as _place
 
 W = json.load(open("wowf.json", encoding="utf-8"))
+# wowf steps that are not bosses in the game (Mana Wraith: two elite trash mobs)
+DROP_STEPS = {"dalaran": {8}}
+for _slug, _ns in DROP_STEPS.items():
+    for _lang in ("ko", "en"):
+        _w = W[_slug][_lang]
+        _w["stops"] = [s for s in _w["stops"] if s["n"] not in _ns]
+        for _f in _w["floors"]:
+            _f["pins"] = [p for p in _f["pins"] if p.get("stop") not in _ns]
 LOOT = json.load(open("loot.json", encoding="utf-8")) if os.path.exists("loot.json") else {}
 # loot boss labels that differ from the guide step names
 LOOT_ALIAS = {
@@ -128,9 +136,13 @@ def minimap_block(slug, ko):
             elif p["label"] == "입구" and start is None:
                 start = ("main", xy)
     else:
-        for n, xy in MM.DALARAN.items():
-            if n == "start": start = ("main", xy)
-            else: stops[n] = {"page": "main", "pos": xy, "alt": []}
+        img = MM.SEWERS
+        sewers = {"key": "sewers", "img": img, "view": MM.SEWER_VIEW, "approx": True, "name": ("하수도", "Sewers")}
+        page["name"] = ("도시", "City")
+        for n, (pg, xy) in MM.DALARAN.items():
+            if n == "start": start = (pg, xy)
+            else: stops[n] = {"page": pg, "pos": xy, "alt": []}
+        return [sewers, page], stops, [], start
     return [page], stops, [], start
 
 ORDER = ["ragefire-chasm", "hall-of-thanes", "wailing-caverns", "deadmines", "ruins-of-lordaeron", "shadowfang-keep",
@@ -233,7 +245,7 @@ def full_names(slug, n, name_ko, name_en):
 # Sketch maps drawn from the guide text alone (no positions on wowf yet):
 # 512 px positions of the steps and the entrance on the sketch.
 SKETCH_POS = {
- "dalaran": {"start": (30, 453), 1: (330, 453), 2: (386, 262), 3: (385, 172), 4: (134, 250), 7: (150, 453), 9: (256, 112)},
+ "dalaran": {"start": (30, 453), 1: (330, 453), 2: (386, 262), 3: (385, 172), 4: (134, 250), 5: (256, 330), 6: (330, 190), 7: (150, 453), 9: (256, 112)},
 }
 
 # extra placement fixes
@@ -382,10 +394,14 @@ def build():
             lines.append("    bliz = {")
             lines.append("      pages = {")
             for pg in bpages:
-                if pg.get("grid"):
-                    tl = ", ".join("{ %d, %d, %d }" % t for t in pg["grid"])
-                    lines.append("        { key = %s, grid = { size = 512, tiles = { %s } }, view = { %s }%s }," % (lua_str(pg["key"]), tl,
-                                 ", ".join(map(str, pg["view"])), ", approx = true" if pg.get("approx") else ""))
+                if pg.get("grid") or pg.get("img"):
+                    nm = (", name = " + L(*pg["name"])) if pg.get("name") else ""
+                    if pg.get("grid"):
+                        src = "grid = { size = 512, tiles = { %s } }" % ", ".join("{ %d, %d, %d }" % t for t in pg["grid"])
+                    else:
+                        src = "img = { %s, %d, %d, %d }" % (lua_str(pg["img"][0]), *pg["img"][1:])
+                    lines.append("        { key = %s, %s, view = { %s }%s%s }," % (lua_str(pg["key"]), src,
+                                 ", ".join(map(str, pg["view"])), ", approx = true" if pg.get("approx") else "", nm))
                     continue
                 tl = ", ".join("{ %s }" % ", ".join(map(str, t)) for t in pg["tiles"])
                 nm = (", name = " + L(*pg["name"])) if pg.get("name") else ""

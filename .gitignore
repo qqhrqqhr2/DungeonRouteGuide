@@ -2,3 +2,4 @@ tools/wowf/
 tools/atlas/
 tools/*.json
 __pycache__/
+tools/wmo_cache/
