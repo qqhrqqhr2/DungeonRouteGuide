@@ -1,6 +1,6 @@
 # Dungeon Route Guide
 
-## Unreleased
+## v1.0.7
 
 - City of Dalaran has two floors: the sewers where the run starts (Atrexis, Lyn the Ignored) on the game's own indoor minimap of the sewers, and the city on the outdoor minimap
 - Floors switch by themselves in dungeons without area data too: the sub-zone you stand in when a boss dies is remembered for that boss's floor
