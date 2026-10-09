@@ -1,4 +1,7 @@
-import re, json, glob, os
+import re, json, glob, os, sys
+# usage: python parse_wowf.py [pages folder] [output json]
+SRC = sys.argv[1] if len(sys.argv) > 1 else "wowf"
+OUT = sys.argv[2] if len(sys.argv) > 2 else "wowf.json"
 from bs4 import BeautifulSoup
 
 KIND = {"우두머리": "boss", "희귀 몹": "rare", "NPC": "npc", "Boss": "boss", "Rare": "rare",
@@ -113,14 +116,14 @@ def parse(path):
     return out
 
 data = {}
-for f in sorted(glob.glob("wowf/*.html")):
+for f in sorted(glob.glob(os.path.join(SRC, "*.html"))):
     base = os.path.basename(f)
     if base.endswith(".en.html"): continue
     slug = base[:-5]
     ko = parse(f)
-    en = parse(f"wowf/{slug}.en.html")
+    en = parse(os.path.join(SRC, f"{slug}.en.html"))
     data[slug] = {"ko": ko, "en": en}
-json.dump(data, open("wowf.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+json.dump(data, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 for slug, d in data.items():
     ko = d["ko"]
     print(slug, ko["name"], "|", d["en"]["name"], "|", ko["info"].get("추천 레벨"), "| floors", [(f["id"], f["tab"], len(f["pins"])) for f in ko["floors"]], "| stops", len(ko["stops"]), "| quests", len(ko["quests"]))

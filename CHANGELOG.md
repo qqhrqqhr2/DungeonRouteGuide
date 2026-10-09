@@ -1,5 +1,11 @@
 # Dungeon Route Guide
 
+## Unreleased
+
+- wowf.io updates: City of Dalaran boss tactics (no longer the BlizzCon-demo notes), attunement quests for both factions in the Prep tab, how to summon Lyn the Ignored, and 10 more boss drops
+- New dungeon quests: Dalaran (Starving Arcane, Heart of Disruption for each faction) and Scarlet Monastery Library (Past Due)
+- Ruins of Lordaeron: the unconfirmed rare Lordaeron Captain is no longer listed
+
 ## v1.0.5
 
 - Item names show right away from the game's own item table instead of waiting for the server; /drg item <id> shows what the game knows about an item
