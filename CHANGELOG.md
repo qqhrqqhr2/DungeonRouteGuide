@@ -1,16 +1,15 @@
 # Dungeon Route Guide
 
-## Unreleased
+## v1.0.6
 
-- Hall of Thanes, Excavation Site, Ruins of Lordaeron and City of Dalaran now show the game's own minimap of the dungeon (loaded from the client, wowf positions fitted onto it); the sketch maps stay as a fallback and for Options > Map art: Atlas
+- Hall of Thanes, Excavation Site, Ruins of Lordaeron and City of Dalaran now show the game's own minimap of the dungeon (loaded from the client by file ID, wowf positions fitted onto it). City of Dalaran has no positions on wowf yet, so its boss spots are estimated from the guide's area names
+- Hand-drawn sketch maps for these four dungeons as a fallback (client without the tiles, or Options > Map art: Atlas), redrawn in the style of the game's dungeon maps
 - City of Dalaran is recognised when you enter it (instance 2959), so progress and auto-checks work there too
-- Redrawn sketch maps for Hall of Thanes, Excavation Site, Ruins of Lordaeron and City of Dalaran: twice the resolution and painted like the game's own dungeon maps (stained golden parchment, raised halls with soft shadows and dark walls, contour bands, muted water and grass)
 - wowf.io updates: City of Dalaran boss tactics (no longer the BlizzCon-demo notes), attunement quests for both factions in the Prep tab, how to summon Lyn the Ignored, and 10 more boss drops
 - New dungeon quests: Dalaran (Starving Arcane, Heart of Disruption for each faction) and Scarlet Monastery Library (Past Due)
 - Ruins of Lordaeron: the unconfirmed rare Lordaeron Captain is no longer listed
-- City of Dalaran gets a sketch map like the other new Forever dungeons (drawn from the guide's area order: sewers, Round Terrace, Fel Grove, Magus Commerce Exchange, Violet Citadel); bosses with unknown spots stay in the list
-- /drg mapscan (outside dungeons) looks for the game's own maps of the dungeons; the new Forever dungeons can preview a found map with Options > Map art: Blizzard
 - A dungeon without any map shows the route as a numbered flow chart instead of an empty area
+- /drg mapscan (outside dungeons) looks for the game's own world maps of the dungeons
 
 ## v1.0.5
 
