@@ -22,7 +22,7 @@ local DEFAULTS = {
   mapSize = 380, showList = true, listTab = "route",
   locked = false, autoOpen = true, hud = true, rareAlert = true, showIcon = true, lang = "auto",
   mapStyle = "blizzard",
-  routes = {}, entrances = {}, frames = {}, names = {},
+  routes = {}, entrances = {}, frames = {}, names = {}, floorAreas = {},
 }
 
 local function ApplyDefaults(db, defaults)
@@ -323,6 +323,7 @@ function ns.SetDone(d, i, value, auto)
       end
     end
     if auto then
+      if d == state.current and ns.LearnFloor then ns.LearnFloor(d, i) end
       local done, total = ns.Counts(d)
       ns.Print(L.KILLED:format(T(step.name), done, total))
       if done >= total then ns.Print("|cff55ff55" .. L.DONE_ALL .. "|r") end

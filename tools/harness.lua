@@ -269,7 +269,7 @@ local dala = ns.DungeonByKey.dala
 TEXSET = {}
 ns.ShowMap(dala); ns.RefreshMap()
 local sew, mm = dala.bliz.pages[1], dala.bliz.pages[2]
-Check(ns.state.pageGeo == dala.bliz and ns.state.shownPage == "sewers" and TEXSET["Interface\\AddOns\\DungeonRouteGuide\\Maps\\DalaranSewers"], "Dalaran starts on the sewers page")
+Check(ns.state.pageGeo == dala.bliz and ns.state.shownPage == "sewers" and sew.grid.px and TEXSET[sew.grid.tiles[1][1]] and TEXSET[sew.grid.tiles[#sew.grid.tiles][1]], "Dalaran starts on the sewers page")
 ns.state.page, ns.state.pageManual = "main", true; ns.RefreshMap()
 Check(ns.state.shownPage == "main" and mm.grid and TEXSET[mm.grid.tiles[1][1]] and TEXSET[mm.grid.tiles[#mm.grid.tiles][1]], "Dalaran city on the minimap tiles")
 ns.state.pageManual = false
@@ -442,6 +442,23 @@ INSTANCE = { nil, "none", nil, nil, nil, nil, nil, 0 }; Fire("ZONE_CHANGED_NEW_A
 INSTANCE = { "검은심연의 나락", "party", 1, "", 5, 0, false, 48 }; Fire("PLAYER_ENTERING_WORLD")
 Check(ns.state.current and ns.state.current.key == "bfd", "BFD detected")
 INSTANCE = { nil, "none", nil, nil, nil, nil, nil, 0 }; Fire("ZONE_CHANGED_NEW_AREA")
+
+-- Dalaran: floors learned from kills (no sub-zone data for the sewers)
+local dl = ns.DungeonByKey.dala
+INSTANCE = { "달라란", "party", 1, "", 5, 0, false, 2959 }; SUBZONE = "하수도"; Fire("PLAYER_ENTERING_WORLD")
+Check(ns.state.current == dl, "Dalaran detected by instance id")
+ns.RefreshMap(); Check(ns.state.shownPage == "sewers", "Dalaran run starts on the sewers")
+ns.SetDone(dl, 1, true, true)
+SUBZONE = "보랏빛 성채"; Fire("ZONE_CHANGED_INDOORS")
+ns.SetDone(dl, 2, true, true)
+Check(ns.db.floorAreas["dala:b"]["하수도"] == "sewers" and ns.db.floorAreas["dala:b"]["보랏빛성채"] == "main", "kills teach the floors")
+SUBZONE = "하수도"; Fire("ZONE_CHANGED_INDOORS"); ns.RefreshMap()
+Check(ns.state.shownPage == "sewers", "back in the sewers -> sewers floor (next boss is in the city)")
+SUBZONE = "보랏빛 성채"; Fire("ZONE_CHANGED_INDOORS"); ns.RefreshMap()
+Check(ns.state.shownPage == "main", "city sub-zone -> city floor")
+Slash("reset")
+INSTANCE = { nil, "none", nil, nil, nil, nil, nil, 0 }; SUBZONE = ""; Fire("ZONE_CHANGED_NEW_AREA")
+DungeonRouteGuideFrame:Hide()
 
 -- entrance arrow outdoors
 FACING = 0; PMAP = 1454; PX, PY = 0.62, 0.49

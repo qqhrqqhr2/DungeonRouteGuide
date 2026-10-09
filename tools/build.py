@@ -136,8 +136,7 @@ def minimap_block(slug, ko):
             elif p["label"] == "입구" and start is None:
                 start = ("main", xy)
     else:
-        img = MM.SEWERS
-        sewers = {"key": "sewers", "img": img, "view": MM.SEWER_VIEW, "approx": True, "name": ("하수도", "Sewers")}
+        sewers = {"key": "sewers", "tiles256": MM.sewer_tiles(), "view": MM.SEWER_VIEW, "approx": True, "name": ("하수도", "Sewers")}
         page["name"] = ("도시", "City")
         for n, (pg, xy) in MM.DALARAN.items():
             if n == "start": start = (pg, xy)
@@ -394,12 +393,12 @@ def build():
             lines.append("    bliz = {")
             lines.append("      pages = {")
             for pg in bpages:
-                if pg.get("grid") or pg.get("img"):
+                if pg.get("grid") or pg.get("tiles256"):
                     nm = (", name = " + L(*pg["name"])) if pg.get("name") else ""
-                    if pg.get("grid"):
+                    if pg.get("tiles256"):
+                        src = "grid = { px = true, tiles = { %s } }" % ", ".join("{ %d, %d, %d, %d, %d, %d }" % t for t in pg["tiles256"])
+                    elif pg.get("grid"):
                         src = "grid = { size = 512, tiles = { %s } }" % ", ".join("{ %d, %d, %d }" % t for t in pg["grid"])
-                    else:
-                        src = "img = { %s, %d, %d, %d }" % (lua_str(pg["img"][0]), *pg["img"][1:])
                     lines.append("        { key = %s, %s, view = { %s }%s%s }," % (lua_str(pg["key"]), src,
                                  ", ".join(map(str, pg["view"])), ", approx = true" if pg.get("approx") else "", nm))
                     continue

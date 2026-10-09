@@ -11,8 +11,9 @@ Data pipeline for `Data.lua` (not packaged).
    floor images). `displays.json` (creature display IDs) is extracted from the cmangos
    classic-db `creature_template`.
 2c. `minimaps.py`: minimap tiles (file IDs from each map's WDT, MAID chunk) of the new Forever
-   dungeons, the wowf image -> minimap fits and the shown part. `python dalaran_sewers.py` draws
-   the Dalaran sewers page from the city WMO's underground floors (downloaded into `wmo_cache/`). `python sketches.py` redraws the sketch maps of the new Forever dungeons into `../Maps`.
+   dungeons, the wowf image -> minimap fits and the shown part. The Dalaran sewers use the
+   city WMO's minimap textures (WMOMinimapTexture rows; blocks of 128 yards from each group's
+   bounding-box minimum, image up = +y). `python sketches.py` redraws the sketch maps of the new Forever dungeons into `../Maps`.
 3. `python place.py` -> `placed.json` (wowf pins converted onto the Atlas maps using `anchors.py`)
 4. Edit `texts.py` (tips, rewritten) and `routes.py` (route waypoints), then `python build.py` -> `../Data.lua`
 5. `python run.py` (and `python run.py enUS`) runs `harness.lua`, a smoke test with stubbed WoW API (needs `pip install lupa`).

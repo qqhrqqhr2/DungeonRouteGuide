@@ -210,6 +210,31 @@ local function PageByKey(g, key)
   for _, p in ipairs(g.pages) do if p.key == key then return p end end
 end
 
+-- Floors learned from kills: the sub-zone you stood in when a boss on a
+-- floor died belongs to that floor (for dungeons without area data, e.g.
+-- Dalaran's sewers). A sub-zone seen on two floors is ignored.
+local function LearnedSet(d, g)
+  local all = ns.db.floorAreas
+  return all and all[d.key .. (g == d.bliz and ":b" or ":a")]
+end
+local function LearnedPage(d, g, area)
+  local t = area and LearnedSet(d, g)
+  return t and t[area] and PageByKey(g, t[area]) or nil
+end
+function ns.LearnFloor(d, i)
+  local area = state.area
+  if not area or area == "" then return end
+  local g = Geo(d)
+  if not (g.pages and #g.pages > 1) then return end
+  local pg = StepGeo(d, i)
+  if not pg then return end
+  ns.db.floorAreas = ns.db.floorAreas or {}
+  local key = d.key .. (g == d.bliz and ":b" or ":a")
+  local t = ns.db.floorAreas[key] or {}
+  ns.db.floorAreas[key] = t
+  if t[area] == nil then t[area] = pg elseif t[area] ~= pg then t[area] = false end
+end
+
 local function CurrentPage(d)
   if not HasMap(d) then return nil end
   local g = Geo(d)
@@ -223,6 +248,7 @@ local function CurrentPage(d)
     for _, p in ipairs(g.pages) do
       if PageHasArea(p, state.area) then state.pageManual = false; break end
     end
+    if LearnedPage(d, g, state.area) then state.pageManual = false end
   end
   if state.pageManual and state.page then
     local p = PageByKey(g, state.page)
@@ -246,6 +272,8 @@ local function CurrentPage(d)
       for _, q in ipairs(fits) do if q.key == state.shownPage then return q end end
       return fits[1]
     end
+    local lp = LearnedPage(d, g, state.area)
+    if lp then return lp end
   end
   local i = ns.NextStep(d)
   local want = i and StepGeo(d, i)
@@ -806,7 +834,7 @@ local function Create()
   -- map
   canvas = CreateFrame("Frame", nil, frame)
   canvas:SetPoint("TOPLEFT", PAD, -HEADER)
-  local bg = canvas:CreateTexture(nil, "BACKGROUND", nil, -1)
+  local bg = canvas:CreateTexture(nil, "BACKGROUND", nil, -8)
   bg:SetAllPoints(); bg:SetColorTexture(0, 0, 0, 0.5)
   mapTex = canvas:CreateTexture(nil, "BACKGROUND")
   mapTex:SetAllPoints()
@@ -1303,15 +1331,18 @@ end
 local function DrawTiles(page, sc)
   local set = page and (page.tiles or page.grid or page.img) and TileSet(page)
   local n = 0
-  local function put(file, tx, ty, size)
-    local x0, x1 = math.max(tx, view[1]), math.min(tx + size, view[1] + view[3])
-    local y0, y1 = math.max(ty, view[2]), math.min(ty + size, view[2] + view[4])
+  local function put(file, tx, ty, size, layer, th)
+    local tw = size
+    th = th or size
+    local x0, x1 = math.max(tx, view[1]), math.min(tx + tw, view[1] + view[3])
+    local y0, y1 = math.max(ty, view[2]), math.min(ty + th, view[2] + view[4])
     if x1 <= x0 or y1 <= y0 then return end
     n = n + 1
     local t = tiles[n]
     if not t then t = canvas:CreateTexture(nil, "BACKGROUND"); tiles[n] = t end
     t:SetTexture(file)
-    t:SetTexCoord((x0 - tx) / size, (x1 - tx) / size, (y0 - ty) / size, (y1 - ty) / size)
+    t:SetDrawLayer("BACKGROUND", layer or 0)
+    t:SetTexCoord((x0 - tx) / tw, (x1 - tx) / tw, (y0 - ty) / th, (y1 - ty) / th)
     t:ClearAllPoints()
     t:SetPoint("TOPLEFT", canvas, "TOPLEFT", (x0 - view[1]) * sc, -(y0 - view[2]) * sc)
     t:SetSize((x1 - x0) * sc, (y1 - y0) * sc)
@@ -1321,7 +1352,15 @@ local function DrawTiles(page, sc)
     put(MAP_PATH .. page.img[1], page.img[2], page.img[3], page.img[4])
   elseif set and page.grid then
     local size = page.grid.size or 512
-    for _, g in ipairs(page.grid.tiles) do put(g[1], g[2] * size, g[3] * size, size) end
+    for _, g in ipairs(page.grid.tiles) do
+      if page.grid.px then
+        -- { file, x, y, width, height, level }: pixel positions, each texture
+        -- its own size; deeper levels first (draw sublevels)
+        put(g[1], g[2], g[3], g[4], math.min(1, (g[6] or 0) - 7), g[5])
+      else
+        put(g[1], g[2] * size, g[3] * size, size)
+      end
+    end
   elseif set then
     for k = 1, 12 do put(set[k], ((k - 1) % 4) * 256, math.floor((k - 1) / 4) * 256, 256) end
   end

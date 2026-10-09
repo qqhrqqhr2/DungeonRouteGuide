@@ -27,17 +27,60 @@ VIEW = {
  'dalaran':            (15808, 15858, 580, 670),
 }
 
-# Dalaran has no wowf map. Two floors in absolute minimap px: the sewers
-# (drawn from the city WMO by dalaran_sewers.py, same coordinates) and the
-# city on the minimap tiles. Spots: Mana Devourer and Arcanic Enigma from
+# Dalaran has no wowf map. Two floors: the sewers (building frame px, see
+# above) and the city (absolute minimap px). Spots: Mana Devourer and Arcanic Enigma from
 # in-game screenshots; the others placed by the guide's area names.
 _D = 29 * 512
-SEWERS = ("DalaranSewers", 15788, 15983, 540)     # image, x, y, size
-SEWER_VIEW = (15808, 16003, 500, 500)
+# Sewers: the city building's own minimap textures (WMOMinimapTexture, WMO
+# 18950 = file 7116370). Each block covers 128 x 128 yards of its group,
+# from the group's bounding-box minimum, image up = +y. Drawn unrotated in the
+# building's frame at 2 px per yard (the building stands 15 degrees off north).
+# (group, min x, min y, [(block x, block y, file ID)]); deep halls first.
+SEWER_GROUPS = [
+ (75, -117.96, -428.55, [(0, 0, 8112893, 256, 256), (0, 1, 8280031, 256, 256), (1, 0, 8280029, 256, 256), (1, 1, 8280033, 256, 256)]),
+ (60, -67.65, -133.6, [(0, 0, 8280014, 256, 256), (1, 0, 8280016, 256, 256)]),
+ (64, 94.83, -42.66, [(0, 0, 8112859, 256, 128)]),
+ (54, 112.97, -103.34, [(0, 0, 8112828, 32, 32)]),
+ (61, -121.97, -152.11, [(0, 0, 8280018, 256, 256), (0, 1, 8280020, 256, 256)]),
+ (62, -31.65, -121.87, [(0, 0, 8112843, 256, 256), (0, 1, 8280022, 256, 256)]),
+ (63, 23.78, -133.49, [(0, 0, 8112851, 256, 256), (0, 1, 8112855, 256, 256)]),
+ (66, 42.48, -139.55, [(0, 0, 8112875, 64, 64)]),
+ (40, 129.87, -152.89, [(0, 0, 8112783, 128, 64)]),
+ (35, -138.93, -52.5, [(0, 0, 8112765, 64, 64)]),
+ (65, -95.7, 42.67, [(0, 0, 8112867, 128, 128)]),
+ (55, -84.53, 87.09, [(0, 0, 8112832, 64, 64)]),
+ (56, -126.13, 47.0, [(0, 0, 8112836, 64, 64)]),
+ (77, -252.8, 26.06, [(0, 0, 8112903, 256, 64), (1, 0, 8112907, 256, 64)]),
+]
+SEWER_X0, SEWER_YTOP = -262.0, 142.0       # page origin in building yards
+
+
+def sewer_px(x, y):
+    return (round((x - SEWER_X0) * 2), round((SEWER_YTOP - y) * 2))
+
+
+def sewer_tiles():
+    out = []
+    for layer, (g, mx, my, blocks) in enumerate(SEWER_GROUPS):
+        for bx, by, fid, w, h in blocks:
+            out.append((fid, *sewer_px(mx + 128 * bx, my + 128 * by + h / 2), w, h, layer))
+    return out
+
+
+SEWER_VIEW = (10, 40, 850, 1110)
+# Dalaran city WMO placement -> building frame, for spots known in minimap px
+_POS = (16763.455, 16791.541)
+def abs_to_building(ax, ay):
+    import math
+    c, s = math.cos(math.radians(15)), math.sin(math.radians(15))
+    dx, dz = ax / 0.96 - _POS[0], ay / 0.96 - _POS[1]
+    return (c * dx + s * dz, s * dx - c * dz)
+
+
 DALARAN = {
-    "start": ("sewers", (_D + 1024, _D + 1170)),     # west end of the long pipe
-    1: ("sewers", (_D + 1169, _D + 1583)),           # Ritual Circle, the deep round hall
-    7: ("sewers", (_D + 1370, _D + 1321)),           # small round room
+    "start": ("sewers", sewer_px(-250, 43)),        # west end of the long pipe
+    1: ("sewers", sewer_px(-9, -316)),               # Ritual Circle, the deep round hall
+    7: ("sewers", sewer_px(129, -16)),               # small round room
     2: ("main", (_D + 1330, _D + 1460)),             # Round Terrace
     3: ("main", (_D + 1405, _D + 1300)),             # Fel Grove
     4: ("main", (_D + 1210, _D + 1300)),             # Magus Commerce Exchange
