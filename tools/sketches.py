@@ -13,20 +13,19 @@ from PIL import Image, ImageDraw, ImageFilter, ImageChops
 N = 2048
 OUT = 1024
 
-INK = (78, 52, 28)
+INK = (96, 66, 34)
+# muted tones of the game's dungeon maps
 PAL = {
-    "floor":  (228, 210, 166),
-    "floor2": (212, 190, 142),
-    "road":   (218, 198, 152),
-    "grass":  (180, 190, 120),
-    "fel":    (150, 178, 92),
-    "arcane": (190, 170, 214),
-    "snow":   (232, 234, 228),
-    "water":  (104, 140, 150),
-    "rubble": (200, 178, 132),
+    "floor":  (224, 208, 164),
+    "floor2": (214, 196, 150),
+    "road":   (220, 204, 160),
+    "grass":  (178, 182, 118),
+    "fel":    (162, 186, 112),
+    "arcane": (196, 180, 206),
+    "snow":   (228, 226, 214),
+    "water":  (150, 170, 172),
+    "rubble": (204, 186, 140),
 }
-
-
 def noise(scale, amount, seed):
     random.seed(seed)
     small = Image.effect_noise((max(2, N // scale), max(2, N // scale)), amount).convert("L")
@@ -34,25 +33,18 @@ def noise(scale, amount, seed):
 
 
 def parchment(seed):
-    base = Image.new("RGB", (N, N), (196, 168, 120))
-    blotch = noise(64, 40, seed).point(lambda v: max(0, min(255, (v - 100) * 3)))
-    base = Image.composite(Image.new("RGB", (N, N), (176, 146, 100)), base, blotch)
-    grain = noise(2, 30, seed + 1).point(lambda v: max(0, min(255, (v - 128) * 2 + 128)))
-    base = ImageChops.multiply(base, Image.merge("RGB", [grain.point(lambda v: 200 + v // 5)] * 3))
-    # fibres
-    d = ImageDraw.Draw(base)
-    random.seed(seed + 2)
-    for _ in range(900):
-        x, y = random.uniform(0, N), random.uniform(0, N)
-        a = random.uniform(0, math.pi)
-        l = random.uniform(8, 40)
-        d.line([(x, y), (x + l * math.cos(a), y + l * math.sin(a))], fill=(170, 140, 96), width=1)
-    # dark worn edges
+    base = Image.new("RGB", (N, N), (198, 162, 100))
+    big = noise(48, 46, seed).point(lambda v: max(0, min(255, (v - 96) * 3)))
+    base = Image.composite(Image.new("RGB", (N, N), (176, 138, 78)), base, big)
+    light = noise(24, 40, seed + 5).point(lambda v: max(0, min(255, (v - 150) * 4)))
+    base = Image.composite(Image.new("RGB", (N, N), (212, 178, 114)), base, light.filter(ImageFilter.GaussianBlur(30)))
+    grain = noise(2, 22, seed + 1)
+    base = ImageChops.multiply(base, Image.merge("RGB", [grain.point(lambda v: 214 + v // 6)] * 3))
+    # burnt, darker rim like an old map sheet
     vig = Image.new("L", (N, N), 0)
-    dv = ImageDraw.Draw(vig)
-    dv.rectangle([60, 60, N - 60, N - 60], fill=255)
-    vig = vig.filter(ImageFilter.GaussianBlur(110))
-    return Image.composite(base, Image.new("RGB", (N, N), (92, 64, 36)), vig)
+    ImageDraw.Draw(vig).rounded_rectangle([90, 90, N - 90, N - 90], radius=140, fill=255)
+    vig = vig.filter(ImageFilter.GaussianBlur(120))
+    return Image.composite(base, Image.new("RGB", (N, N), (104, 72, 36)), vig)
 
 
 def grow(mask, px):
@@ -113,7 +105,7 @@ class Sketch:
     def dot(self, x, y, r, col=INK):
         cx, cy = self.c(x, y)
         rr = self.s(r)
-        self.inkd.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=col + (255,), outline=INK + (255,), width=4)
+        self.inkd.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=col + (255,), outline=INK + (255,), width=3)
 
     def tree(self, x, y, r=10, col=(118, 140, 70)):
         cx, cy = self.c(x, y)
@@ -142,9 +134,9 @@ class Sketch:
             r = random.uniform(30, 62)
             # mountain peak: lit west face, shaded east face, ink outline
             top, left, right, foot = (cx, cy - r), (cx - r, cy + r * 0.6), (cx + r, cy + r * 0.6), (cx + r * 0.25, cy + r * 0.6)
-            self.inkd.polygon([top, left, foot], fill=(196, 168, 120, 255))
-            self.inkd.polygon([top, foot, right], fill=(150, 120, 82, 255))
-            self.inkd.line([left, top, right], fill=INK + (255,), width=4)
+            self.inkd.polygon([top, left, foot], fill=(196, 162, 104, 255))
+            self.inkd.polygon([top, foot, right], fill=(158, 122, 72, 255))
+            self.inkd.line([left, top, right], fill=INK + (220,), width=3)
             for k in range(1, 4):
                 t = k / 4
                 a = (top[0] + (right[0] - top[0]) * t, top[1] + (right[1] - top[1]) * t)
@@ -159,40 +151,38 @@ class Sketch:
 
     def render(self):
         img = parchment(self.seed)
-        # drop shadow under everything that is walkable
         u = self.union()
-        sh = grow(u, 18).filter(ImageFilter.GaussianBlur(22))
-        sh = ImageChops.offset(sh, 10, 14).point(lambda v: v * 0.55)
-        img = Image.composite(Image.new("RGB", (N, N), (70, 48, 26)), img, sh)
-        grain = noise(3, 26, self.seed + 9)
-        blot = noise(40, 30, self.seed + 10)
+        # terrain around the walkable areas: darker bands like contour lines
+        for px, col, alpha in [(120, (150, 112, 60), 0.30), (70, (140, 102, 54), 0.40), (36, (124, 88, 44), 0.55)]:
+            band = grow(u, px).filter(ImageFilter.GaussianBlur(px / 3)).point(lambda v, a=alpha: int(v * a))
+            img = Image.composite(Image.new("RGB", (N, N), col), img, band)
+        for px in (52, 92):
+            ring = ImageChops.subtract(grow(u, px + 6), grow(u, px)).filter(ImageFilter.GaussianBlur(3)).point(lambda v: int(v * 0.5))
+            img = Image.composite(Image.new("RGB", (N, N), (112, 78, 40)), img, ring)
+        grain = noise(3, 20, self.seed + 9)
+        blot = noise(30, 26, self.seed + 10)
         for key, m in self.layers:
             col = PAL[key]
-            rim = grow(m, 14)
+            # soft dark outline
+            rim = grow(m, 9).filter(ImageFilter.GaussianBlur(2))
             img = Image.composite(Image.new("RGB", (N, N), INK), img, rim)
             fill = Image.new("RGB", (N, N), col)
-            # paper grain and soft blotches in the fill
-            tex = ImageChops.add(grain.point(lambda v: v // 6), blot.point(lambda v: v // 8), 1, -30)
+            tex = ImageChops.add(grain.point(lambda v: v // 8), blot.point(lambda v: v // 7), 1, -28)
             fill = ImageChops.subtract(fill, Image.merge("RGB", [tex] * 3))
             if key == "water":
                 d = ImageDraw.Draw(fill)
                 random.seed(self.seed + 3)
-                for _ in range(260):
+                for _ in range(200):
                     x, y = random.uniform(0, N), random.uniform(0, N)
-                    l = random.uniform(16, 46)
-                    d.arc([x - l, y - 6, x + l, y + 6], 200, 340, fill=(150, 184, 190), width=3)
-            img = Image.composite(fill, img, m)
-            # inner shade along the walls, light edge just inside the rim
-            edge = ImageChops.subtract(m, shrink(m, 26)).filter(ImageFilter.GaussianBlur(10))
-            edge = ImageChops.multiply(edge, m).point(lambda v: v * 0.45)
-            img = Image.composite(Image.new("RGB", (N, N), tuple(int(v * 0.72) for v in col)), img, edge)
-            hl = ImageChops.subtract(m, shrink(m, 6)).point(lambda v: v * 0.35)
-            img = Image.composite(Image.new("RGB", (N, N), tuple(min(255, v + 22) for v in col)), img, hl)
+                    l = random.uniform(14, 40)
+                    d.arc([x - l, y - 5, x + l, y + 5], 200, 340, fill=(176, 194, 194), width=3)
+            img = Image.composite(fill, img, m.filter(ImageFilter.GaussianBlur(1)))
+            # inner shading: darker along the walls, lighter in the middle
+            edge = ImageChops.subtract(m, shrink(m, 40)).filter(ImageFilter.GaussianBlur(16))
+            edge = ImageChops.multiply(edge, m).point(lambda v: int(v * 0.42))
+            img = Image.composite(Image.new("RGB", (N, N), tuple(int(v * 0.80) for v in col)), img, edge)
         img.paste(self.ink, (0, 0), self.ink)
-        # thin frame
-        d = ImageDraw.Draw(img)
-        d.rectangle([18, 18, N - 18, N - 18], outline=(70, 46, 24), width=10)
-        d.rectangle([34, 34, N - 34, N - 34], outline=(150, 118, 70), width=4)
+        img = img.filter(ImageFilter.GaussianBlur(1.1))
         return img.resize((OUT, OUT), Image.LANCZOS)
 
 
