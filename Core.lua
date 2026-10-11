@@ -13,6 +13,7 @@ ns.state = {
   inCombat = false,
 }
 local state = ns.state
+local UsePreview -- used by InitDB before the definition below
 
 -- donation page shown by Options > Support / "/drg donate"
 ns.DONATE_URL = "https://buymeacoffee.com/qqhrqqhr2"
@@ -83,6 +84,7 @@ function ns.InitDB()
   DungeonRouteGuideCharDB = DungeonRouteGuideCharDB or {}
   DungeonRouteGuideCharDB.progress = DungeonRouteGuideCharDB.progress or { done = {}, lastSeen = 0 }
   ns.db = DungeonRouteGuideDB
+  ns.db.mapStyle = "blizzard" -- migrate old Atlas preference to automatic tiles
   ns.char = DungeonRouteGuideCharDB
   ns.SetLanguage(ns.db.lang)
   ApplyLearnedNames()
@@ -93,8 +95,9 @@ end
 -- Step helpers (with user route edits applied)
 ---------------------------------------------------------------------------
 local function Edits(d, step, create)
-  local r = ns.db.routes[d.key]
-  if not r and create then r = {}; ns.db.routes[d.key] = r end
+  local routeKey = d.key .. (d.editSpace or "")
+  local r = ns.db.routes[routeKey]
+  if not r and create then r = {}; ns.db.routes[routeKey] = r end
   if not r then return end
   local e = r[step.id]
   if not e and create then e = {}; r[step.id] = e end
@@ -336,7 +339,7 @@ function ns.ResetProgress(d)
   d = d or state.current or state.viewed
   if not d then return end
   local p = ns.char.progress
-  p.key = d.key; p.done = {}; p.lastSeen = time()
+  p.key = d.key; p.done = {}; p.history = {}; p.zone = nil; p.lastSeen = time()
   state.rareSeen = {}
   ns.Print(L.RESET_DONE)
   ns.RefreshAll()
@@ -388,46 +391,12 @@ end
 -- Finds the game's own dungeon maps for our dungeons and their art tiles;
 -- dungeons that have no Blizzard map in the data get a preview from them.
 ---------------------------------------------------------------------------
-local function UsePreview(rec)
-  local d = ns.DungeonByKey[rec.dungeon]
-  if not d or (d.bliz and not d.bliz.preview) or type(rec.tiles) ~= "table" or #rec.tiles ~= 12 then return end
-  if rec.kind ~= 4 then return end                      -- dungeon maps only, not zones / cities
-  local sketchOnly = true                                -- only dungeons drawn as sketches or without a map
-  for _, p in ipairs(d.pages or {}) do if not p.schematic then sketchOnly = false end end
-  if not sketchOnly then return end
-  d.bliz = d.bliz or { preview = true, pages = {}, steps = {} }
-  for _, p in ipairs(d.bliz.pages) do if p.key == tostring(rec.map) then return end end
-  d.bliz.pages[#d.bliz.pages + 1] = { key = tostring(rec.map), tiles = { rec.tiles }, name = { ko = rec.name, en = rec.name } }
+UsePreview = function(rec)
+  -- Saved world-map scans are deliberately ignored in minimap-only mode.
 end
 
 function ns.MapScan()
-  local getInfo = C_Map and C_Map.GetMapInfo
-  local getTex = C_Map and C_Map.GetMapArtLayerTextures
-  if not getInfo or not getTex then ns.Print(L.SCAN_NONE); return end
-  local found = {}
-  for id = 1, 5000 do
-    local info = ns.Safe(getInfo, id)
-    local name = type(info) == "table" and ns.Str(info.name)
-    if name then
-      for _, d in ipairs(ns.Dungeons) do
-        if NameMatches(d, name) then
-          local tex = ns.Safe(getTex, id, 1)
-          local tiles = {}
-          if type(tex) == "table" then
-            for _, f in ipairs(tex) do local n = ns.Num(f); if n then tiles[#tiles + 1] = n end end
-          end
-          local rec = { map = id, name = name, kind = ns.Num(info.mapType), dungeon = d.key, tiles = tiles }
-          found[#found + 1] = rec
-          ns.Print(L.SCAN_HIT:format(id, name, rec.kind or -1, #tiles))
-          break
-        end
-      end
-    end
-  end
-  ns.db.mapscan = found
-  for _, rec in ipairs(found) do UsePreview(rec) end
-  ns.Print(L.SCAN_DONE:format(#found))
-  if ns.RebuildMap then ns.RebuildMap() end
+  ns.Print(L.FLOW_ONLY)
 end
 
 function ns.InstanceInfo()
@@ -435,26 +404,77 @@ function ns.InstanceInfo()
   return ns.Str(name), ns.Str(itype), ns.Num(iid)
 end
 
-function ns.DetectDungeon()
+function ns.DungeonCandidates()
   local name, itype, iid = ns.InstanceInfo()
-  if not itype or itype == "none" then return nil end
+  if not itype or itype == "none" then return {}, name, nil end
   local byID, byName = {}, {}
   for _, d in ipairs(ns.Dungeons) do
     if ListHas(d.instanceIDs, iid) then byID[#byID + 1] = d end
     if NameMatches(d, name) then byName[#byName + 1] = d end
   end
-  if #byName == 1 then return byName[1] end
-  local list = #byID > 0 and byID or byName
-  if #list <= 1 then return list[1] end
-  -- Several wings share one instance: decide by sub-zone.
-  local zones = { ns.Str(ns.Safe(GetSubZoneText)), ns.Str(ns.Safe(GetMinimapZoneText)), ns.Str(ns.Safe(GetZoneText)) }
+  return #byID > 0 and byID or byName, name, iid or name
+end
+
+local function WingFromZone(list, zone)
+  zone = ns.Normalize(zone)
+  if not zone or zone == "" then return end
+  local match
   for _, d in ipairs(list) do
-    for _, z in ipairs(zones) do
-      if z and z ~= "" and ListHas(d.subzones, z) then return d end
+    local found = ns.Normalize(d.name.ko) == zone or ns.Normalize(d.name.en) == zone
+    for _, alias in ipairs(d.subzones or {}) do
+      if ns.Normalize(alias) == zone then found = true; break end
+    end
+    if found then
+      if match then return end -- an ambiguous name is not evidence
+      match = d
     end
   end
-  if state.current and ListHas(list, state.current) then return state.current end
-  return list[1]
+  return match
+end
+
+function ns.DetectDungeon()
+  local list, name, scope = ns.DungeonCandidates()
+  if state.detectInstanceScope ~= scope then
+    state.detectInstanceScope = scope
+    state.detectedWing, state.wingOverride = nil, nil
+  end
+  state.detectionPending = nil
+  if #list <= 1 then return list[1] end
+  if state.wingOverride and ListHas(list, state.wingOverride) then return state.wingOverride end
+  -- Read independently: a missing sub-zone must not hide a usable minimap
+  -- name. More specific APIs take precedence over stale broader zone names.
+  for _, api in ipairs({ "GetSubZoneText", "GetMinimapZoneText", "GetZoneText" }) do
+    local d = WingFromZone(list, ns.Str(ns.Safe(_G[api])))
+    if d then state.detectedWing = d; return d end
+  end
+  local named
+  for _, d in ipairs(list) do
+    if NameMatches(d, name) then
+      if named then named = nil; break end
+      named = d
+    end
+  end
+  if named then state.detectedWing = named; return named end
+  -- Keep only a wing identified during this entry, never an arbitrary
+  -- previous preview/current dungeon. Loading into another wing clears it.
+  if state.detectedWing and ListHas(list, state.detectedWing) then return state.detectedWing end
+  state.detectionPending = list
+  return nil
+end
+
+function ns.SelectDungeon(d)
+  local list, _, scope = ns.DungeonCandidates()
+  if #list > 1 and ListHas(list, d) then
+    state.detectInstanceScope = scope
+    state.wingOverride = d
+    ns.UpdateLocation()
+    state.viewed, state.selected, state.cardTrash = d, nil, nil
+    if ns.ShowMap then ns.ShowMap(d) end
+    ns.Print(L.WING_MANUAL:format(T(d.name)))
+  else
+    state.viewed, state.selected, state.cardTrash = d, nil, nil
+    if ns.ShowMap then ns.ShowMap(d) end
+  end
 end
 
 local function EnterDungeon(d)
@@ -466,7 +486,7 @@ local function EnterDungeon(d)
     finished = total > 0 and done >= total
   end
   if p.key ~= d.key or stale or finished then
-    p.key = d.key; p.done = {}; p.zone = nil
+    p.key = d.key; p.done = {}; p.history = {}; p.zone = nil
     state.rareSeen = {}
     ns.Print(L.NEW_RUN:format(T(d.name)))
   end
@@ -474,6 +494,9 @@ local function EnterDungeon(d)
   state.current = d
   state.viewed = d
   state.selected = nil
+  state.targetStep = nil
+  state.area = nil
+  state.areaChanged = true
   if ns.StopEntranceIfInside then ns.StopEntranceIfInside() end
   if ns.db.autoOpen and ns.ShowMap then ns.ShowMap(d, true) end
 end
@@ -497,18 +520,27 @@ local function UpdateArea()
 end
 
 function ns.UpdateLocation()
+  local previousPending = state.detectionPending
   local d = ns.DetectDungeon()
   if d ~= state.current then
     if state.current and not d then LeaveDungeon()
     elseif d then EnterDungeon(d) end
   end
-  if not d then
+  if state.detectionPending then
+    state.warnedUnknown = nil
+    if not previousPending then
+      ns.Print(L.WING_PENDING)
+      if ns.db.autoOpen and ns.ShowWingPicker then ns.ShowWingPicker(state.detectionPending) end
+    end
+  elseif not d then
+    if ns.HideWingPicker then ns.HideWingPicker() end
     local _, itype = ns.InstanceInfo()
     if itype == "party" and not state.warnedUnknown then
       state.warnedUnknown = true
       ns.Print(L.NOT_SUPPORTED)
     end
   else
+    if ns.HideWingPicker then ns.HideWingPicker() end
     state.warnedUnknown = nil
     UpdateArea()
   end
@@ -559,7 +591,7 @@ local function OnSystemMessage(msg)
   if not list or #list == 0 then return end
   local p = ns.char.progress
   for _, d in ipairs(list) do
-    if p.key == d.key then p.done = {}; p.zone = nil; p.lastSeen = 0 end
+    if p.key == d.key then p.done = {}; p.history = {}; p.zone = nil; p.lastSeen = 0 end
   end
   ns.Print(L.RESET_SEEN:format(T(list[1].name)))
   ns.RefreshAll()
@@ -582,6 +614,9 @@ local function StepByName(d, name)
   local n = ns.Normalize(name)
   if not d or not n then return end
   for i, step in ipairs(d.steps) do
+    for _, alias in ipairs(step.aliases or {}) do
+      if ns.Normalize(alias) == n then return i, step end
+    end
     for _, v in pairs(step.name) do
       if ns.Normalize(v) == n then return i, step end
     end
@@ -606,7 +641,13 @@ end
 local function NoteInstance(unit)
   local d = state.current
   if not d then return end
-  local zone = ns.InstanceUIDFromGUID(ns.Safe(UnitGUID, unit))
+  -- Ignore pets, friendly summons and creatures from another map.
+  if not ns.True(ns.Safe(UnitCanAttack, "player", unit)) then return end
+  local guid = ns.Str(ns.Safe(UnitGUID, unit))
+  local map = guid and tonumber(guid:match("^%a+%-%d+%-%d+%-(%d+)%-%d+%-"))
+  local _, _, iid = ns.InstanceInfo()
+  if not map or not iid or map ~= iid then return end
+  local zone = ns.InstanceUIDFromGUID(guid)
   if not zone then return end
   local p = ns.char.progress
   if p.key ~= d.key then return end
@@ -614,6 +655,7 @@ local function NoteInstance(unit)
     local any = false
     for _ in pairs(p.done) do any = true; break end
     p.done = {}
+    p.history = {}
     state.rareSeen = {}
     if any then ns.Print(L.NEW_INSTANCE) end
     p.zone = zone
@@ -665,7 +707,7 @@ end
 local function RareAlert(unit)
   if not ns.db.rareAlert or not state.current then return end
   local npc = ns.UnitNpcID(unit)
-  if not npc or state.rareSeen[npc] then return end
+  if not npc or state.rareSeen[npc] or ns.True(ns.Safe(UnitIsDead, unit)) then return end
   local _, step = StepByNpc(state.current, npc)
   local isRare = step and step.kind == "rare"
   if not isRare then
@@ -745,6 +787,7 @@ local EVENTS = {
   "PLAYER_TARGET_CHANGED", "UNIT_HEALTH", "NAME_PLATE_UNIT_ADDED",
   "LOOT_OPENED", "ENCOUNTER_END", "BOSS_KILL", "UPDATE_MOUSEOVER_UNIT", "UNIT_TARGET", "CHAT_MSG_SYSTEM", "GET_ITEM_INFO_RECEIVED",
   "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
+  "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED",
 }
 for _, e in ipairs(EVENTS) do pcall(ev.RegisterEvent, ev, e) end
 
@@ -765,9 +808,17 @@ end
 handlers.PLAYER_LOGOUT = function()
   if state.current and ns.char then ns.char.progress.lastSeen = time() end
 end
-handlers.PLAYER_ENTERING_WORLD = function() ns.UpdateLocation() end
-handlers.ZONE_CHANGED_NEW_AREA = handlers.PLAYER_ENTERING_WORLD
-handlers.ZONE_CHANGED = function() if state.current then ns.UpdateLocation() end end
+handlers.PLAYER_ENTERING_WORLD = function()
+  state.detectedWing, state.wingOverride, state.detectInstanceScope = nil, nil, nil
+  ns.UpdateLocation()
+  -- Zone text can arrive after the world-loading event without a new zone
+  -- event. Retry using fresh data; do not choose a default wing while waiting.
+  if C_Timer and C_Timer.After then
+    for _, delay in ipairs({ 0.25, 1, 2 }) do C_Timer.After(delay, ns.UpdateLocation) end
+  end
+end
+handlers.ZONE_CHANGED_NEW_AREA = function() ns.UpdateLocation() end
+handlers.ZONE_CHANGED = function() ns.UpdateLocation() end
 handlers.ZONE_CHANGED_INDOORS = handlers.ZONE_CHANGED
 handlers.PLAYER_TARGET_CHANGED = UpdateTarget
 handlers.UNIT_HEALTH = function(unit) if state.current and Watched(unit) then CheckUnitDeath(unit) end end
@@ -781,6 +832,20 @@ handlers.GET_ITEM_INFO_RECEIVED = function(itemID, success)
   itemRefreshQueued = true
   C_Timer.After(0.3, function() itemRefreshQueued = false; if ns.RefreshMap then ns.RefreshMap() end end)
 end
+local questRefreshQueued = false
+handlers.QUEST_LOG_UPDATE = function()
+  if questRefreshQueued then return end
+  if C_Timer and C_Timer.After then
+    questRefreshQueued = true
+    C_Timer.After(0.2, function()
+      questRefreshQueued = false
+      if ns.RefreshMap then ns.RefreshMap() end
+    end)
+  elseif ns.RefreshMap then ns.RefreshMap() end
+end
+handlers.QUEST_ACCEPTED = handlers.QUEST_LOG_UPDATE
+handlers.QUEST_TURNED_IN = handlers.QUEST_LOG_UPDATE
+handlers.QUEST_REMOVED = handlers.QUEST_LOG_UPDATE
 handlers.CHAT_MSG_SYSTEM = OnSystemMessage
 handlers.UPDATE_MOUSEOVER_UNIT = function() NoteInstance("mouseover"); ns.LearnName("mouseover"); CheckUnitDeath("mouseover") end
 handlers.UNIT_TARGET = function(unit)
@@ -849,8 +914,23 @@ SlashCmdList.DUNGEONROUTEGUIDE = function(msg)
     local want = ({ auto = "auto", ["자동"] = "auto", ko = "ko", kr = "ko", ["한국어"] = "ko", en = "en", english = "en", ["영어"] = "en" })[rest]
     ns.ChangeLanguage(want)
   elseif cmd == "map" then
-    if rest == "atlas" or rest == "blizzard" then ns.SetMapStyle(rest)
-    else ns.SetMapStyle(ns.db.mapStyle == "atlas" and "blizzard" or "atlas") end
+    ns.SetMapStyle("blizzard")
+  elseif cmd == "wing" or cmd == "구역" then
+    if rest == "auto" or rest == "자동" then
+      state.wingOverride, state.detectedWing = nil, nil
+      ns.UpdateLocation()
+    else
+      local d = ns.DungeonByKey[rest]
+      if not d then
+        for _, candidate in ipairs(ns.Dungeons) do
+          for _, alias in ipairs(candidate.nameMatch or {}) do
+            if ns.Normalize(alias) == ns.Normalize(rest) then d = candidate; break end
+          end
+          if d then break end
+        end
+      end
+      if d then ns.SelectDungeon(d) else ns.Print(L.WING_HELP) end
+    end
   elseif cmd == "icon" then ns.SetIconShown(not ns.db.showIcon); ns.Print(L.OPT_ICON:format(ns.OnOff(ns.db.showIcon)))
   elseif cmd == "rare" then ns.db.rareAlert = not ns.db.rareAlert; ns.Print(L.OPT_RARE:format(ns.OnOff(ns.db.rareAlert)))
   elseif cmd == "go" then

@@ -12,3 +12,4 @@ ignore:
   - tools
   - assets
   - .gitignore
+  - Maps

@@ -24,20 +24,25 @@ Blizzard dungeon map art (default map style)
   and spawns; Korean mob names from AzerothCore (github.com/azerothcore).
 
 Maps/Thanes.tga, Maps/Excavation.tga, Maps/RuinsLordaeron.tga, Maps/Dalaran.tga: hand-drawn
-sketch maps made for this addon, used when the client has no minimap tiles for them (layout referenced from the WOWF.IO guides; no pixels copied;
+sketch maps made for this addon, used when the client has no minimap tiles for them (layout referenced from the community dungeon guides guides; no pixels copied;
 Dalaran drawn from the guide text only).
 
 Dungeon facts / 던전 정보 참고
   Step order, boss / NPC / rare / quest-spot positions, alternate spawn spots,
   quest lists, boss loot (item IDs) and entrance coordinates for WoW Forever
   were referenced from
-  WOWF.IO dungeon guides (https://wowf.io/ko/dungeons, accessed 2026-10-07).
+  community dungeon guides dungeon guides (community dungeon guides accessed 2026-10-07).
   Positions are used as they are on the Blizzard maps and were converted onto
   the Atlas maps; descriptions were rewritten
   for this addon (quest objective lines are the game's quest text).
-  New Forever dungeons: the wowf positions were fitted onto the minimap tiles;
-  City of Dalaran has no positions on WOWF.IO, its boss spots are estimated
+  New Forever dungeons: the community dungeon guides positions were fitted onto the minimap tiles;
+  City of Dalaran has no positions on community dungeon guides, its boss spots are estimated
   from the guide's area names.
 
 This addon is distributed under the GNU General Public License v2 (LICENSE.txt).
 World of Warcraft is a trademark of Blizzard Entertainment, Inc.
+
+Current minimaps: Blizzard Entertainment (Forever Beta 1.60.1.70338,
+with verified matching Classic Era 1.15.9.70003 supplements).
+See MINIMAP_SOURCES.txt. Atlas images remain historical source files only;
+the current installation does not load or include Maps/.

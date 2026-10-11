@@ -1,5 +1,14 @@
 # Dungeon Route Guide
 
+## v1.0.8
+
+- All 18 dungeons and 29 areas now use bundled minimap tiles, with square fit, mouse-wheel zoom, pan and Fit reset
+- Align map orientation and prevent clickable goals and floor links from overlapping
+- Scarlet Monastery no longer selects Graveyard when the wing is unknown; retry zone detection or select the current wing with /drg wing library (or /drg wing auto)
+- Include the original addon icon for the screen button and addon list
+- Add Korean names for all 106 quest entries, including new dungeon quests; prefer the game's Korean title when available, with a bundled Korean fallback
+- Translate quest objectives and attunement instructions and remove development labels and external guide-site names from the game UI
+
 ## v1.0.7
 
 - City of Dalaran has two floors: the sewers where the run starts (Atrexis, Lyn the Ignored) on the game's own indoor minimap of the sewers, and the city on the outdoor minimap
@@ -8,10 +17,10 @@
 
 ## v1.0.6
 
-- Hall of Thanes, Excavation Site, Ruins of Lordaeron and City of Dalaran now show the game's own minimap of the dungeon (loaded from the client by file ID, wowf positions fitted onto it). City of Dalaran has no positions on wowf yet, so its boss spots are estimated from the guide's area names
+- Hall of Thanes, Excavation Site, Ruins of Lordaeron and City of Dalaran now show the game's own minimap of the dungeon (loaded from the client by file ID, community guide positions fitted onto it). City of Dalaran has no positions on community guide yet, so its boss spots are estimated from the guide's area names
 - Hand-drawn sketch maps for these four dungeons as a fallback (client without the tiles, or Options > Map art: Atlas), redrawn in the style of the game's dungeon maps
 - City of Dalaran is recognised when you enter it (instance 2959), so progress and auto-checks work there too
-- wowf.io updates: City of Dalaran boss tactics (no longer the BlizzCon-demo notes), attunement quests for both factions in the Prep tab, how to summon Lyn the Ignored, and 10 more boss drops
+- community guide updates: City of Dalaran boss tactics (no longer the BlizzCon-demo notes), attunement quests for both factions in the Prep tab, how to summon Lyn the Ignored, and 10 more boss drops
 - New dungeon quests: Dalaran (Starving Arcane, Heart of Disruption for each faction) and Scarlet Monastery Library (Past Due)
 - Ruins of Lordaeron: the unconfirmed rare Lordaeron Captain is no longer listed
 - A dungeon without any map shows the route as a numbered flow chart instead of an empty area
@@ -22,11 +31,11 @@
 - Item names show right away from the game's own item table instead of waiting for the server; /drg item <id> shows what the game knows about an item
 - Loading bar while item info is still coming from the server; items the game does not have are marked as such instead of "Loading…" forever
 - Long loot lists scroll: the card next to the window has a scroll bar, and the icon rows under the tip scroll with the mouse wheel
-- Loot refreshed for all dungeons from the current wowf.io lists
+- Loot refreshed for all dungeons from the current community guide lists
 - Prep tab: drops of trash mobs and of named mobs off the route (e.g. Deathsworn Captain, Techbot) are grouped by source; click one to see the full item list with names
 - The Route list ends with a "Trash mobs" row (and rows for named mobs off the route); click it to see their drops under the tip and in the card
 - Trash drops show which mob drops them and how often (e.g. Defias Blackguard 6%), or "any mob in the dungeon, low chance" for dungeon-wide drops; mob-specific drops are listed first
-- Full monster names as wowf.io lists them (e.g. 잠들지 않는 아즈쉬르, 돌연변이 요정용 instead of shortened names)
+- Full monster names as community guide lists them (e.g. 잠들지 않는 아즈쉬르, 돌연변이 요정용 instead of shortened names)
 - When you target or mouse over a boss, the name your game client shows is remembered and used in the guide from then on
 
 ## v1.0.4
@@ -70,7 +79,7 @@
 
 ## v0.2.0
 
-- 18 WoW Forever dungeons from the wowf.io guides: route order, bosses, rares, NPCs and quest spots
+- 18 WoW Forever dungeons from the community guide guides: route order, bosses, rares, NPCs and quest spots
 - Map legend (entrance / boss / rare / NPC / quest spot), quest "!" badges, alternate spawn spots
 - Multi-page maps (Blackfathom Deeps), dungeon picker, Route / Quests / Prep tabs
 - Kill detection by creature ID and by name

@@ -12,6 +12,21 @@ function ns.T(v)
 end
 
 local S = {
+  WING_PENDING    = { "수도원 구역을 아직 판별하지 못했습니다. 현재 구역을 선택하거나 구역명이 갱신될 때까지 기다려 주세요.", "The monastery wing is not identified yet. Choose your current wing or wait for the zone name to update." },
+  WING_TITLE      = { "수도원: 현재 구역 선택", "Monastery: choose your current wing" },
+  WING_WAIT       = { "구역명이 확인되면 자동으로 지도가 열립니다.", "The map opens automatically when the wing is identified." },
+  WING_MANUAL     = { "현재 구역 선택: %s (이번 입장 동안 유지). /drg wing auto 로 자동 판별로 돌아갑니다.", "Current wing: %s (until the next entry). Use /drg wing auto to resume detection." },
+  WING_HELP       = { "/drg wing 도서관 · 묘지 · 무기고 · 대성당 또는 auto", "/drg wing library · graveyard · armory · cathedral, or auto" },
+  MAP_FIT         = { "전체", "Fit" },
+  MAP_ZOOM_TIP    = { "휠: 확대·축소 / 확대 후 지도 끌기: 이동 / 이 버튼: 전체 보기", "Wheel: zoom / Drag while zoomed: pan / Click this button: fit map" },
+  MAP_CLASSIC_SUPPLEMENT = { "이 구역은 공식 클래식 클라이언트의 미니맵으로 보완했습니다. 현재 파일의 타일 번호와 건물 배치 좌표가 일치하는지 확인했습니다.", "Supplemented with official Classic client minimaps. Map tile coordinates and WMO placements match the current client." },
+  MAP_NORTH_UP    = { "북 ↑", "N ↑" },
+  MAP_GUIDE_UP    = { "방향 고정", "Fixed orientation" },
+  MAP_NORTH_TIP   = { "북쪽이 위인 고정 지도입니다. 미니맵 회전 옵션이 켜져 있으면 미니맵과 화면 방향이 달라질 수 있습니다.", "Fixed north-up map. With minimap rotation enabled, the minimap can face a different direction." },
+  MAP_GUIDE_TIP   = { "방향이 고정된 지도입니다. 미니맵 회전 설정을 사용하면 화면 방향이 다를 수 있습니다.", "Fixed map orientation. With minimap rotation enabled, the minimap can face a different direction." },
+  PARTIAL_MINIMAP = { "일부 미니맵 타일 누락", "Some minimap tiles unavailable" },
+  UNAVAILABLE_MINIMAP = { "지도를 불러오지 못했습니다.\n목록에서 다른 구역을 선택해 주세요.", "The map could not be loaded.\nSelect another area from the list." },
+  PIN_CANDIDATES  = { "무작위 출현 후보 위치입니다. 선택하면 다른 후보 지점도 표시합니다. 실제 출현 지점은 게임에서 확인하세요.", "Possible random spawn locations. Select to show alternative spots. Check the active spawn in game." },
   TITLE           = { "던전 길잡이", "Dungeon Route Guide" },
   NEXT            = { "다음", "Next" },
   TARGET          = { "대상", "Target" },
@@ -46,9 +61,10 @@ local S = {
   BLANK_MAP       = { "지형 그림 없음 · 상대 위치만 표시", "No terrain art · relative positions only" },
   BTN_CURRENT     = { "현재 던전", "Current" },
   TIP_CURRENT     = { "지금 있는 던전 지도로 돌아갑니다", "Back to the map of the dungeon you are in" },
-  FLOW_ONLY       = { "지도 자료가 없어 진행 순서만 표시", "No map data yet: route order only" },
-  SCHEMATIC       = { "약도라서 위치는 참고용", "Sketch map, positions approximate" },
-  APPROX          = { "보스 위치는 지역 이름으로 추정", "Boss spots estimated from area names" },
+  FLOW_ONLY       = { "미니맵 자료가 없어 진행 순서만 표시", "No minimap data yet: route order only" },
+  SCHEMATIC       = { "위치는 참고용", "Sketch map, positions approximate" },
+  LEGACY_MAP = { "구버전 미니맵 · 층 배치 확인 필요", "Legacy minimap - verify floor layout" },
+  APPROX          = { "표식 위치 추정 · 확인 필요", "Estimated markers - review required" },
   LOOT            = { "전리품", "Loot" },
   TRASH_LOOT      = { "일반 몹 드랍", "Trash drops" },
   TRASH_ALL       = { "던전 일반 몹이 떨구는 아이템", "Dropped by the dungeon's trash mobs" },
@@ -70,7 +86,7 @@ local S = {
   LOOT_HINT       = { "Shift+클릭: 채팅에 링크", "Shift-click: link in chat" },
   OPT_LANG        = { "언어: %s", "Language: %s" },
   OPT_MAPSTYLE    = { "지도 그림: %s", "Map art: %s" },
-  MAP_BLIZ        = { "블리자드 원본", "Blizzard" },
+  MAP_BLIZ        = { "미니맵 조합", "Minimap tiles" },
   MAP_ATLAS       = { "Atlas", "Atlas" },
   MAPSTYLE_SET    = { "지도 그림: %s", "Map art: %s" },
   MODEL_HINT      = { "끌기: 회전 · 휠: 확대/축소 · 오른쪽 클릭: 처음 각도", "Drag: rotate · Wheel: zoom · Right-click: reset" },
@@ -138,18 +154,18 @@ local S = {
   ON              = { "켜짐", "on" },
   OFF             = { "꺼짐", "off" },
   CLICK_HINT      = { "왼쪽 클릭: 선택 · 오른쪽 클릭: 완료 표시 전환", "Left-click: select · Right-click: toggle done" },
-  SOURCE          = { "지도: Atlas (GPL-2.0) · 정보 참고: wowf.io", "Maps: Atlas (GPL-2.0) · Info: wowf.io" },
+  SOURCE          = { "던전 공략 길잡이", "Dungeon route guide" },
   RESET_DONE      = { "진행을 초기화했습니다.", "Progress reset." },
   COMBAT_LOCKED   = { "전투 중에는 할 수 없습니다.", "Not available in combat." },
   HELP = {
     "|cff66ccff/drg|r 지도 열기/닫기 · |cff66ccff/drg hud|r 다음 목표 표시\n" ..
     "|cff66ccff/drg next|r 다음 단계 직접 완료 · |cff66ccff/drg undo|r 되돌리기 · |cff66ccff/drg reset|r 진행 초기화\n" ..
     "|cff66ccff/drg go|r 입구 안내 · |cff66ccff/drg go stop|r 안내 끄기 · |cff66ccff/drg entrance set|r 지금 위치를 입구로 저장\n" ..
-    "|cff66ccff/drg lang|r 언어 (auto · ko · en) · |cff66ccff/drg map|r 지도 그림 (블리자드 원본 · Atlas) · |cff66ccff/drg icon|r 화면 아이콘 보이기/숨기기 · |cff66ccff/drg edit|r 표식 위치 편집 · |cff66ccff/drg export|r 편집 내보내기 · |cff66ccff/drg debug|r 던전 정보 확인",
+    "|cff66ccff/drg lang|r 언어 (auto · ko · en) · |cff66ccff/drg map|r 미니맵 다시 불러오기 · |cff66ccff/drg icon|r 화면 아이콘 보이기/숨기기 · |cff66ccff/drg edit|r 표식 위치 편집 · |cff66ccff/drg export|r 편집 내보내기 · |cff66ccff/drg debug|r 던전 정보 확인",
     "|cff66ccff/drg|r toggle map · |cff66ccff/drg hud|r next-objective bar\n" ..
     "|cff66ccff/drg next|r mark next done · |cff66ccff/drg undo|r undo · |cff66ccff/drg reset|r reset progress\n" ..
     "|cff66ccff/drg go|r guide to entrance · |cff66ccff/drg go stop|r stop · |cff66ccff/drg entrance set|r save current spot as entrance\n" ..
-    "|cff66ccff/drg lang|r language (auto · ko · en) · |cff66ccff/drg map|r map art (Blizzard · Atlas) · |cff66ccff/drg icon|r show/hide icon · |cff66ccff/drg edit|r marker edit · |cff66ccff/drg export|r export edits · |cff66ccff/drg debug|r dungeon info",
+    "|cff66ccff/drg lang|r language (auto · ko · en) · |cff66ccff/drg map|r reload minimap · |cff66ccff/drg icon|r show/hide icon · |cff66ccff/drg edit|r marker edit · |cff66ccff/drg export|r export edits · |cff66ccff/drg debug|r dungeon info",
   },
 }
 

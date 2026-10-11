@@ -36,6 +36,9 @@ local lootBar, lootLabel, lootBtns = nil, nil, {}
 local trashBtns = {}
 local TRASH_ICON = "Interface\\Icons\\INV_Misc_Bag_10"
 local entranceMark, tabRoute, tabQuest, tabNotes, progressText, tipText, questNote
+local orientationBadge
+local zoomReset
+local navigation, baseView, nav = {}, AVIEW, nil
 
 ---------------------------------------------------------------------------
 -- helpers
@@ -93,16 +96,12 @@ local function Circle(parent, layer, size, sub)
   return t
 end
 
--- Map styles: "blizzard" = the game's own dungeon map art (4 x 3 tiles of
--- 256 px read from the client by file ID; the wowf positions fit it as they
--- are), "atlas" = the bundled Atlas images. Atlas is used for dungeons
--- without Blizzard art, or when the client has none of a page's tile files.
-local BVIEW = { 8, 8, 986, 652 }    -- shown part of the 1002 x 668 map (frame trimmed)
+-- Native minimap-only geometry is supplied by MinimapData.lua.
 local AVIEW = { 0, 0, 512, 512 }
 local blizFailed = {}
 
 local function UseBliz(d)
-  return (d and d.bliz and ns.db.mapStyle ~= "atlas" and not blizFailed[d.key]) and true or false
+  return (d and d.bliz and not blizFailed[d.key]) and true or false
 end
 -- Dungeons without any map: the steps as a flow chart in route order
 -- (snake layout on the 512 x 512 canvas), so the map area still guides.
@@ -127,13 +126,12 @@ end
 
 local function Geo(d)
   if UseBliz(d) then return d.bliz end
-  if not (d.pages and #d.pages > 0) then return FlowGeo(d) end
-  return d
+  return FlowGeo(d) -- minimap unavailable: route only, no Atlas fallback
 end
 local function HasMap(d) local g = Geo(d); return g.pages and #g.pages > 0 end
 local function ViewOf(page)
   if page and page.view then return page.view end
-  return (page and page.tiles) and BVIEW or AVIEW
+  return AVIEW
 end
 
 -- page, position and alternate spots of a step in the shown map style
@@ -154,6 +152,36 @@ ns.StepGeo = StepGeo
 -- map pixels -> screen pixels for the page being drawn
 local view = AVIEW
 local function Scale() return (ns.db.mapSize or 380) / view[4] end
+local function ClampCenter(n, b)
+  local w, h = b[3] / n.zoom, b[4] / n.zoom
+  n.x = math.max(b[1] + w / 2, math.min(b[1] + b[3] - w / 2, n.x))
+  n.y = math.max(b[2] + h / 2, math.min(b[2] + b[4] - h / 2, n.y))
+end
+local function NavigationView(d, page)
+  baseView = ViewOf(page)
+  if not page or page.flow or page.unavailable then nav = nil; return baseView end
+  local key = d.key .. "/" .. page.key
+  nav = navigation[key]
+  if not nav then
+    nav = { zoom = 1, x = baseView[1] + baseView[3]/2, y = baseView[2] + baseView[4]/2 }
+    navigation[key] = nav
+  end
+  ClampCenter(nav, baseView)
+  return {nav.x-baseView[3]/nav.zoom/2, nav.y-baseView[4]/nav.zoom/2, baseView[3]/nav.zoom, baseView[4]/nav.zoom}
+end
+local function ZoomMap(delta)
+  if not nav or state.edit then return end
+  local old, sc = nav.zoom, Scale()
+  local cx, cy = GetCursorPosition()
+  local es = canvas:GetEffectiveScale()
+  local fx = math.max(0, math.min(1, (cx/es-canvas:GetLeft())/canvas:GetWidth()))
+  local fy = math.max(0, math.min(1, (canvas:GetTop()-cy/es)/canvas:GetHeight()))
+  local px, py = view[1]+fx*view[3], view[2]+fy*view[4]
+  nav.zoom = math.max(1, math.min(5, old * (delta>0 and 1.25 or 0.8)))
+  nav.x = px + (0.5-fx)*baseView[3]/nav.zoom
+  nav.y = py + (0.5-fy)*baseView[4]/nav.zoom
+  ns.RefreshMap()
+end
 
 local function StepTooltip(owner, d, i)
   local step = d.steps[i]
@@ -165,6 +193,8 @@ local function StepTooltip(owner, d, i)
   if step.outside then kind = kind .. " · " .. T(step.outside) end
   GameTooltip:AddLine(kind, 0.7, 0.7, 0.7)
   if step.quest then GameTooltip:AddLine("! " .. L.QUEST_MARK, 1, 0.82, 0) end
+  local position = d.bliz and d.bliz.steps and d.bliz.steps[step.id]
+  if position and position.candidates then GameTooltip:AddLine(L.PIN_CANDIDATES, 1, 0.75, 0.3, true) end
   GameTooltip:AddLine(T(step.tip), 1, 1, 1, true)
   if step.loot and #step.loot > 0 then
     GameTooltip:AddLine(" ")
@@ -186,8 +216,10 @@ local function StepClick(d, i, button)
   else
     state.selected = (state.selected == i) and nil or i
     state.cardTrash = nil
-    local pg = StepGeo(d, i)
+    local pg, pos = StepGeo(d, i)
     if pg then state.page, state.pageManual = pg, true end
+    local n = pg and navigation[d.key .. "/" .. pg]
+    if n and pos and state.selected then n.x, n.y = pos[1], pos[2] end
     ns.RefreshMap()
   end
 end
@@ -215,7 +247,7 @@ end
 -- Dalaran's sewers). A sub-zone seen on two floors is ignored.
 local function LearnedSet(d, g)
   local all = ns.db.floorAreas
-  return all and all[d.key .. (g == d.bliz and ":b" or ":a")]
+  return all and all[d.key .. (d.editSpace or "") .. (g == d.bliz and ":b" or ":a")]
 end
 local function LearnedPage(d, g, area)
   local t = area and LearnedSet(d, g)
@@ -229,7 +261,7 @@ function ns.LearnFloor(d, i)
   local pg = StepGeo(d, i)
   if not pg then return end
   ns.db.floorAreas = ns.db.floorAreas or {}
-  local key = d.key .. (g == d.bliz and ":b" or ":a")
+  local key = d.key .. (d.editSpace or "") .. (g == d.bliz and ":b" or ":a")
   local t = ns.db.floorAreas[key] or {}
   ns.db.floorAreas[key] = t
   if t[area] == nil then t[area] = pg elseif t[area] ~= pg then t[area] = false end
@@ -308,8 +340,6 @@ local MENU = {
   function() ns.db.rareAlert = not ns.db.rareAlert end,
   function() return L.OPT_FADE:format(ns.OnOff(ns.db.combatFade)) end,
   function() ns.db.combatFade = not ns.db.combatFade; ns.ApplyAlpha() end,
-  function() return L.OPT_MAPSTYLE:format(ns.db.mapStyle == "atlas" and L.MAP_ATLAS or L.MAP_BLIZ) end,
-  function() ns.SetMapStyle(ns.db.mapStyle == "atlas" and "blizzard" or "atlas") end,
   function() return L.OPT_LANG:format(L["LANG_" .. (ns.db.lang or "auto")]) end,
   function() ns.ChangeLanguage() end,
   function() return L.OPT_ICON:format(ns.OnOff(ns.db.showIcon)) end,
@@ -372,8 +402,8 @@ local function CreatePicker()
     b.lv = b:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     b.lv:SetPoint("RIGHT", -4, 0)
     b:SetScript("OnClick", function()
-      state.viewed = d; state.selected, state.cardTrash = nil, nil
-      picker:Hide(); if floorList then floorList:Hide() end; ns.RefreshMap()
+      picker:Hide(); if floorList then floorList:Hide() end
+      ns.SelectDungeon(d)
     end)
     picker.buttons[k] = b
   end
@@ -397,6 +427,10 @@ local function GetMarker(k)
   m = CreateFrame("Button", nil, overlay)
   m:SetSize(16, 16)
   m:SetFrameLevel(overlay:GetFrameLevel() + 4)
+  m.leader = overlay:CreateLine(nil, "ARTWORK")
+  m.leader:SetThickness(1)
+  m.leader:SetColorTexture(1, 1, 1, 0.65)
+  m.leader:Hide()
   m.glow = Circle(m, "BACKGROUND", 26)
   m.glow:SetVertexColor(1, 0.82, 0, 0.55)
   m.glow:SetBlendMode("ADD")
@@ -466,11 +500,15 @@ local function GetLink(k)
   l = CreateFrame("Button", nil, overlay)
   l:SetSize(18, 18)
   l:SetFrameLevel(overlay:GetFrameLevel() + 3)
+  l.leader = overlay:CreateLine(nil, "ARTWORK")
+  l.leader:SetThickness(1); l.leader:SetColorTexture(0.45,0.8,1,0.65); l.leader:Hide()
   l.bg = Circle(l, "BACKGROUND", 18)
   l.bg:SetVertexColor(0.05, 0.05, 0.08, 0.75)
   l.tex = l:CreateTexture(nil, "ARTWORK")
-  l.tex:SetSize(22, 22); l.tex:SetPoint("CENTER")
+  l.tex:SetSize(11, 11); l.tex:SetPoint("BOTTOMRIGHT",4,-2)
   l.tex:SetTexture(LINK_ICON)
+  l.number=l:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
+  l.number:SetPoint("CENTER");l.number:SetTextColor(0.55,0.85,1)
   l.name = l:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   l.name:SetPoint("TOP", l, "BOTTOM", 0, -1)
   l.name:SetTextColor(0.55, 0.85, 1)
@@ -478,13 +516,16 @@ local function GetLink(k)
   l.nameBg:SetColorTexture(0, 0, 0, 0.6)
   l.nameBg:SetPoint("TOPLEFT", l.name, "TOPLEFT", -3, 1)
   l.nameBg:SetPoint("BOTTOMRIGHT", l.name, "BOTTOMRIGHT", 3, -1)
+  l.name:Hide();l.nameBg:Hide()
   l:SetScript("OnEnter", function(self)
+    self.name:Show();self.nameBg:Show()
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:SetText(self.label or "", 1, 1, 1, 1, true)
+    if self.approx then GameTooltip:AddLine(L.APPROX, 1, 0.75, 0.3, true) end
     if self.toPage then GameTooltip:AddLine(L.LINK_CLICK, 0.5, 0.8, 1) end
     GameTooltip:Show()
   end)
-  l:SetScript("OnLeave", GameTooltip_Hide)
+  l:SetScript("OnLeave", function(self)self.name:Hide();self.nameBg:Hide();GameTooltip_Hide()end)
   l:SetScript("OnClick", function(self)
     if not self.toPage then return end
     state.page, state.pageManual = self.toPage, true
@@ -565,7 +606,7 @@ local function GetQuestRow(k)
   r:SetScript("OnEnter", function(self)
     if not self.q then return end
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetText(T(self.q.name), 1, 0.82, 0)
+    GameTooltip:SetText(ns.QuestTitle(self.q), 1, 0.82, 0)
     if self.q.level then GameTooltip:AddLine(("Lv %d"):format(self.q.level), 0.7, 0.7, 0.7) end
     GameTooltip:AddLine(T(self.q.giver), 1, 1, 1, true)
     GameTooltip:Show()
@@ -843,14 +884,53 @@ local function Create()
   noMapText:SetPoint("CENTER"); ns.Loc(noMapText, "NO_MAP")
   overlay = CreateFrame("Frame", nil, canvas)
   overlay:SetAllPoints()
+  if overlay.SetClipsChildren then overlay:SetClipsChildren(true) end
   overlay:SetFrameLevel(canvas:GetFrameLevel() + 2)
+  orientationBadge = CreateFrame("Button", nil, overlay)
+  orientationBadge:SetSize(120, 36)
+  orientationBadge:SetPoint("TOPRIGHT", -6, -27)
+  orientationBadge.text = orientationBadge:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+  orientationBadge.text:SetPoint("TOPRIGHT")
+  orientationBadge:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetText(self.northUp and L.MAP_NORTH_TIP or L.MAP_GUIDE_TIP, 1, 1, 1, 1, true)
+    if self.partial then GameTooltip:AddLine(L.PARTIAL_MINIMAP, 1, 0.7, 0.3, true) end
+    if self.supplementalNative then GameTooltip:AddLine(L.MAP_CLASSIC_SUPPLEMENT, 1, 0.8, 0.4, true) end
+    GameTooltip:Show()
+  end)
+  orientationBadge:SetScript("OnLeave", GameTooltip_Hide)
   -- The canvas takes mouse input (edit clicks), so it must also forward
   -- drags to the window or the map area could not be used to move it.
   canvas:EnableMouse(true)
+  canvas:EnableMouseWheel(true)
+  canvas:SetScript("OnMouseWheel", function(_, delta) ZoomMap(delta) end)
   canvas:RegisterForDrag("LeftButton")
-  canvas:SetScript("OnDragStart", function() if not ns.db.locked then frame:StartMoving() end end)
-  canvas:SetScript("OnDragStop", function() frame:StopMovingOrSizing(); SavePosition() end)
-  canvas:SetScript("OnMouseUp", function(_, button) ns.EditClick(button) end)
+  canvas:SetScript("OnDragStart", function(self)
+    if nav and nav.zoom > 1 and not state.edit then
+      local x, y = GetCursorPosition()
+      self.pan = {x, y, nav.x, nav.y, Scale(), self:GetEffectiveScale()}
+      self:SetScript("OnUpdate", function(c)
+        local cx, cy = GetCursorPosition(); local p = c.pan
+        if not p or not nav then return end
+        nav.x = p[3] - (cx-p[1])/p[6]/p[5]
+        nav.y = p[4] + (cy-p[2])/p[6]/p[5]
+        ns.RefreshMap()
+      end)
+    elseif not ns.db.locked then frame:StartMoving() end
+    self.dragged = true
+  end)
+  canvas:SetScript("OnDragStop", function(self)
+    self:SetScript("OnUpdate", nil); self.pan = nil
+    frame:StopMovingOrSizing(); SavePosition()
+  end)
+  canvas:SetScript("OnMouseDown", function(self) self.dragged = false end)
+  canvas:SetScript("OnMouseUp", function(self, button) if not self.dragged then ns.EditClick(button) end end)
+  canvas:SetScript("OnHide", function(self) self:SetScript("OnUpdate", nil); self.pan=nil end)
+  zoomReset = Btn(overlay, L.MAP_FIT, 46, L.MAP_ZOOM_TIP, function()
+    if nav then nav.zoom=1; ns.RefreshMap() end
+  end)
+  zoomReset:SetPoint("BOTTOMRIGHT", -4, 4)
+  zoomReset:SetFrameLevel(overlay:GetFrameLevel()+8)
 
   entranceMark = CreateFrame("Frame", nil, overlay)
   entranceMark:SetSize(15, 15)
@@ -1197,18 +1277,47 @@ local function Place(f, sc, p, dx, dy)
   f:ClearAllPoints()
   f:SetPoint("CENTER", canvas, "TOPLEFT", (p[1] - view[1]) * sc + (dx or 0), -(p[2] - view[2]) * sc + (dy or 0))
 end
+local function InView(p)
+  return p and p[1]>=view[1] and p[1]<=view[1]+view[3] and p[2]>=view[2] and p[2]<=view[2]+view[4]
+end
+local function MarkerSpot(p, sc, occupied)
+  local ax, ay = (p[1]-view[1])*sc, (p[2]-view[2])*sc
+  local W, H = canvas:GetWidth(), canvas:GetHeight()
+  local function free(x,y)
+    for _,q in ipairs(occupied)do if (q[1]-x)^2+(q[2]-y)^2 < 20^2 then return false end end
+    return true
+  end
+  for _,radius in ipairs({0,22,32,44,60,80,104,132})do
+    for angle=0,15 do
+      local a=angle*math.pi/8
+      local x=math.max(12,math.min(W-12,ax+radius*math.cos(a)))
+      local y=math.max(12,math.min(H-12,ay+radius*math.sin(a)))
+      if free(x,y)then occupied[#occupied+1]={x,y};return x-ax, ay-y end
+    end
+  end
+  occupied[#occupied+1]={ax,ay};return 0,0
+end
 
 local function DrawMarkers(d, page, nextIndex, sc)
   local k, ka = 0, 0
   local g = Geo(d)
+  local occupied={}
+  for _,ln in ipairs(g.links or{})do
+    if ln.page==page.key and InView(ln.pos)then occupied[#occupied+1]={(ln.pos[1]-view[1])*sc,(ln.pos[2]-view[2])*sc}end
+  end
+  if g.start and g.start.page==page.key and InView(g.start.pos)then
+    occupied[#occupied+1]={(g.start.pos[1]-view[1])*sc,(g.start.pos[2]-view[2])*sc}
+  end
+  local reservedCount=#occupied
   for i, step in ipairs(d.steps) do
     local spage, spos, salt = StepGeo(d, i)
-    if spos and spage == page.key and ns.StepVisible(step) then
+    if spos and spage == page.key and InView(spos) and ns.StepVisible(step) then
       local done = ns.IsDone(d, i)
       local cat = Category(step)
       local c = done and CAT.done or CAT[cat]
       -- alternate spawn spots
-      for _, ap in ipairs(salt or {}) do
+      for _, ap in ipairs((state.selected==i or state.targetStep==i) and (salt or {}) or {}) do
+        if InView(ap) then
         ka = ka + 1
         local a = GetAlt(ka)
         a.index = i
@@ -1218,11 +1327,21 @@ local function DrawMarkers(d, page, nextIndex, sc)
         a.text:SetText(abn and tostring(abn) or "")
         if not abn and aic then a.icon:SetTexture(aic); a.icon:Show() else a.icon:Hide() end
         a:Show()
+        end
       end
       k = k + 1
       local m = GetMarker(k)
       m.index = i
-      Place(m, sc, spos)
+      local dx,dy=0,0
+      if not page.flow then dx,dy=MarkerSpot(spos,sc,occupied) end
+      Place(m, sc, spos,dx,dy)
+      local displaced=dx*dx+dy*dy>1
+      m.leader:SetShown(displaced)
+      if displaced then
+        local ax,ay=(spos[1]-view[1])*sc,-(spos[2]-view[2])*sc
+        m.leader:SetStartPoint("TOPLEFT",canvas,ax,ay)
+        m.leader:SetEndPoint("TOPLEFT",canvas,ax+dx,ay+dy)
+      end
       if page.flow then
         -- names wrap within their column so neighbours do not overlap
         m.label:SetWidth(math.max(40, page.colW * sc - 8))
@@ -1246,10 +1365,10 @@ local function DrawMarkers(d, page, nextIndex, sc)
       m:Show()
     end
   end
-  for j = k + 1, #markers do markers[j]:Hide() end
+  for j = k + 1, #markers do markers[j]:Hide(); markers[j].leader:Hide() end
   for j = ka + 1, #alts do alts[j]:Hide() end
   -- entrance and floor links
-  if g.start and g.start.page == page.key then
+  if g.start and g.start.page == page.key and InView(g.start.pos) then
     Place(entranceMark, sc, g.start.pos)
     entranceMark.text:ClearAllPoints()
     if (g.start.pos[2] - view[2]) / view[4] > 0.92 then
@@ -1262,18 +1381,29 @@ local function DrawMarkers(d, page, nextIndex, sc)
     entranceMark:Hide()
   end
   local kl = 0
+  local linkOccupied={}
+  for j=reservedCount+1,#occupied do linkOccupied[#linkOccupied+1]=occupied[j]end
+  if g.start and g.start.page==page.key and InView(g.start.pos)then linkOccupied[#linkOccupied+1]={(g.start.pos[1]-view[1])*sc,(g.start.pos[2]-view[2])*sc}end
   for _, ln in ipairs(g.links or {}) do
-    if ln.page == page.key then
+    if ln.page == page.key and InView(ln.pos) then
       kl = kl + 1
       local l = GetLink(kl)
       l.label = T(ln.text)
       l.toPage = ln.toPage
-      l.name:SetText(ln.to and T(ln.to) or "")
-      Place(l, sc, ln.pos)
+      l.approx = ln.approx
+      l.name:SetText(ln.caption and T(ln.caption) or (ln.to and T(ln.to) or ""))
+      l.number:SetText(ln.caption and T(ln.caption):match("^(%d+)") or "↗")
+      local dx,dy=MarkerSpot(ln.pos,sc,linkOccupied)
+      Place(l, sc, ln.pos,dx,dy)
+      l.leader:SetShown(dx*dx+dy*dy>1)
+      if dx*dx+dy*dy>1 then
+        local ax,ay=(ln.pos[1]-view[1])*sc,-(ln.pos[2]-view[2])*sc
+        l.leader:SetStartPoint("TOPLEFT",canvas,ax,ay);l.leader:SetEndPoint("TOPLEFT",canvas,ax+dx,ay+dy)
+      end
       l:Show()
     end
   end
-  for j = kl + 1, #links do links[j]:Hide() end
+  for j = kl + 1, #links do links[j]:Hide();links[j].leader:Hide() end
 end
 
 -- Atlas prints its own legend numbers on the images; cover them so only
@@ -1316,10 +1446,13 @@ local function TileSet(page)
   page.set = false
   if page.img then page.set = page.img; return page.set end      -- bundled image
   if page.grid then
-    local first = page.grid.tiles[1]
-    local ok, loaded = pcall(tiles[1].SetTexture, tiles[1], first and first[1])
-    if first and ok and loaded ~= false then page.set = page.grid end
-    return page.set or nil
+    if #page.grid.tiles == 0 then return nil end
+    for _, tile in ipairs(page.grid.tiles) do
+      local ok, loaded = pcall(tiles[1].SetTexture, tiles[1], tile[1])
+      if not ok or loaded == false then return nil end
+    end
+    page.set = page.grid
+    return page.set
   end
   for _, set in ipairs(page.tiles) do
     local ok, loaded = pcall(tiles[1].SetTexture, tiles[1], set[1])
@@ -1331,7 +1464,7 @@ end
 local function DrawTiles(page, sc)
   local set = page and (page.tiles or page.grid or page.img) and TileSet(page)
   local n = 0
-  local function put(file, tx, ty, size, layer, th)
+  local function put(file, tx, ty, size, layer, th, border, fileSize)
     local tw = size
     th = th or size
     local x0, x1 = math.max(tx, view[1]), math.min(tx + tw, view[1] + view[3])
@@ -1342,7 +1475,11 @@ local function DrawTiles(page, sc)
     if not t then t = canvas:CreateTexture(nil, "BACKGROUND"); tiles[n] = t end
     t:SetTexture(file)
     t:SetDrawLayer("BACKGROUND", layer or 0)
-    t:SetTexCoord((x0 - tx) / tw, (x1 - tx) / tw, (y0 - ty) / th, (y1 - ty) / th)
+    if border and fileSize then
+      t:SetTexCoord((border+x0-tx)/fileSize,(border+x1-tx)/fileSize,(border+y0-ty)/fileSize,(border+y1-ty)/fileSize)
+    else
+      t:SetTexCoord((x0 - tx) / tw, (x1 - tx) / tw, (y0 - ty) / th, (y1 - ty) / th)
+    end
     t:ClearAllPoints()
     t:SetPoint("TOPLEFT", canvas, "TOPLEFT", (x0 - view[1]) * sc, -(y0 - view[2]) * sc)
     t:SetSize((x1 - x0) * sc, (y1 - y0) * sc)
@@ -1356,7 +1493,7 @@ local function DrawTiles(page, sc)
       if page.grid.px then
         -- { file, x, y, width, height, level }: pixel positions, each texture
         -- its own size; deeper levels first (draw sublevels)
-        put(g[1], g[2], g[3], g[4], math.min(1, (g[6] or 0) - 7), g[5])
+        put(g[1], g[2], g[3], g[4], math.min(1, (g[6] or 0) - 7), g[5], g[7], g[8])
       else
         put(g[1], g[2] * size, g[3] * size, size)
       end
@@ -1395,9 +1532,9 @@ local function DrawFlowLines(d, page, sc)
 end
 
 local function HideMapLayer()
-  for _, t in ipairs(markers) do t:Hide() end
+  for _, t in ipairs(markers) do t:Hide(); t.leader:Hide() end
   for _, t in ipairs(alts) do t:Hide() end
-  for _, t in ipairs(links) do t:Hide() end
+  for _, t in ipairs(links) do t:Hide();t.leader:Hide() end
   for _, m in ipairs(masks) do m.outer:Hide(); m.inner:Hide() end
   entranceMark:Hide()
 end
@@ -1575,7 +1712,7 @@ local function DrawQuestList(d)
       r:SetPoint("TOPLEFT", 0, y)
       y = y - 31
       local st = QuestStatus(q.id)
-      r.name:SetText(T(q.name))
+      r.name:SetText(ns.QuestTitle(q))
       if st == "done" then r.status:SetText("|cff55ff55" .. L.Q_DONE .. "|r")
       elseif st == "active" then r.status:SetText("|cffffd100" .. L.Q_ACTIVE .. "|r")
       else r.status:SetText("|cff999999" .. L.Q_MISSING .. "|r") end
@@ -1596,6 +1733,9 @@ local function DrawNotes(d)
   questNote:Hide()
   local parts = {}
   for _, n in ipairs(d.notes or {}) do parts[#parts + 1] = "• " .. T(n) end
+  for _,connection in ipairs(d.routeConnections or {}) do
+    parts[#parts + 1] = T(connection.text)
+  end
   if d.entrance then
     parts[#parts + 1] = ("|cff4fd96f%s|r %s (%.1f, %.1f)"):format(L.LEG_ENTRANCE, T(d.entrance.zone), d.entrance.x, d.entrance.y)
   end
@@ -1638,22 +1778,29 @@ function ns.RefreshMap()
   if not d then return end
   local nextIndex = ns.NextStep(d)
   local page = CurrentPage(d)
-  -- Blizzard art missing from this client: fall back to Atlas for the dungeon
-  if page and (page.tiles or page.grid) and not TileSet(page) then
+  -- Missing minimap tiles: show route only; never fall back to other art.
+  if page and not page.unavailable and (page.tiles or page.grid) and not TileSet(page) then
     blizFailed[d.key] = true
     page = CurrentPage(d)
   end
-  view = ViewOf(page)
+  view = NavigationView(d, page)
   state.shownPage = page and page.key
-  local sig = tostring(d) .. tostring(view) .. tostring(ns.db.mapSize) .. tostring(ns.db.showList)
+  local sig = tostring(d) .. tostring(page) .. tostring(ns.db.mapSize) .. tostring(ns.db.showList)
   if frame.layoutSig ~= sig then frame.layoutSig = sig; Layout() end
   local sc = Scale()
+  zoomReset:SetShown(nav ~= nil)
+  if nav then zoomReset:SetText(nav.zoom > 1 and ("%.1f×"):format(nav.zoom) or L.MAP_FIT) end
   title:SetText(("%s |cffaaaaaa%s|r"):format(T(d.name), d.levels or ""))
   local away = state.current ~= nil and state.current ~= d
   currentBtn:SetEnabled(away)
   currentBtn:SetAlpha(away and 1 or 0.45)
   if page then
-    if page.flow then
+    if page.unavailable then
+      mapTex:Hide()
+      DrawTiles(nil)
+      HideMapLayer()
+      DrawFlowLines(d, nil, sc)
+    elseif page.flow then
       mapTex:Hide()
       DrawTiles(nil)
     elseif page.tiles or page.grid or page.img then
@@ -1664,10 +1811,13 @@ function ns.RefreshMap()
       mapTex:SetTexture(MAP_PATH .. page.map)
       mapTex:Show()
     end
-    noMapText:SetShown(false)
-    DrawMasks(page, sc)
-    DrawMarkers(d, page, nextIndex, sc)
-    DrawFlowLines(d, page, sc)
+    noMapText:SetText(page.unavailable and L.UNAVAILABLE_MINIMAP or L.NO_MAP)
+    noMapText:SetShown(page.unavailable or false)
+    if not page.unavailable then
+      DrawMasks(page, sc)
+      DrawMarkers(d, page, nextIndex, sc)
+      DrawFlowLines(d, page, sc)
+    end
   else
     mapTex:Hide()
     DrawTiles(nil)
@@ -1686,11 +1836,22 @@ function ns.RefreshMap()
     tabNotes:SetAlpha(tab == "notes" and 1 or 0.55)
   end
   -- Only notes that matter while playing (credits live in CREDITS.txt).
+  local orientation = page and not page.unavailable and page.orientation
+  orientationBadge:SetShown(orientation and true or false)
+  if orientation then
+    orientationBadge.northUp = orientation.mode == "north-up"
+    orientationBadge.partial = page.partial
+    orientationBadge.supplementalNative = page.supplementalNative
+    local directionText = orientationBadge.northUp and L.MAP_NORTH_UP or L.MAP_GUIDE_UP
+    if page.partial then directionText = directionText .. "\n|cffffb347" .. L.PARTIAL_MINIMAP .. "|r" end
+    orientationBadge.text:SetText(directionText)
+  end
   local parts = {}
   if state.edit then parts[#parts + 1] = "|cffff5555EDIT|r" end
   if state.current ~= d then parts[#parts + 1] = L.BROWSE_ONLY end
   if page and page.schematic then parts[#parts + 1] = L.SCHEMATIC end
   if page and page.flow then parts[#parts + 1] = L.FLOW_ONLY end
+  if page and page.partial then parts[#parts + 1] = L.PARTIAL_MINIMAP end
   if page and page.approx then parts[#parts + 1] = L.APPROX end
   if page and page.tiles and d.bliz and d.bliz.preview then parts[#parts + 1] = L.PREVIEW_MAP end
   footer:SetText(table.concat(parts, " · "))
@@ -1713,16 +1874,58 @@ function ns.RebuildMap()
 end
 
 function ns.SetMapStyle(style)
-  ns.db.mapStyle = (style == "atlas") and "atlas" or "blizzard"
+  ns.db.mapStyle = "blizzard" -- automatic: prefer available client tiles
   for k in pairs(blizFailed) do blizFailed[k] = nil end
   for _, d in ipairs(ns.Dungeons) do
     for _, p in ipairs(d.bliz and d.bliz.pages or {}) do p.set = nil end
   end
-  ns.Print(L.MAPSTYLE_SET:format(ns.db.mapStyle == "atlas" and L.MAP_ATLAS or L.MAP_BLIZ))
+  ns.Print(L.MAP_BLIZ)
   ns.RebuildMap()
 end
 
+local wingPicker
+function ns.ShowWingPicker(candidates)
+  if frame then frame:Hide() end
+  if not wingPicker then
+    wingPicker = CreateFrame("Frame", "DungeonRouteGuideWingPicker", UIParent, "BackdropTemplate")
+    Backdrop(wingPicker, 0.97)
+    wingPicker:SetPoint("CENTER")
+    wingPicker:SetFrameStrata("DIALOG")
+    wingPicker:SetSize(330, 90 + #candidates * 28)
+    wingPicker.heading = wingPicker:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    wingPicker.heading:SetPoint("TOP", 0, -14)
+    wingPicker.note = wingPicker:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    wingPicker.note:SetPoint("BOTTOM", 0, 14)
+    wingPicker.buttons = {}
+    local close = Btn(wingPicker, "X", 20, nil, function() wingPicker:Hide() end)
+    close:SetPoint("TOPRIGHT", -6, -6)
+  end
+  wingPicker.heading:SetText(L.WING_TITLE)
+  wingPicker.note:SetText(L.WING_WAIT)
+  wingPicker:SetHeight(90 + #candidates * 28)
+  for i, d in ipairs(candidates) do
+    local b = wingPicker.buttons[i]
+    if not b then
+      b = Btn(wingPicker, "", 306)
+      b:SetPoint("TOPLEFT", 12, -44 - (i - 1) * 28)
+      b:SetScript("OnClick", function(self) ns.SelectDungeon(self.dungeon) end)
+      wingPicker.buttons[i] = b
+    end
+    b.dungeon = d; b:SetText(T(d.name)); b:Show()
+  end
+  for i = #candidates + 1, #wingPicker.buttons do wingPicker.buttons[i]:Hide() end
+  wingPicker:Show()
+end
+
+function ns.HideWingPicker()
+  if wingPicker then wingPicker:Hide() end
+end
+
 function ns.ShowMap(d, auto)
+  if state.detectionPending and not state.current then
+    ns.ShowWingPicker(state.detectionPending)
+    return
+  end
   if not frame then Create() end
   state.viewed = d or state.viewed or state.current or (ns.SuggestDungeon and ns.SuggestDungeon()) or ns.Dungeons[1]
   frame.autoShown = auto and true or false
@@ -1784,9 +1987,9 @@ end
 
 local exportFrame
 function ns.ShowExport()
-  local out = {}
+  local out = { "-- DungeonRouteGuide native-70338-v1; manual edits are reference positions" }
   for _, d in ipairs(ns.Dungeons) do
-    local r = ns.db.routes[d.key]
+    local r = ns.db.routes[d.key .. (d.editSpace or "")]
     if r then
       for _, step in ipairs(d.steps) do
         local e = r[step.id]

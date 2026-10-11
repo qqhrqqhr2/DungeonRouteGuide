@@ -2,3 +2,5 @@ tools/wowf/
 tools/atlas/
 tools/*.json
 __pycache__/
+assets/review-v1.0.8/
+tools/native-maps/

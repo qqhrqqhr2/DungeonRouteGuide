@@ -1,0 +1,28 @@
+DungeonRouteGuide dev12 minimap sources
+
+Primary client: Forever Beta 1.60.1.70338.
+BuildConfig f6e309c700cea095978aeb5d85210df4.
+Supplemental client: Classic Era 1.15.9.70003.
+BuildConfig 2417084b8b041ee120d02d4adf31b0bc.
+Official asset CDN: https://cdn.blizzard.com/tpr/wow/
+
+Native WMO minimaps use WMOMinimapTexture, MOGI group bounds and MODF placement.
+Native outdoor minimaps use the WDT MAID tile grid. Old 256px terrain tiles
+are resampled to the corresponding current 512px cell before the same transform.
+Supplemental Deadmines ship / cave and Shadowfang outdoor art match the current
+map/tile IDs, and the root WMO and ship MODF translations, rotations and scales
+match exactly. Prison group 38 MOGI bounds match exactly. The outdated
+HeroHall01 minimap 213755 is not used as current HeroHall02 courtyard artwork.
+Only the current courtyard group bounds clip the supplemental outdoor image.
+
+Goal references: https://github.com/cmangos/classic-db
+Event references: https://github.com/cmangos/mangos-classic
+Current guide references: dungeon guide references
+All are source reference positions, not live Forever spawn confirmation.
+NativeMapEvidence.json contains exact source IDs, hashes, geometry and evidence.
+MapFit.json contains alpha bounds and display views. TextureEncoding.json
+records lossless tiles and sampling gutters. No original map or Atlas art.
+
+28 pages are north-up; the Dalaran sewer page follows the independently
+matched guide orientation. Its world north is unverified.
+No game-client execution or in-instance playtest was performed.

@@ -139,3 +139,13 @@ function ns.FirstSentence(s)
   local first = s:match("^(.-[%.!?])%s") or s
   return first
 end
+
+-- Use the client's Korean title when available; untranslated client data
+-- falls back to the bundled Korean name in both the list and tooltip.
+function ns.QuestTitle(q)
+  if ns.locale == "ko" then
+    local title = ns.Str(ns.Safe(C_QuestLog and C_QuestLog.GetTitleForQuestID, q.id))
+    if title and title:find("[\234-\237][\128-\191][\128-\191]") then return title end
+  end
+  return ns.T(q.name)
+end

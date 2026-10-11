@@ -10,13 +10,14 @@
 ## X-License: GPL-2.0
 ## X-Website: https://github.com/qqhrqqhr2/DungeonRouteGuide
 ## X-Curse-Project-ID: 1728502
-## X-Credits: Dungeon maps: game client map art; fallback maps from Atlas (Dan Gilbert, Arith and the Atlas Team), GPL-2.0
+## X-Credits: Forever Beta 1.60.1.70338 client minimap geometry; route references dungeon guides; ClassicDB spawn references
 ## SavedVariables: DungeonRouteGuideDB
 ## SavedVariablesPerCharacter: DungeonRouteGuideCharDB
 
 Locale.lua
 Util.lua
 Data.lua
+MinimapData.lua
 Core.lua
 MapFrame.lua
 HUD.lua
