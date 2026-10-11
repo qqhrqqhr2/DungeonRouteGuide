@@ -108,6 +108,7 @@ local S = {
   Q_DONE          = { "완료", "Done" },
   Q_ACTIVE        = { "진행 중", "In log" },
   Q_MISSING       = { "미수락", "Not taken" },
+  Q_REWARDS       = { "퀘스트 보상", "Quest rewards" },
   Q_NOTE          = { "클래식 기준 정보입니다. 포에버에서 조건이 다를 수 있어요.", "Based on Classic data; may differ in Forever." },
   NO_QUESTS       = { "이 던전에 등록된 퀘스트가 없습니다.", "No quests listed for this dungeon." },
   NEW_INSTANCE    = { "새 인스턴스를 감지해서 진행을 초기화했습니다.", "New instance detected, progress reset." },

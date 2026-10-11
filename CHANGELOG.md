@@ -1,5 +1,15 @@
 # Dungeon Route Guide
 
+## v1.0.9
+
+- Align route dots, completion checks, type icons and boss numbers with the first line of wrapped monster names
+- Add mouse-wheel scrolling and a scrollbar to Route, Quests and Prep; keep each tab position and clamp it when content or window size changes
+- Display every visible quest and wrap long route names, quest descriptions and preparation notes; include all loot icons in the scrollable panel
+- Complete City of Dalaran boss loot: all 26 drops across eight bosses, including Lyn the Ignored and Arcane Anomaly
+- Show 18 City of Dalaran quest reward options in quest tooltips, with English and Korean name fallbacks
+- Clarify that the Titan Relic is returned for Excavation Site follow-up quests, so another dungeon run is not required for the relic
+- Explain how to reach the Shade of the Archmage through the NPC outside the Violet Citadel
+
 ## v1.0.8
 
 - All 18 dungeons and 29 areas now use bundled minimap tiles, with square fit, mouse-wheel zoom, pan and Fit reset

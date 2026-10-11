@@ -6,6 +6,7 @@ local L, T = ns.L, ns.T
 local state = ns.state
 
 local HEADER, PAD, LISTW = 28, 6, 240
+local LIST_CONTENT_W = LISTW - PAD - 24
 local LEGEND_H, FOOT_H = 16, 14
 local MAP_PATH = "Interface\\AddOns\\DungeonRouteGuide\\Maps\\"
 local MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
@@ -37,6 +38,8 @@ local trashBtns = {}
 local TRASH_ICON = "Interface\\Icons\\INV_Misc_Bag_10"
 local entranceMark, tabRoute, tabQuest, tabNotes, progressText, tipText, questNote
 local orientationBadge
+local listScroll, listContent, listScrollKey, listRestoreOffset
+local listOffsets = {}
 local zoomReset
 local navigation, baseView, nav = {}, AVIEW, nil
 
@@ -538,28 +541,75 @@ end
 ---------------------------------------------------------------------------
 -- list panel widgets
 ---------------------------------------------------------------------------
+local function ListScrollBar()
+  return listScroll and (listScroll.ScrollBar or _G.DungeonRouteGuideListScrollScrollBar)
+end
+
+local function SetListOffset(offset)
+  local maximum = listScroll.maxOffset or 0
+  offset = math.max(0, math.min(maximum, offset or 0))
+  listScroll:SetVerticalScroll(offset)
+  local bar = ListScrollBar()
+  if bar then bar:SetValue(offset) end
+  if listScrollKey then listOffsets[listScrollKey] = offset end
+end
+
+local function ListWheel(_, delta)
+  SetListOffset((listOffsets[listScrollKey] or 0) - delta * 36)
+end
+
+local function BeginList(d, tab)
+  listScrollKey = d.key .. ":" .. tab
+  listRestoreOffset = listOffsets[listScrollKey] or 0
+end
+
+local function FinishList(height)
+  local viewport = listScroll:GetHeight()
+  listContent:SetHeight(math.max(viewport, height))
+  listScroll.maxOffset = math.max(0, height - viewport)
+  if listScroll.UpdateScrollChildRect then listScroll:UpdateScrollChildRect() end
+  local bar = ListScrollBar()
+  if bar then
+    bar:SetMinMaxValues(0, listScroll.maxOffset)
+    bar:SetShown(listScroll.maxOffset > 0)
+  end
+  SetListOffset(listRestoreOffset or 0)
+end
+
+local function TextHeight(fs, text, width)
+  fs:SetWidth(width)
+  fs:SetHeight(0)
+  fs:SetText(text)
+  local height = math.max(12, math.ceil(fs:GetStringHeight() or 12))
+  fs:SetHeight(height)
+  return height
+end
+
 local function GetRow(k)
   local r = rows[k]
   if r then return r end
-  r = CreateFrame("Button", nil, list)
-  r:SetSize(LISTW - 12, 17)
+  r = CreateFrame("Button", nil, listContent)
+  r:SetSize(LIST_CONTENT_W, 17)
+  r:EnableMouseWheel(true)
+  r:SetScript("OnMouseWheel", ListWheel)
   r.hl = r:CreateTexture(nil, "HIGHLIGHT"); r.hl:SetAllPoints(); r.hl:SetColorTexture(1, 1, 1, 0.08)
   r.bg = r:CreateTexture(nil, "BACKGROUND"); r.bg:SetAllPoints(); r.bg:SetColorTexture(1, 0.82, 0, 0.12)
   r.dot = Circle(r, "ARTWORK", 8)
-  r.dot:ClearAllPoints(); r.dot:SetPoint("LEFT", 4, 0)
+  -- Keep leading symbols beside the first line when a name wraps.
+  r.dot:ClearAllPoints(); r.dot:SetPoint("TOPLEFT", 4, -4)
   r.check = r:CreateTexture(nil, "OVERLAY")
-  r.check:SetTexture(CHECK); r.check:SetSize(14, 14); r.check:SetPoint("LEFT", 1, 0)
+  r.check:SetTexture(CHECK); r.check:SetSize(14, 14); r.check:SetPoint("TOPLEFT", 1, -1)
   r.num = r:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
-  r.num:SetPoint("LEFT", 14, 0); r.num:SetWidth(18); r.num:SetJustifyH("RIGHT")
+  r.num:SetPoint("TOPLEFT", 14, -2); r.num:SetSize(18, 12); r.num:SetJustifyH("RIGHT")
   r.kicon = r:CreateTexture(nil, "ARTWORK")
-  r.kicon:SetSize(13, 13); r.kicon:SetPoint("RIGHT", r.num, "RIGHT", 1, 0)
+  r.kicon:SetSize(13, 13); r.kicon:SetPoint("TOPLEFT", 20, -1.5)
   r.tag = r:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-  r.tag:SetPoint("RIGHT", -2, 0)
+  r.tag:SetPoint("TOPRIGHT", -2, -2)
+  r.tag:SetHeight(12)
   r.name = r:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-  r.name:SetPoint("LEFT", r.num, "RIGHT", 5, 0)
-  r.name:SetPoint("RIGHT", r.tag, "LEFT", -4, 0)
+  r.name:SetPoint("TOPLEFT", 37, -2)
   r.name:SetJustifyH("LEFT")
-  if r.name.SetWordWrap then r.name:SetWordWrap(false) end
+  if r.name.SetWordWrap then r.name:SetWordWrap(true) end
   r:RegisterForClicks("LeftButtonUp", "RightButtonUp")
   r:SetScript("OnEnter", function(self)
     if self.group then
@@ -590,25 +640,37 @@ end
 local function GetQuestRow(k)
   local r = qrows[k]
   if r then return r end
-  r = CreateFrame("Frame", nil, list)
-  r:SetSize(LISTW - 12, 30)
+  r = CreateFrame("Frame", nil, listContent)
+  r:SetSize(LIST_CONTENT_W, 30)
   r:EnableMouse(true)
+  r:EnableMouseWheel(true)
+  r:SetScript("OnMouseWheel", ListWheel)
   r.name = r:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-  r.name:SetPoint("TOPLEFT", 2, 0); r.name:SetPoint("TOPRIGHT", -52, 0)
+  r.name:SetPoint("TOPLEFT", 2, 0)
   r.name:SetJustifyH("LEFT")
-  if r.name.SetWordWrap then r.name:SetWordWrap(false) end
+  if r.name.SetWordWrap then r.name:SetWordWrap(true) end
   r.status = r:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
   r.status:SetPoint("TOPRIGHT", -2, 0)
   r.giver = r:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-  r.giver:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 6, -2); r.giver:SetPoint("RIGHT", -2, 0)
+  r.giver:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 6, -2)
   r.giver:SetJustifyH("LEFT")
-  if r.giver.SetWordWrap then r.giver:SetWordWrap(false) end
+  if r.giver.SetWordWrap then r.giver:SetWordWrap(true) end
   r:SetScript("OnEnter", function(self)
     if not self.q then return end
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:SetText(ns.QuestTitle(self.q), 1, 0.82, 0)
     if self.q.level then GameTooltip:AddLine(("Lv %d"):format(self.q.level), 0.7, 0.7, 0.7) end
     GameTooltip:AddLine(T(self.q.giver), 1, 1, 1, true)
+    if self.q.rewards and #self.q.rewards > 0 then
+      GameTooltip:AddLine(" ")
+      GameTooltip:AddLine(L.Q_REWARDS, 1, 0.82, 0)
+      for _, reward in ipairs(self.q.rewards) do
+        local name, _, quality, icon = ns.ItemInfo(reward.id)
+        name = name or T(reward.name)
+        local tex = icon and ("|T" .. icon .. ":14:14|t ") or ""
+        GameTooltip:AddLine(tex .. ns.QualityHex(quality) .. name .. "|r")
+      end
+    end
     GameTooltip:Show()
   end)
   r:SetScript("OnLeave", GameTooltip_Hide)
@@ -648,6 +710,7 @@ local function Layout()
   legend:SetPoint("TOPLEFT", canvas, "BOTTOMLEFT", 0, -3)
   list:SetShown(ns.db.showList)
   list:SetHeight(S + LEGEND_H)
+  listScroll:SetHeight(S + LEGEND_H - 26)
 end
 
 local legendItems = {}
@@ -967,24 +1030,32 @@ local function Create()
   Fit(tabRoute, 40); Fit(tabQuest, 40); Fit(tabNotes, 36)
   progressText = list:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
   progressText:SetPoint("TOPRIGHT", -4, -4)
-  tipText = list:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+  listScroll = CreateFrame("ScrollFrame", "DungeonRouteGuideListScroll", list, "UIPanelScrollFrameTemplate")
+  listScroll:SetPoint("TOPLEFT", 0, -26)
+  listScroll:SetWidth(LIST_CONTENT_W)
+  listContent = CreateFrame("Frame", nil, listScroll)
+  listContent:SetSize(LIST_CONTENT_W, 1)
+  listScroll:SetScrollChild(listContent)
+  listScroll:EnableMouseWheel(true)
+  listScroll:SetScript("OnMouseWheel", ListWheel)
+  listScroll:HookScript("OnVerticalScroll", function(_, offset)
+    if listScrollKey then listOffsets[listScrollKey] = offset end
+  end)
+  tipText = listContent:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
   tipText:SetJustifyH("LEFT"); tipText:SetJustifyV("TOP")
-  tipText:SetWidth(LISTW - 16)
-  -- item icons of the selected / next boss (bottom of the list panel)
-  lootBar = CreateFrame("Frame", nil, list)
-  lootBar:SetPoint("BOTTOMLEFT", 0, 0)
-  lootBar:SetSize(LISTW - PAD, 62)
+  tipText:SetWidth(LIST_CONTENT_W - 8)
+  if tipText.SetWordWrap then tipText:SetWordWrap(true) end
+  -- Item icons follow the full text inside the scrollable panel.
+  lootBar = CreateFrame("Frame", nil, listContent)
+  lootBar:SetSize(LIST_CONTENT_W, 62)
   lootLabel = lootBar:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
   lootLabel:SetPoint("TOPLEFT", 4, 0)
-  if lootBar.EnableMouseWheel then lootBar:EnableMouseWheel(true) end
-  lootBar:SetScript("OnMouseWheel", function(self, delta)
-    if (self.maxOffset or 0) == 0 then return end
-    self.offset = math.max(0, math.min(self.maxOffset, (self.offset or 0) - delta))
-    ns.RefreshMap()
-  end)
-  questNote = list:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+  lootBar:EnableMouseWheel(true)
+  lootBar:SetScript("OnMouseWheel", ListWheel)
+  questNote = listContent:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
   questNote:SetJustifyH("LEFT"); questNote:SetJustifyV("TOP")
-  questNote:SetWidth(LISTW - 16)
+  questNote:SetWidth(LIST_CONTENT_W - 8)
+  if questNote.SetWordWrap then questNote:SetWordWrap(true) end
 
   CreateMenu()
   CreatePicker()
@@ -1570,27 +1641,16 @@ end
 
 -- Show item icons for ids (nil hides the bar). Returns the bar height used.
 local lootFrom   -- sources of the items in the bar (trash groups)
--- Two rows of icons; longer lists scroll a row per mouse-wheel step.
+-- All icons are laid out in the same scrollable content as the text.
 local function DrawLoot(ids, label, from)
   lootFrom = from
   if not ids or #ids == 0 then lootBar:Hide(); return 0 end
   lootBar:Show()
-  local perRow = math.floor((LISTW - PAD) / 24)
-  local maxBtn = perRow * 2
-  if lootBar.ids ~= ids then lootBar.ids, lootBar.offset = ids, 0 end
-  local maxOffset = math.max(0, math.ceil(#ids / perRow) - 2)
-  lootBar.offset = math.max(0, math.min(lootBar.offset or 0, maxOffset))
-  lootBar.maxOffset = maxOffset
-  local first = lootBar.offset * perRow
-  if maxOffset > 0 then
-    label = ("%s |cff999999(%d · %s %d/%d)|r"):format(label, #ids, L.WHEEL, lootBar.offset + 1, maxOffset + 1)
-  end
+  local perRow = math.floor(LIST_CONTENT_W / 24)
   local settled, total = ns.ItemProgress(ids)
   if settled < total then label = label .. (" |cff66b3ff%s|r"):format(L.ITEMS_LOADING:format(settled, total)) end
-  lootLabel:SetText(label)
-  for k = 1, maxBtn do
-    local id = ids[first + k]
-    if not id then break end
+  local labelHeight = TextHeight(lootLabel, label, LIST_CONTENT_W - 8)
+  for k, id in ipairs(ids) do
     local b = GetLootBtn(k)
     b.id = id
     b.from = lootFrom and lootFrom[id]
@@ -1599,34 +1659,31 @@ local function DrawLoot(ids, label, from)
     QualityBorder(b.border, q)
     b:ClearAllPoints()
     local row, col = math.floor((k - 1) / perRow), (k - 1) % perRow
-    b:SetPoint("TOPLEFT", lootBar, "TOPLEFT", 2 + col * 24, -14 - row * 24)
+    b:SetPoint("TOPLEFT", lootBar, "TOPLEFT", 2 + col * 24, -labelHeight - 2 - row * 24)
+    b:EnableMouseWheel(true)
+    b:SetScript("OnMouseWheel", ListWheel)
     b:Show()
   end
-  for j = math.min(#ids - first, maxBtn) + 1, #lootBtns do lootBtns[j]:Hide() end
-  local rows_ = math.min(2, math.ceil(#ids / perRow))
-  lootBar:SetHeight(14 + rows_ * 24)
-  return 14 + rows_ * 24 + 4
+  for j = #ids + 1, #lootBtns do lootBtns[j]:Hide() end
+  local height = labelHeight + 2 + math.ceil(#ids / perRow) * 24
+  lootBar:SetHeight(height)
+  return height + 4
 end
 
 local function HideTrashBtns() for _, b in ipairs(trashBtns) do b:Hide() end end
 
 local function DrawRouteList(d, nextIndex)
+  BeginList(d, "route")
   HideTrashBtns()
-  local avail = list:GetHeight() - 26 - 70
   local groups = d.trashGroups or {}
-  local count = #groups
-  for _, step in ipairs(d.steps) do if ns.StepVisible(step) then count = count + 1 end end
-  local rowH = math.max(13, math.min(17, math.floor(avail / math.max(1, count))))
-  local y, k = -26, 0
+  local y, k = 0, 0
   for i, step in ipairs(d.steps) do
     if ns.StepVisible(step) then
       k = k + 1
       local r = GetRow(k)
       r.index = i
-      r:SetHeight(rowH)
       r:ClearAllPoints()
       r:SetPoint("TOPLEFT", 0, y)
-      y = y - rowH
       local done = ns.IsDone(d, i)
       r.check:SetShown(done)
       local c = CAT[Category(step)]
@@ -1635,7 +1692,6 @@ local function DrawRouteList(d, nextIndex)
       local rbn, ric = ns.BossNumber(d, i), ns.KindIcon(step)
       r.num:SetText(rbn and tostring(rbn) or "")
       if not rbn and ric then r.kicon:SetTexture(ric); r.kicon:Show() else r.kicon:Hide() end
-      r.name:SetText(T(step.name))
       if done then r.name:SetTextColor(0.55, 0.55, 0.55)
       elseif i == nextIndex then r.name:SetTextColor(1, 0.82, 0)
       elseif step.kind == "fork" then r.name:SetTextColor(0.7, 0.7, 0.7)
@@ -1643,6 +1699,11 @@ local function DrawRouteList(d, nextIndex)
       else r.name:SetTextColor(1, 1, 1) end
       r.group = nil
       r.tag:SetText(RowTag(step, d, i))
+      local tagWidth = math.min(64, r.tag:GetStringWidth())
+      r.tag:SetWidth(tagWidth)
+      local rowH = math.max(17, TextHeight(r.name, T(step.name), LIST_CONTENT_W - 43 - tagWidth) + 4)
+      r:SetHeight(rowH)
+      y = y - rowH
       r.bg:SetShown(state.selected == i)
       r:Show()
     end
@@ -1652,82 +1713,84 @@ local function DrawRouteList(d, nextIndex)
     k = k + 1
     local r = GetRow(k)
     r.index, r.group = nil, gk
-    r:SetHeight(rowH)
     r:ClearAllPoints()
     r:SetPoint("TOPLEFT", 0, y)
-    y = y - rowH
     r.check:Hide()
     r.dot:SetVertexColor(0.6, 0.6, 0.6, 1); r.dot:Show()
     r.num:SetText("")
     r.kicon:SetTexture(TRASH_ICON); r.kicon:Show()
-    r.name:SetText(T(g.name))
     r.name:SetTextColor(0.8, 0.8, 0.8)
     r.tag:SetText(L.LOOT .. " " .. #g.loot)
+    local tagWidth = math.min(64, r.tag:GetStringWidth())
+    r.tag:SetWidth(tagWidth)
+    local rowH = math.max(17, TextHeight(r.name, T(g.name), LIST_CONTENT_W - 43 - tagWidth) + 4)
+    r:SetHeight(rowH)
+    y = y - rowH
     r.bg:SetShown(state.cardTrash == gk)
     r:Show()
   end
   for j = k + 1, #rows do rows[j]:Hide() end
   local tg = state.cardTrash and groups[state.cardTrash]
-  if tg then
-    local used = DrawLoot(tg.loot, L.LOOT .. " · " .. T(tg.name), tg.from)
-    tipText:ClearAllPoints()
-    tipText:SetPoint("TOPLEFT", 4, y - 6)
-    tipText:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", -4, used)
-    tipText:SetText("|cffffd100" .. T(tg.name) .. "|r\n" .. L.TRASH_TIP:format(#tg.loot))
-    tipText:Show()
-    for j = 1, #qrows do qrows[j]:Hide() end
-    questNote:Hide()
-    return
-  end
   local i = state.selected or nextIndex
   local step = i and d.steps[i]
-  local used = DrawLoot(step and step.loot, L.LOOT .. (step and (" · " .. T(step.name)) or ""))
   tipText:ClearAllPoints()
   tipText:SetPoint("TOPLEFT", 4, y - 6)
-  tipText:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", -4, used)
-  if i then
-    local step = d.steps[i]
-    tipText:SetText("|cffffd100" .. ns.StepTitle(d, i) .. "|r\n" .. T(step.tip))
+  local text
+  if tg then
+    text = "|cffffd100" .. T(tg.name) .. "|r\n" .. L.TRASH_TIP:format(#tg.loot)
+  elseif i then
+    text = "|cffffd100" .. ns.StepTitle(d, i) .. "|r\n" .. T(step.tip)
   else
-    tipText:SetText("|cff55ff55" .. L.DONE_ALL .. "|r")
+    text = "|cff55ff55" .. L.DONE_ALL .. "|r"
   end
+  y = y - 6 - TextHeight(tipText, text, LIST_CONTENT_W - 8) - 8
+  lootBar:ClearAllPoints()
+  lootBar:SetPoint("TOPLEFT", 0, y)
+  local used
+  if tg then used = DrawLoot(tg.loot, L.LOOT .. " · " .. T(tg.name), tg.from)
+  else used = DrawLoot(step and step.loot, L.LOOT .. (step and (" · " .. T(step.name)) or "")) end
+  FinishList(-y + used + 8)
   tipText:Show()
   for j = 1, #qrows do qrows[j]:Hide() end
   questNote:Hide()
 end
 
 local function DrawQuestList(d)
+  BeginList(d, "quest")
   HideTrashBtns()
   for j = 1, #rows do rows[j]:Hide() end
   tipText:Hide()
   DrawLoot(nil)
-  local y, k = -26, 0
-  local maxRows = math.floor((list:GetHeight() - 60) / 31)
+  local y, k = 0, 0
   for _, q in ipairs(d.quests or {}) do
-    if ns.StepVisible(q) and k < maxRows then
+    if ns.StepVisible(q) then
       k = k + 1
       local r = GetQuestRow(k)
       r.q = q
       r:ClearAllPoints()
       r:SetPoint("TOPLEFT", 0, y)
-      y = y - 31
       local st = QuestStatus(q.id)
-      r.name:SetText(ns.QuestTitle(q))
+      local nameHeight = TextHeight(r.name, ns.QuestTitle(q), LIST_CONTENT_W - 54)
       if st == "done" then r.status:SetText("|cff55ff55" .. L.Q_DONE .. "|r")
       elseif st == "active" then r.status:SetText("|cffffd100" .. L.Q_ACTIVE .. "|r")
       else r.status:SetText("|cff999999" .. L.Q_MISSING .. "|r") end
-      r.giver:SetText(T(q.giver))
+      local giverHeight = TextHeight(r.giver, T(q.giver), LIST_CONTENT_W - 10)
+      local rowHeight = nameHeight + 2 + giverHeight + 6
+      r:SetHeight(rowHeight)
+      y = y - rowHeight
       r:Show()
     end
   end
   for j = k + 1, #qrows do qrows[j]:Hide() end
   questNote:ClearAllPoints()
   questNote:SetPoint("TOPLEFT", 4, y - 6)
-  questNote:SetText(k == 0 and L.NO_QUESTS or L.Q_NOTE)
+  local noteHeight = TextHeight(questNote, k == 0 and L.NO_QUESTS or L.Q_NOTE, LIST_CONTENT_W - 8)
+  FinishList(-y + 6 + noteHeight + 8)
   questNote:Show()
 end
 
 local function DrawNotes(d)
+  BeginList(d, "notes")
   for j = 1, #rows do rows[j]:Hide() end
   for j = 1, #qrows do qrows[j]:Hide() end
   questNote:Hide()
@@ -1743,32 +1806,32 @@ local function DrawNotes(d)
   -- drops of mobs that are not route steps, one button per source; the
   -- list opens in the card next to the window
   local groups = d.trashGroups or {}
-  local used = 0
-  for k = #groups, 1, -1 do
-    local g = groups[k]
+  tipText:ClearAllPoints()
+  tipText:SetPoint("TOPLEFT", 4, 0)
+  local height = TextHeight(tipText, #parts > 0 and table.concat(parts, "\n\n") or L.NO_NOTES, LIST_CONTENT_W - 8)
+  local y = -height - 10
+  for k, g in ipairs(groups) do
     local b = trashBtns[k]
     if not b then
-      b = Btn(list, "", LISTW - PAD - 4, nil, function(self)
+      b = Btn(listContent, "", LIST_CONTENT_W, nil, function(self)
         state.selected = nil
         state.cardTrash = (state.cardTrash == self.index) and nil or self.index
         ns.RefreshMap()
       end)
       trashBtns[k] = b
+      b:EnableMouseWheel(true)
+      b:SetScript("OnMouseWheel", ListWheel)
     end
     b.index = k
     b:SetText(("%s · %s %d"):format(T(g.name), L.LOOT, #g.loot))
     b:ClearAllPoints()
-    b:SetPoint("BOTTOMLEFT", list, "BOTTOMLEFT", 0, used)
+    b:SetPoint("TOPLEFT", listContent, "TOPLEFT", 0, y)
     b:SetAlpha(state.cardTrash == k and 1 or 0.85)
     b:Show()
-    used = used + 22
+    y = y - 22
   end
   for j = #groups + 1, #trashBtns do trashBtns[j]:Hide() end
-  if #groups > 0 then used = used + 4 end
-  tipText:ClearAllPoints()
-  tipText:SetPoint("TOPLEFT", 4, -30)
-  tipText:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", -4, used)
-  tipText:SetText(#parts > 0 and table.concat(parts, "\n\n") or L.NO_NOTES)
+  FinishList(-y + 8)
   tipText:Show()
 end
 
