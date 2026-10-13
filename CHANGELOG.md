@@ -1,6 +1,6 @@
 # Dungeon Route Guide
 
-## Unreleased
+## v1.0.10
 
 - The map follows the sub-zone you stand in again in Deadmines, Gnomeregan, Blackfathom Deeps and Uldaman (lost with the new minimap pages in 1.0.8)
 - Credits describe the bundled minimap art correctly
