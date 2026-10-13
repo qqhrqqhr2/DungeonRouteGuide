@@ -18,6 +18,7 @@ Locale.lua
 Util.lua
 Data.lua
 MinimapData.lua
+FloorAreas.lua
 Core.lua
 MapFrame.lua
 HUD.lua

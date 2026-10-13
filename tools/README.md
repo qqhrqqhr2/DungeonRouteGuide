@@ -2,6 +2,11 @@
 
 Data pipeline for `Data.lua` (not packaged).
 
+> Since v1.0.8 the maps and markers come from `MinimapData.lua` and the hand-edited
+> `Data.lua`, made by the native-minimap pipeline (`tools/native-maps/`, not in the
+> repository). `build.py` below still writes the v1.0.7 layout: running it overwrites
+> `Data.lua` and loses those changes. `run.py` / `harness.lua` remain the smoke test.
+
 1. Download the wowf.io guide pages into `wowf/` (`<slug>.html` Korean, `<slug>.en.html` English),
    and the Atlas classic maps into `atlas/Images/Atlas_ClassicWoW` (github.com/nanderson11/Atlas).
 2. `python parse_wowf.py` -> `wowf.json` (steps, pins, quests);

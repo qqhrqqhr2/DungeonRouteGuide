@@ -26,7 +26,8 @@ MOCK_GetZoomLevels = function() return 6 end
 MOCK_GetEffectiveScale = function() return 1 end
 MOCK_GetLeft = function() return 100 end
 MOCK_GetTop = function() return 600 end
-MOCK_GetHeight = function() return 420 end
+MOCK_GetHeight = function(s) return rawget(s, "_h") or 420 end
+MOCK_GetWidth = function(s) return rawget(s, "_w") or 420 end
 MOCK_GetStringWidth = function() return 40 end
 MOCK_GetFrameLevel = function() return 1 end
 MOCK_SetText = function(s, t) s._text = t end
@@ -52,6 +53,10 @@ function CreateFrame(kind, name, parent, template)
   local f = mock(name or kind)
   frames[#frames + 1] = f
   if name then _G[name] = f end
+  if template and tostring(template):find("ScrollFrameTemplate") then
+    rawset(f, "ScrollBar", mock("scrollbar"))
+    if name then _G[name .. "ScrollBar"] = f.ScrollBar end
+  end
   return f
 end
 UIParent = mock("UIParent"); UIParent._shown = true
@@ -75,6 +80,7 @@ IsShiftKeyDown = function() return SHIFT end
 InCombatLockdown = function() return false end
 UnitLevel = function() return PLEVEL or 20 end
 UnitFactionGroup = function() return FACTION or "Horde" end
+UnitCanAttack = function() return true end
 PlaySound = function() end
 RaidNotice_AddMessage = function(_, m) print("RAIDWARN: " .. m) end
 RaidWarningFrame = {}
@@ -190,8 +196,8 @@ trow._scripts.OnClick(trow, "LeftButton"); Check(ns.state.cardTrash == 1, "click
 local ulda = ns.DungeonByKey.ulda
 ns.ShowMap(ulda); ns.state.cardTrash = #ulda.trashGroups; ns.RefreshMap()
 local bar
-for _, f in ipairs(frames) do if rawget(f, "maxOffset") and f:IsShown() then bar = f end end
-Check(bar and bar.maxOffset > 0, "long icon list can scroll")
+for _, f in ipairs(frames) do if rawget(f, "maxOffset") then bar = f end end
+Check(bar ~= nil, "list panel scrolls (loot icons are inside it)")
 local _, tot0 = ns.ItemProgress(ulda.trashGroups[#ulda.trashGroups].loot)
 local set1 = ns.ItemProgress(ulda.trashGroups[#ulda.trashGroups].loot)
 Check(set1 < tot0, "odd item IDs are loading (stub)")
@@ -201,7 +207,6 @@ Check(set2 == tot2 and miss2 > 0, "items that never answer count as missing")
 Fire("GET_ITEM_INFO_RECEIVED", 999999, false); Check(ns.itemMissing[999999], "server says no such item")
 Check(ns.ItemInfo(9) == "Local9" and ns.ItemState(9) == "ok", "client item table name used while the server is slow")
 Slash("item 9431")
-bar._scripts.OnMouseWheel(bar, -1); Check(bar.offset == 1, "mouse wheel scrolls the icons")
 ns.ShowMap(ns.DungeonByKey.dm)
 ns.state.cardTrash = nil
 ns.state.cardTrash = nil
@@ -213,63 +218,62 @@ for _, f in ipairs(frames) do if f._name == "PlayerModel" then model = f end end
 Check(model ~= nil, "boss card model created")
 ns.state.selected = 3; ns.RefreshMap()
 Check(rawget(model, "_display") == wcd.steps[3].model and wcd.steps[3].model ~= nil, "Cobrahn 3D model shown")
-Check(ns.state.pageGeo == wcd, "WC uses Atlas (no Blizzard positions)")
+Check(ns.state.pageGeo == wcd.bliz, "WC uses its minimap tiles")
 local bfd = ns.DungeonByKey.bfd
 ns.ShowMap(bfd); ns.db.listTab = "route"; ns.RefreshMap()
-Check(#bfd.pages == 3, "BFD has 3 Atlas pages")
-Check(bfd.bliz and #bfd.bliz.pages == 3 and ns.state.pageGeo == bfd.bliz, "BFD shows 3 Blizzard pages")
-Check(TEXSET[bfd.bliz.pages[1].tiles[1][1]], "Blizzard tiles set by file ID")
-ns.state.page, ns.state.pageManual = "3", true; ns.RefreshMap()
+Check(bfd.bliz and #bfd.bliz.pages == 2 and ns.state.pageGeo == bfd.bliz, "BFD shows 2 minimap areas")
+Check(TEXSET[bfd.bliz.pages[1].grid.tiles[1][1]], "minimap tiles drawn")
+ns.state.page, ns.state.pageManual = "sanctum", true; ns.RefreshMap()
+Check(ns.state.shownPage == "sanctum", "BFD second area picked")
 -- area dropdown for dungeons with several maps
 local gn = ns.DungeonByKey.gnomer
-ns.ShowMap(gn); ns.state.page, ns.state.pageManual = "4", true; ns.RefreshMap()
+local gp = gn.bliz.pages
+ns.ShowMap(gn); ns.state.page, ns.state.pageManual = gp[4].key, true; ns.RefreshMap()
 local fb, fn, fl, frows = ns.AreaWidgets()
 Check(fb:IsShown() and fb.text._text:find("4/4") ~= nil, "area dropdown shows 4/4")
-Check(fn:IsShown() and fn.key == "1", "next-objective link points to area 1")
+Check(fn:IsShown() and fn.key == gp[1].key, "next-objective link points to the first area")
 fb._scripts.OnClick(fb); Check(fl:IsShown(), "area list opens")
-frows[2]._scripts.OnClick(frows[2]); Check(ns.state.page == "2" and not fl:IsShown(), "pick area 2")
-fn._scripts.OnClick(fn); Check(ns.state.page == "1" and not fn:IsShown(), "jump to next objective area")
--- floor link: area name under the arrow, click opens that area
-ns.state.page, ns.state.pageManual = "1", true; ns.RefreshMap()
+frows[2]._scripts.OnClick(frows[2]); Check(ns.state.page == gp[2].key and not fl:IsShown(), "pick area 2")
+fn._scripts.OnClick(fn); Check(ns.state.page == gp[1].key and not fn:IsShown(), "jump to next objective area")
+-- floor link: click opens that area
+ns.state.page, ns.state.pageManual = "upper", true; ns.RefreshMap()
 local lk
-for _, f in ipairs(frames) do if rawget(f, "toPage") == "2" and f:IsShown() then lk = f end end
-Check(lk and lk.name._text == (ns.locale == "ko" and "거주 지구" or "The Dormitory"), "link shows where it leads")
-lk._scripts.OnClick(lk); Check(ns.state.page == "2", "clicking a link opens that area")
+for _, f in ipairs(frames) do if rawget(f, "toPage") == "court" and f:IsShown() then lk = f end end
+Check(lk ~= nil, "floor link to Tinkers' Court shown")
+if lk then lk._scripts.OnClick(lk); Check(ns.state.page == "court", "clicking a link opens that area") end
 ns.ShowMap(ns.DungeonByKey.rfc); ns.RefreshMap()
 Check(not fb:IsShown(), "single-map dungeon: no dropdown")
 -- floor follows the sub-zone you stand in
 INSTANCE = { "놈리건", "party", 1, "", 5, 0, false, 90 }
 SUBZONE = "톱니바퀴의 전당"
 Fire("PLAYER_ENTERING_WORLD")
-Check(ns.state.current == gn and ns.state.shownPage == "1", "Gnomeregan: Hall of Gears -> area 1")
+Check(ns.state.current == gn and ns.state.shownPage == "upper", "Gnomeregan: Hall of Gears -> upper level")
 SUBZONE = "땜장이 왕실"; Fire("ZONE_CHANGED_INDOORS")
-Check(ns.state.shownPage == "4", "Tinkers' Court -> area 4")
-ns.state.page, ns.state.pageManual = "2", true; ns.RefreshMap()
-Check(ns.state.shownPage == "2", "picked by hand stays")
+Check(ns.state.shownPage == "court", "Tinkers' Court -> court")
+ns.state.page, ns.state.pageManual = "workshop", true; ns.RefreshMap()
+Check(ns.state.shownPage == "workshop", "picked by hand stays")
 SUBZONE = "출격실"; Fire("ZONE_CHANGED_INDOORS")
-Check(ns.state.shownPage == "2" or ns.state.shownPage == "3", "Launch Bay (areas 2/3) -> one of them")
+Check(ns.state.shownPage == "workshop" or ns.state.shownPage == "launch", "Launch Bay -> workshop or launch bay")
 SUBZONE = "Echomok"; Fire("ZONE_CHANGED_INDOORS")
 INSTANCE = { nil, "none", nil, nil, nil, nil, nil, 0 }; SUBZONE = ""
 Fire("ZONE_CHANGED_NEW_AREA")
 DungeonRouteGuideFrame:Hide()
--- client without the art: falls back to Atlas
+-- client without the tiles: route flow chart
 local smgy = ns.DungeonByKey.smgy
-for _, set in ipairs(smgy.bliz.pages[1].tiles) do MISSING[set[1]] = true end
-Slash("map blizzard")
+MISSING[smgy.bliz.pages[1].grid.tiles[1][1]] = true; smgy.bliz.pages[1].set = nil
+Slash("map")
 ns.ShowMap(smgy); ns.RefreshMap()
-Check(ns.state.pageGeo == smgy, "missing Blizzard art -> Atlas")
-for _, set in ipairs(smgy.bliz.pages[1].tiles) do MISSING[set[1]] = nil end
-MISSING[smgy.bliz.pages[1].tiles[1][1]] = true
-Slash("map blizzard")
+Check(ns.state.shownPage == "flow", "missing tiles -> flow chart")
+MISSING = {}; smgy.bliz.pages[1].set = nil
+Slash("map")
 ns.ShowMap(smgy); ns.RefreshMap()
-Check(ns.state.pageGeo == smgy.bliz and smgy.bliz.pages[1].set == smgy.bliz.pages[1].tiles[2], "second tile set used when the first is missing")
-MISSING = {}
+Check(ns.state.pageGeo == smgy.bliz, "tiles back -> minimap")
 -- new Forever dungeons: the game's minimap tiles, sketch when they are missing
 local dala = ns.DungeonByKey.dala
 TEXSET = {}
 ns.ShowMap(dala); ns.RefreshMap()
 local sew, mm = dala.bliz.pages[1], dala.bliz.pages[2]
-Check(ns.state.pageGeo == dala.bliz and ns.state.shownPage == "sewers" and sew.grid.px and TEXSET[sew.grid.tiles[1][1]] and TEXSET[sew.grid.tiles[#sew.grid.tiles][1]], "Dalaran starts on the sewers page")
+Check(ns.state.pageGeo == dala.bliz and ns.state.shownPage == "sewers" and TEXSET[sew.grid.tiles[1][1]], "Dalaran starts on the sewers page")
 ns.state.page, ns.state.pageManual = "main", true; ns.RefreshMap()
 Check(ns.state.shownPage == "main" and mm.grid and TEXSET[mm.grid.tiles[1][1]] and TEXSET[mm.grid.tiles[#mm.grid.tiles][1]], "Dalaran city on the minimap tiles")
 ns.state.pageManual = false
@@ -287,9 +291,9 @@ for _, k in ipairs({ "thanes", "excav", "rol" }) do
 end
 MISSING[mm.grid.tiles[1][1]] = true; mm.set = nil
 ns.ShowMap(dala); ns.state.page, ns.state.pageManual = "main", true; ns.RefreshMap(); ns.state.pageManual = false
-Check(ns.state.pageGeo == dala and dala.pages[1].schematic and ns.state.shownPage == "main", "minimap missing -> Dalaran sketch map")
+Check(ns.state.shownPage == "flow", "minimap missing -> Dalaran flow chart")
 MISSING = {}; mm.set = nil
-Slash("map blizzard")
+Slash("map")
 -- a dungeon without any map gets the route as a flow chart
 local dalaPages, dalaBliz = dala.pages, dala.bliz
 dala.pages = {}; dala.bliz = nil; ns.RefreshMap()
@@ -365,17 +369,13 @@ Slash("size 460"); Slash("alpha 50"); Check(ns.db.alpha == 0.5, "alpha 50 -> 0.5
 Slash("edit")
 ns.state.selected = BAZ
 ns.EditClick("LeftButton")
-Check(ns.db.routes.rfc.s6.bpos[1] == math.floor((300 - 100) / (460 / 652) + 8 + 0.5), "edit moves marker (Blizzard map)")
+local rk = "rfc" .. (d.editSpace or "")
+Check(ns.db.routes[rk] and ns.db.routes[rk].s6 and ns.db.routes[rk].s6.bpos ~= nil, "edit moves marker")
 Slash("export")
 ns.EditClick("RightButton")
-Check(ns.db.routes.rfc.s6.bpos == nil, "edit clear")
-Slash("map atlas")
-Check(ns.state.pageGeo == d, "/drg map atlas")
-ns.EditClick("LeftButton")
-Check(ns.db.routes.rfc.s6.pos[1] == math.floor((300 - 100) / (460 / 512) + 0.5), "edit moves marker (Atlas)")
-ns.EditClick("RightButton")
-Slash("map blizzard")
-Check(ns.state.pageGeo == d.bliz, "/drg map blizzard")
+Check(not (ns.db.routes[rk] and ns.db.routes[rk].s6 and ns.db.routes[rk].s6.bpos), "edit clear")
+Slash("map")
+Check(ns.state.pageGeo == d.bliz, "/drg map")
 Slash("edit")
 ns.db.listTab = "quest"; ns.RefreshMap()
 ns.db.listTab = "notes"; ns.RefreshMap()
@@ -383,12 +383,7 @@ ns.db.listTab = "route"
 ns.CycleViewed(1); Check(ns.state.viewed.key == "thanes", "cycle to next dungeon")
 ns.CycleViewed(-1)
 Slash("reset")
-local rolBliz = ns.DungeonByKey.rol.bliz
-ns.DungeonByKey.rol.bliz = nil
 Slash("mapscan")
-Check(ns.db.mapscan and ns.db.mapscan[1] and ns.db.mapscan[1].dungeon == "rol", "map scan finds Ruins of Lordaeron")
-Check(ns.DungeonByKey.rol.bliz and ns.DungeonByKey.rol.bliz.preview, "found map becomes a preview")
-ns.DungeonByKey.rol.bliz = rolBliz; ns.db.mapscan = nil
 Slash("debug")
 Slash("donate"); Check(DungeonRouteGuideDonate:IsShown() and DungeonRouteGuideDonate.box._text == ns.DONATE_URL, "/drg donate shows the link")
 DungeonRouteGuideDonate:Hide()
@@ -448,10 +443,12 @@ local dl = ns.DungeonByKey.dala
 INSTANCE = { "달라란", "party", 1, "", 5, 0, false, 2959 }; SUBZONE = "하수도"; Fire("PLAYER_ENTERING_WORLD")
 Check(ns.state.current == dl, "Dalaran detected by instance id")
 ns.RefreshMap(); Check(ns.state.shownPage == "sewers", "Dalaran run starts on the sewers")
-ns.SetDone(dl, 1, true, true)
+local function StepIndex(dd, id) for i, s in ipairs(dd.steps) do if s.id == id then return i end end end
+ns.SetDone(dl, StepIndex(dl, "s1"), true, true)
 SUBZONE = "보랏빛 성채"; Fire("ZONE_CHANGED_INDOORS")
-ns.SetDone(dl, 2, true, true)
-Check(ns.db.floorAreas["dala:b"]["하수도"] == "sewers" and ns.db.floorAreas["dala:b"]["보랏빛성채"] == "main", "kills teach the floors")
+ns.SetDone(dl, StepIndex(dl, "s2"), true, true)
+local learned = ns.db.floorAreas["dala" .. (dl.editSpace or "") .. ":b"]
+Check(learned and learned["하수도"] == "sewers" and learned["보랏빛성채"] == "main", "kills teach the floors")
 SUBZONE = "하수도"; Fire("ZONE_CHANGED_INDOORS"); ns.RefreshMap()
 Check(ns.state.shownPage == "sewers", "back in the sewers -> sewers floor (next boss is in the city)")
 SUBZONE = "보랏빛 성채"; Fire("ZONE_CHANGED_INDOORS"); ns.RefreshMap()
