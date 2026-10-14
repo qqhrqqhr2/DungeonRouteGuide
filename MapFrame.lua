@@ -183,7 +183,7 @@ local function ZoomMap(delta)
   nav.zoom = math.max(1, math.min(5, old * (delta>0 and 1.25 or 0.8)))
   nav.x = px + (0.5-fx)*baseView[3]/nav.zoom
   nav.y = py + (0.5-fy)*baseView[4]/nav.zoom
-  ns.RefreshMap()
+  ns.RefreshMap(true)
 end
 
 local function StepTooltip(owner, d, i)
@@ -519,16 +519,14 @@ local function GetLink(k)
   l.nameBg:SetColorTexture(0, 0, 0, 0.6)
   l.nameBg:SetPoint("TOPLEFT", l.name, "TOPLEFT", -3, 1)
   l.nameBg:SetPoint("BOTTOMRIGHT", l.name, "BOTTOMRIGHT", 3, -1)
-  l.name:Hide();l.nameBg:Hide()
   l:SetScript("OnEnter", function(self)
-    self.name:Show();self.nameBg:Show()
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:SetText(self.label or "", 1, 1, 1, 1, true)
     if self.approx then GameTooltip:AddLine(L.APPROX, 1, 0.75, 0.3, true) end
     if self.toPage then GameTooltip:AddLine(L.LINK_CLICK, 0.5, 0.8, 1) end
     GameTooltip:Show()
   end)
-  l:SetScript("OnLeave", function(self)self.name:Hide();self.nameBg:Hide();GameTooltip_Hide()end)
+  l:SetScript("OnLeave", GameTooltip_Hide)
   l:SetScript("OnClick", function(self)
     if not self.toPage then return end
     state.page, state.pageManual = self.toPage, true
@@ -660,6 +658,10 @@ local function GetQuestRow(k)
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:SetText(ns.QuestTitle(self.q), 1, 0.82, 0)
     if self.q.level then GameTooltip:AddLine(("Lv %d"):format(self.q.level), 0.7, 0.7, 0.7) end
+    if self.q.minLevel then
+      local low = (ns.Num(ns.Safe(UnitLevel, "player")) or 0) < self.q.minLevel
+      GameTooltip:AddLine(L.Q_MINLEVEL_TIP:format(self.q.minLevel), low and 1 or 0.7, low and 0.4 or 0.7, low and 0.4 or 0.7)
+    end
     GameTooltip:AddLine(T(self.q.giver), 1, 1, 1, true)
     if self.q.rewards and #self.q.rewards > 0 then
       GameTooltip:AddLine(" ")
@@ -975,9 +977,11 @@ local function Create()
       self:SetScript("OnUpdate", function(c)
         local cx, cy = GetCursorPosition(); local p = c.pan
         if not p or not nav then return end
+        if cx == p[7] and cy == p[8] then return end     -- no movement, no redraw
+        p[7], p[8] = cx, cy
         nav.x = p[3] - (cx-p[1])/p[6]/p[5]
         nav.y = p[4] + (cy-p[2])/p[6]/p[5]
-        ns.RefreshMap()
+        ns.RefreshMap(true)
       end)
     elseif not ns.db.locked then frame:StartMoving() end
     self.dragged = true
@@ -990,7 +994,7 @@ local function Create()
   canvas:SetScript("OnMouseUp", function(self, button) if not self.dragged then ns.EditClick(button) end end)
   canvas:SetScript("OnHide", function(self) self:SetScript("OnUpdate", nil); self.pan=nil end)
   zoomReset = Btn(overlay, L.MAP_FIT, 46, L.MAP_ZOOM_TIP, function()
-    if nav then nav.zoom=1; ns.RefreshMap() end
+    if nav then nav.zoom=1; ns.RefreshMap(true) end
   end)
   zoomReset:SetPoint("BOTTOMRIGHT", -4, 4)
   zoomReset:SetFrameLevel(overlay:GetFrameLevel()+8)
@@ -1463,6 +1467,8 @@ local function DrawMarkers(d, page, nextIndex, sc)
       l.toPage = ln.toPage
       l.approx = ln.approx
       l.name:SetText(ln.caption and T(ln.caption) or (ln.to and T(ln.to) or ""))
+      local hasName = (l.name:GetText() or "") ~= ""
+      l.name:SetShown(hasName); l.nameBg:SetShown(hasName)
       l.number:SetText(ln.caption and T(ln.caption):match("^(%d+)") or "↗")
       local dx,dy=MarkerSpot(ln.pos,sc,linkOccupied)
       Place(l, sc, ln.pos,dx,dy)
@@ -1773,6 +1779,8 @@ local function DrawQuestList(d)
       local nameHeight = TextHeight(r.name, ns.QuestTitle(q), LIST_CONTENT_W - 54)
       if st == "done" then r.status:SetText("|cff55ff55" .. L.Q_DONE .. "|r")
       elseif st == "active" then r.status:SetText("|cffffd100" .. L.Q_ACTIVE .. "|r")
+      elseif q.minLevel and (ns.Num(ns.Safe(UnitLevel, "player")) or 0) < q.minLevel then
+        r.status:SetText("|cffff6666" .. L.Q_MINLEVEL:format(q.minLevel) .. "|r")
       else r.status:SetText("|cff999999" .. L.Q_MISSING .. "|r") end
       local giverHeight = TextHeight(r.giver, T(q.giver), LIST_CONTENT_W - 10)
       local rowHeight = nameHeight + 2 + giverHeight + 6
@@ -1835,7 +1843,8 @@ local function DrawNotes(d)
   tipText:Show()
 end
 
-function ns.RefreshMap()
+-- mapOnly: redraw the map area alone (zoom / pan), not the list and card
+function ns.RefreshMap(mapOnly)
   if not frame or not frame:IsShown() then return end
   local d = state.viewed
   if not d then return end
@@ -1889,6 +1898,7 @@ function ns.RefreshMap()
     DrawFlowLines(d, nil, sc)
   end
   DrawFloors(d, page)
+  if mapOnly then return end
   if ns.db.showList then
     local done, total = ns.Counts(d)
     progressText:SetText(("|TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:12:12|t %d/%d"):format(done, total))

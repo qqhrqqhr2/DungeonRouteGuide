@@ -378,6 +378,14 @@ Slash("map")
 Check(ns.state.pageGeo == d.bliz, "/drg map")
 Slash("edit")
 ns.db.listTab = "quest"; ns.RefreshMap()
+local dmq
+for _, q in ipairs(ns.DungeonByKey.dm.quests) do if q.minLevel then dmq = q end end
+Check(dmq ~= nil, "Deadmines quests know the level they can be taken from")
+ns.ShowMap(ns.DungeonByKey.dm); PLEVEL = 5; FACTION = "Alliance"; ns.RefreshMap()
+local lowRow
+for _, f in ipairs(frames) do local q = rawget(f, "q"); if q and q.minLevel and f:IsShown() and f.status._text and f.status._text:find(tostring(q.minLevel)) then lowRow = f end end
+Check(lowRow ~= nil, "quest too high for you shows its minimum level")
+PLEVEL, FACTION = nil, nil; ns.ShowMap(d); ns.RefreshMap()
 ns.db.listTab = "notes"; ns.RefreshMap()
 ns.db.listTab = "route"
 ns.CycleViewed(1); Check(ns.state.viewed.key == "thanes", "cycle to next dungeon")
@@ -449,6 +457,9 @@ SUBZONE = "보랏빛 성채"; Fire("ZONE_CHANGED_INDOORS")
 ns.SetDone(dl, StepIndex(dl, "s2"), true, true)
 local learned = ns.db.floorAreas["dala" .. (dl.editSpace or "") .. ":b"]
 Check(learned and learned["하수도"] == "sewers" and learned["보랏빛성채"] == "main", "kills teach the floors")
+local enigma
+for _, s in ipairs(dl.steps) do if s.id == "s6" then enigma = s end end
+Check(enigma.name.ko == "신비한 수수께끼", "Arcanic Enigma uses its game name")
 SUBZONE = "하수도"; Fire("ZONE_CHANGED_INDOORS"); ns.RefreshMap()
 Check(ns.state.shownPage == "sewers", "back in the sewers -> sewers floor (next boss is in the city)")
 SUBZONE = "보랏빛 성채"; Fire("ZONE_CHANGED_INDOORS"); ns.RefreshMap()

@@ -1,5 +1,12 @@
 # Dungeon Route Guide
 
+## Unreleased
+
+- Quests show the level they can be taken from (99 dungeon quests); quests you are too low for show it in red in the Quests tab and tooltip
+- City of Dalaran: Arcanic Enigma goes by its game name (신비한 수수께끼), Korean quest names Heart of Disruption (분열의 심장) and Opportunistic Education (기회주의 학습법), and updated boss notes (Fel Ancient in Runeweaver Square, Unstable Sentinel, Mana Devourer, Tome of Dalaran)
+- Zooming and dragging the map redraw only the map, so panning stays smooth
+- Floor links show where they lead under the icon again
+
 ## v1.0.10
 
 - The map follows the sub-zone you stand in again in Deadmines, Gnomeregan, Blackfathom Deeps and Uldaman (lost with the new minimap pages in 1.0.8)
