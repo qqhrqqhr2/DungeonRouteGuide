@@ -1,6 +1,6 @@
 # Dungeon Route Guide
 
-## Unreleased
+## v1.0.11
 
 - Quests show the level they can be taken from (99 dungeon quests); quests you are too low for show it in red in the Quests tab and tooltip
 - City of Dalaran: Arcanic Enigma goes by its game name (신비한 수수께끼), Korean quest names Heart of Disruption (분열의 심장) and Opportunistic Education (기회주의 학습법), and updated boss notes (Fel Ancient in Runeweaver Square, Unstable Sentinel, Mana Devourer, Tome of Dalaran)
