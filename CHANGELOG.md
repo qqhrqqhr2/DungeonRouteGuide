@@ -5,7 +5,7 @@
 - Quests show the level they can be taken from (99 dungeon quests); quests you are too low for show it in red in the Quests tab and tooltip
 - City of Dalaran: Arcanic Enigma goes by its game name (신비한 수수께끼), Korean quest names Heart of Disruption (분열의 심장) and Opportunistic Education (기회주의 학습법), and updated boss notes (Fel Ancient in Runeweaver Square, Unstable Sentinel, Mana Devourer, Tome of Dalaran)
 - Zooming and dragging the map redraw only the map, so panning stays smooth
-- Floor links show where they lead under the icon again
+- Floor links show the floor they lead to under the icon again, only where the name fits (one per destination nearby, never over a marker or another name; the tooltip always has it)
 
 ## v1.0.10
 

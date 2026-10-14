@@ -522,6 +522,7 @@ local function GetLink(k)
   l:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:SetText(self.label or "", 1, 1, 1, 1, true)
+    if not self.name:IsShown() and (self.name:GetText() or "") ~= "" then GameTooltip:AddLine(self.name:GetText(), 0.55, 0.85, 1) end
     if self.approx then GameTooltip:AddLine(L.APPROX, 1, 0.75, 0.3, true) end
     if self.toPage then GameTooltip:AddLine(L.LINK_CLICK, 0.5, 0.8, 1) end
     GameTooltip:Show()
@@ -1459,6 +1460,21 @@ local function DrawMarkers(d, page, nextIndex, sc)
   local linkOccupied={}
   for j=reservedCount+1,#occupied do linkOccupied[#linkOccupied+1]=occupied[j]end
   if g.start and g.start.page==page.key and InView(g.start.pos)then linkOccupied[#linkOccupied+1]={(g.start.pos[1]-view[1])*sc,(g.start.pos[2]-view[2])*sc}end
+  -- Destination names under the floor-link icons, only where they fit:
+  -- one name per destination nearby, never over a marker or another name
+  -- (the full text stays in the tooltip).
+  local labelRects, named = {}, {}
+  local W, H = canvas:GetWidth() or 0, canvas:GetHeight() or 0
+  local function LabelFits(x0, y0, x1, y1)
+    if x0 < 0 or y1 > H or (W > 0 and x1 > W) then return false end
+    for _, r in ipairs(labelRects) do
+      if x0 < r[3] and x1 > r[1] and y0 < r[4] and y1 > r[2] then return false end
+    end
+    for _, q in ipairs(occupied) do
+      if q[1] > x0 - 9 and q[1] < x1 + 9 and q[2] > y0 - 9 and q[2] < y1 + 9 then return false end
+    end
+    return true
+  end
   for _, ln in ipairs(g.links or {}) do
     if ln.page == page.key and InView(ln.pos) then
       kl = kl + 1
@@ -1466,12 +1482,39 @@ local function DrawMarkers(d, page, nextIndex, sc)
       l.label = T(ln.text)
       l.toPage = ln.toPage
       l.approx = ln.approx
-      l.name:SetText(ln.caption and T(ln.caption) or (ln.to and T(ln.to) or ""))
-      local hasName = (l.name:GetText() or "") ~= ""
-      l.name:SetShown(hasName); l.nameBg:SetShown(hasName)
+      local dest = PageByKey(g, ln.toPage)
+      local nameText = (dest and dest.name and T(dest.name)) or (ln.to and T(ln.to)) or ""
+      l.name:SetText(nameText)
       l.number:SetText(ln.caption and T(ln.caption):match("^(%d+)") or "↗")
       local dx,dy=MarkerSpot(ln.pos,sc,linkOccupied)
       Place(l, sc, ln.pos,dx,dy)
+      local cx, cy = (ln.pos[1]-view[1])*sc + dx, (ln.pos[2]-view[2])*sc - dy
+      local show = nameText ~= ""
+      if show then
+        for _, p in ipairs(named[nameText] or {}) do
+          if (p[1]-cx)^2 + (p[2]-cy)^2 < 90^2 then show = false; break end
+        end
+      end
+      if show then
+        -- below the icon, else above it; slid back inside the map at the edges
+        local w = (l.name:GetStringWidth() or 40) / 2 + 3
+        local shift = 0
+        if W > 0 then shift = math.max(0 - (cx - w), math.min(0, W - (cx + w))) end
+        local x0, x1 = cx - w + shift, cx + w + shift
+        local placed
+        if LabelFits(x0, cy + 10, x1, cy + 24) then placed = "below"
+        elseif LabelFits(x0, cy - 24, x1, cy - 10) then placed = "above" end
+        show = placed ~= nil
+        if show then
+          labelRects[#labelRects + 1] = placed == "below" and { x0, cy + 10, x1, cy + 24 } or { x0, cy - 24, x1, cy - 10 }
+          named[nameText] = named[nameText] or {}
+          table.insert(named[nameText], { cx, cy })
+          l.name:ClearAllPoints()
+          if placed == "below" then l.name:SetPoint("TOP", l, "BOTTOM", shift, -1)
+          else l.name:SetPoint("BOTTOM", l, "TOP", shift, 1) end
+        end
+      end
+      l.name:SetShown(show); l.nameBg:SetShown(show)
       l.leader:SetShown(dx*dx+dy*dy>1)
       if dx*dx+dy*dy>1 then
         local ax,ay=(ln.pos[1]-view[1])*sc,-(ln.pos[2]-view[2])*sc
