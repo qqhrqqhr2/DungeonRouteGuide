@@ -23,4 +23,7 @@ Core.lua
 MapFrame.lua
 HUD.lua
 Entrance.lua
+WorldMap.lua
+WorldMapSearch.lua
+WorldMap.xml
 Icon.lua

@@ -347,6 +347,8 @@ local MENU = {
   function() ns.ChangeLanguage() end,
   function() return L.OPT_ICON:format(ns.OnOff(ns.db.showIcon)) end,
   function() ns.SetIconShown(not ns.db.showIcon) end,
+  function() return L.OPT_WORLD_PINS:format(ns.OnOff(ns.db.worldMapPins)) end,
+  function() ns.db.worldMapPins = not ns.db.worldMapPins end,
   function() return L.OPT_GO end,
   function() ns.StartEntrance(state.viewed); menu:Hide() end,
   function() return L.OPT_RESET end,

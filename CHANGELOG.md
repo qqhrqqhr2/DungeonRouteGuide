@@ -1,5 +1,31 @@
 # Dungeon Route Guide
 
+## v1.0.12
+
+### 한국어
+
+- 아제로스 전체 지도와 대륙 지도에 작은 던전 입구·이름·권장 레벨을 표시하고, 가까운 입구를 하나로 묶어 안내합니다. 지역·도시·던전 지도에서는 게임의 기본 표시를 사용합니다.
+- 지도 하단 중앙의 기존 애드온 아이콘으로 검색·표시 옵션을 열고 닫습니다. 아이콘은 드래그로 이동하며 위치를 저장하고 지도 밖으로 나가지 않습니다.
+- 던전 목록과 던전 표식의 좌·우클릭 기능을 제거했습니다. 한글·영문 검색 후 Enter를 누르면 해당 입구의 지역 지도를 엽니다. 해골 표식과 테두리는 가로·세로를 절반으로 줄였습니다.
+- 로데론의 폐허를 남작 → 비열한 빅토르(선택) → 버려진 자(선택) → 비요크 → 라스마엘 순서로 조정하고 이동·이벤트 안내를 보완했습니다. 기존 완료 기록과 지도 좌표는 유지합니다.
+- 호드는 하수도 열쇠가 있어도 야외 달라란에서 공격받으며 하수도를 통한 던전 입장은 유지된다는 주의사항을 한글·영문으로 추가했습니다.
+- 군주 아쿠아니스 퀘스트 보상 3종을 툴팁에 연결했습니다. 현재 아이템 이름·등급·능력치는 게임 정보를 사용합니다.
+
+### English
+
+- Reorder Ruins of Lordaeron to the Baron → Viktor (optional) → the Abandoned (optional) → Bjork → Rath'mael, with updated passage/wave-event notes; keep boss IDs and native map positions tied to the same bosses
+- Add a Korean/English warning that Horde characters are attacked in outdoor Dalaran even with the sewer key, while City of Dalaran dungeon access remains available
+- Show all three Baron Aquanis quest reward options in tooltips, with Korean/English name fallbacks; read current names, quality and stats from the game
+- Halve the width and height of world-map skull markers and their borders while keeping dungeon-name and level text readable
+- Add a compact original-addon icon that opens Dungeon Route Guide search and display options; start it at the bottom center, support bounded dragging, and remember its position
+- Remove the dungeon result list, per-dungeon selection and left/right-click actions on dungeon markers; keep name/level/location tooltips and pass clicks through to the map
+- Keep Korean/English name search as a map-marker filter, with a result count and a clear button
+- Press Enter after entering a dungeon name to open its entrance's zone map; prefer an exact name/key match, otherwise use the first partial match, and honor saved entrance coordinates
+- Show compact dungeon entrance markers, names and recommended levels on the Azeroth world map and continent maps; use the game's own markers on detailed maps
+- Group nearby entrances, including Scarlet Monastery wings, and list all grouped dungeons in the tooltip
+- Keep markers readable while zooming, avoid overlapping labels, and provide entrance/name/level display toggles
+- Add outdoor entrance positions for Ruins of Lordaeron and City of Dalaran; prefer saved entrance coordinates
+
 ## v1.0.11
 
 - Quests show the level they can be taken from (99 dungeon quests); quests you are too low for show it in red in the Quests tab and tooltip

@@ -1,4 +1,25 @@
-# DungeonRouteGuide v1.0.9
+# DungeonRouteGuide v1.0.12
+
+WoW Forever 던전 길잡이 / Dungeon route guide for WoW Forever.
+
+## v1.0.12 변경 내용
+
+- 아제로스 전체 지도·대륙 지도에 던전 입구, 이름, 권장 레벨을 표시합니다. 지역 지도에서는 게임의 기본 표시를 사용합니다.
+- 지도 하단 중앙의 애드온 아이콘을 누르면 검색·표시 옵션이 열리고, 다시 누르면 닫힙니다. 드래그로 이동하면 위치를 저장합니다.
+- 한글·영문 던전 이름을 검색하고 Enter를 누르면 입구가 있는 지역 지도를 엽니다. 예: `폐광` → 서부 몰락지대.
+- 던전 목록을 제거하고 해골 표식을 작게 줄였습니다. 세계 지도 던전 표식은 마우스오버로 안내하며 클릭은 지도에 전달합니다.
+- 로데론의 폐허 진행 순서·이동 안내와 달라란 호드 주의사항을 수정하고, 군주 아쿠아니스 퀘스트 보상 3종을 툴팁에 연결했습니다. 한글·영문을 모두 지원합니다.
+
+## v1.0.12 changes
+
+- Show compact dungeon entrances, names and recommended levels on the Azeroth world map and continent maps. Detailed maps use the game's own markers.
+- Click the original addon icon at the bottom center of the world map to open or close search and display options. Drag the icon to move it; its position is saved and stays inside the map.
+- Search by Korean or English dungeon name and press Enter to open its entrance's zone map, for example `Deadmines` → Westfall. An exact match takes priority; otherwise the first partial match is used.
+- Remove the dungeon list and halve skull marker dimensions. World-map markers show information on hover and pass clicks through to the map.
+- Update the Ruins of Lordaeron route and event notes, add the Horde outdoor-Dalaran warning, and show all three Baron Aquanis quest reward options. Existing progress and map coordinates are preserved.
+- To install, close WoW and replace `Interface/AddOns/DungeonRouteGuide` with the folder from the release ZIP. Saved settings and progress are retained. Use `/drg` to open the dungeon guide.
+
+자동 검사는 통과했으며 이번 변경의 인게임 확인은 아직입니다. / Automated checks pass; these changes have not yet been verified in game.
 
 ## v1.0.9 변경 내용
 

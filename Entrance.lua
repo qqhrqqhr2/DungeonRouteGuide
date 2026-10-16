@@ -169,5 +169,6 @@ function ns.SaveEntranceHere(d)
   local map, x, y = PlayerMapPos()
   if (itype and itype ~= "none") or not map then ns.Print(L.ENTRANCE_NOPOS); return end
   ns.db.entrances[d.key] = { map = map, x = x * 100, y = y * 100, zone = { ko = ZoneName(map), en = ZoneName(map) } }
+  if ns.RefreshWorldMap then ns.RefreshWorldMap() end
   ns.Print(L.ENTRANCE_SET:format(T(d.name), x * 100, y * 100))
 end

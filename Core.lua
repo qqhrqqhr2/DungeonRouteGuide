@@ -22,6 +22,8 @@ local DEFAULTS = {
   alpha = 0.9, combatFade = true, combatAlpha = 0.35,
   mapSize = 380, showList = true, listTab = "route",
   locked = false, autoOpen = true, hud = true, rareAlert = true, showIcon = true, lang = "auto",
+  worldMapPins = true,
+  worldMapLabels = true, worldMapLevels = true,
   mapStyle = "blizzard",
   routes = {}, entrances = {}, frames = {}, names = {}, floorAreas = {},
 }
@@ -84,6 +86,7 @@ function ns.InitDB()
   DungeonRouteGuideCharDB = DungeonRouteGuideCharDB or {}
   DungeonRouteGuideCharDB.progress = DungeonRouteGuideCharDB.progress or { done = {}, lastSeen = 0 }
   ns.db = DungeonRouteGuideDB
+  ns.db.worldMapHidden = nil -- retire the per-dungeon visibility selection
   ns.db.mapStyle = "blizzard" -- migrate old Atlas preference to automatic tiles
   ns.char = DungeonRouteGuideCharDB
   ns.SetLanguage(ns.db.lang)
@@ -775,6 +778,7 @@ end
 function ns.RefreshAll()
   if ns.RefreshMap then ns.RefreshMap() end
   if ns.RefreshHUD then ns.RefreshHUD() end
+  if ns.RefreshWorldMap then ns.RefreshWorldMap() end
 end
 
 ---------------------------------------------------------------------------
@@ -794,10 +798,12 @@ for _, e in ipairs(EVENTS) do pcall(ev.RegisterEvent, ev, e) end
 local handlers = {}
 handlers.ADDON_LOADED = function(name)
   if name == ADDON then ns.InitDB() end
+  if name == "Blizzard_WorldMap" and ns.InitWorldMap then ns.InitWorldMap() end
 end
 handlers.PLAYER_LOGIN = function()
   if not ns.db then ns.InitDB() end
   ns.ready = true
+  if ns.InitWorldMap then ns.InitWorldMap() end
   if ns.CreateIcon then ns.CreateIcon() end
   if C_Timer and C_Timer.NewTicker then
     C_Timer.NewTicker(30, function()
@@ -938,6 +944,7 @@ SlashCmdList.DUNGEONROUTEGUIDE = function(msg)
   elseif cmd == "entrance" and rest == "set" then ns.SaveEntranceHere()
   elseif cmd == "entrance" and rest == "clear" then
     if state.viewed then ns.db.entrances[state.viewed.key] = nil end
+    if ns.RefreshWorldMap then ns.RefreshWorldMap() end
   elseif cmd == "edit" then ns.SetEditMode(not state.edit)
   elseif cmd == "export" then ns.ShowExport()
   elseif cmd == "donate" or cmd == "support" or cmd == "후원" then ns.ShowDonate()
